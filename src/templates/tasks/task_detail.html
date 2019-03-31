@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load markup  %} {% load i18n  %} {% load in_group %} 
+{% block extrahead %}{{ block.super }}
+<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}/styles/pygments_friendly.css" />
+{% endblock %}
+{% block breadcrumbs %}
+	{{ block.super }} > {{task.title}}
+{% endblock %}
+{% block content %}<div id='task_detail'>
+<span id="submission_date">
+	Submission date: {{task.submission_date.date}}
+</span>
+
+<h1>{{task.title}}</h1>
+
+<p>
+{% if user|in_group:"Tutor" or user|in_group:"Trainer"%}
+	<span class="icon ui-icon-triangle-1-e"></span><a href={% url attestation_list task_id=task.id%}>{% trans "Attestations" %}</a>
+{% endif %}
+{% if user|in_group:"Trainer"%}
+	<span class="icon ui-icon-triangle-1-e"></span><a href={% url statistics task_id=task.id%}>{% trans "Statistics"%}</a>
+{% endif %}
+{% if user|in_group:"User"%}
+	<span class="icon ui-icon-triangle-1-e"></span><a href={% url solution_list task_id=task.id%}>{% trans "My Solutions" %}</a>
+{% endif %}<p>
+{{task.description|markdown:"codehilite"}}
+
+<div>{% endblock %}

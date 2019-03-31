@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load highlight %} {% load i18n  %}
+{% block extrahead %}{{ block.super }}
+<script src="{{MEDIA_URL}}frameworks/ace/build/src/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{MEDIA_URL}}frameworks/ace/build/src/theme-twilight.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{MEDIA_URL}}frameworks/ace/build/src/mode-javascript.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">	
+	
+	
+	var editor;
+	window.onload = function() {
+		$("#editor").html($("#id_script").text())
+		$("#id_script").hide()
+		editor = ace.edit("editor");
+		editor.setTheme("ace/theme/twilight");
+		editor.renderer.setShowPrintMargin(false);
+		var JavaScriptMode = require("ace/mode/javascript").Mode;
+		editor.getSession().setMode(new JavaScriptMode());
+		calculate();
+		$(".calculated_grade_cell").hover(
+										  function () {
+										  $(this).append($("<span class='icon ui-icon-arrowreturnthick-1-e'></span>"));
+										  }, 
+										  function () {
+										  $(this).find("span:last").remove();
+										  }
+										  );
+		$(".calculated_grade_cell").click(function () {
+										  $(this).next().find("input[type=text]")[0].value = $(this).text();
+										  });
+		$("input[type=submit]").click(function () {
+									  $("#id_script").text(editor.getSession().getValue());
+									  })
+		
+	};	
+	
+	
+	function calculate(){
+		var all_grades = new Array();
+		$('.user_row').each(function(index) {
+							var grades=new Array();
+							var result;
+							$(this).find('.grade_cell').each(function(index) {
+															 grades[index] = $(this).text()
+															 });
+							all_grades[index] = grades
+							});
+	
+		
+		{% include "attestation/rating_scale_items_js_inline.html" %}
+		
+		for (index in all_grades){
+			var grades = all_grades[index];
+			var result;
+			
+			try {
+				eval(editor.getSession().getValue());
+			} catch (e) {
+			}
+			
+			$("#calculated_grade_cell"+index).text(result);
+		}
+	}
+	
+	function takeAll(){
+		$(".calculated_grade_cell").click();
+	}
+	
+</script>
+{% endblock %} 
+{% block breadcrumbs %} {{block.super}} > Rating Overview {% endblock %}
+{% block content %}<div id="rating">
+<h2>{% trans "Rating Overview" %}</h2>
+
+
+
+<div><form method="post" action="">{% csrf_token %}
+
+	<pre id="editor"></pre>
+	
+	{{script_form.script}}
+	<input type="button" id="calculate_button" value="calculate" onClick="calculate()" />
+	<p class="help">This JavaScript will be executed for every user listed below to calculate a proposed end note. This calculation is also shown to the tutors and users. <i><b>grades</b></i> is an Array containing all final grades for one user as Stings. <i><b>ratingScaleItems</b></i> is an array of arrays containing the names of the rating scale items of every task's final grade rating scale. Save the end note recomendation in <i><b>result</b></i> so it can be displayed in the row 'Calculated grade' and on the user index page.</p>
+
+	<div id="email"><a href="mailto:?bcc={% for user, attestations in rating_list %}{{user.email}},{% endfor %}"><span class="icon ui-icon-mail-closed"></span>Email all users</a></div>  <div id="export"><a href="{% url rating_export %}"><span class="icon ui-icon-extlink"></span>Export as csv (utf-8)</a></div>
+
+    {{ final_grade_formset.management_form }}
+	<table class="noLinkHighlight">
+		<tr>
+			<th>User</th>
+			{% for task in tasks %}
+				<th><div class="heading"><a href="{% url task_detail task_id=task.id  %}">{{task.title}}</a></div></th>
+			{% endfor %}
+			<th><div class="heading" id="calculated_grade_heading">Calculated grade</div></th>
+			<th>Final grade</th>
+		</tr>
+		{% for user, attestations in rating_list %}
+			<tr class="{% cycle 'odd' 'even' %} user_row">
+				<td><a href="mailto:{{user.email}}">{{user.get_full_name}}</a></td>
+				{% for attestation in attestations %}
+						{% if attestation.final_grade %}
+							<td class="grade_cell"><a href="{% url view_attestation attestation_id=attestation.id%}">{{attestation.final_grade}}</a></td>
+						{% else %}
+							<td class="grade_cell">-</td>
+						{% endif %}
+	
+				{% endfor %}
+				<td class="calculated_grade_cell" id="calculated_grade_cell{{forloop.counter0}}"></td>
+				<td>
+					{% with final_grade_formset.forms.pop as form %}
+						{% for field in form.hidden_fields %} {{field}} {% endfor %}
+						{{ form.final_grade }}
+					{% endwith %}
+				</td>
+			</tr>
+		{% endfor %}
+		<tr>
+			<td></td>{% for task in tasks %}<td></td>{% endfor %}<td><a onClick="takeAll()">take all<span class='icon ui-icon-arrowreturnthick-1-e'></span></a></td><td></td>
+		</tr>
+	</table>
+	{{publish_final_grade_form}}
+	<input type="submit" name="submit" value="Save Grades and Script" />
+</form></div>
+</div>
+{% endblock %}

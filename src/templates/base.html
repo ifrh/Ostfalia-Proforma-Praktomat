@@ -1,0 +1,63 @@
+{% load i18n %}{% load in_group %} 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<script type="text/javascript" src="{{MEDIA_URL}}frameworks/jquery/jquery.js"></script>
+	<script type="text/javascript" src="{{MEDIA_URL}}frameworks/jquery/jquery-ui.js"></script>
+	<script type="text/javascript">
+		maxWidth = false;
+		function toggleMaxWidth() {
+			if (maxWidth) { $("#container").css("max-width","1000px"); }
+			else          { $("#container").css("max-width","none"); }
+			maxWidth = !maxWidth;
+			if (env.editor) { env.editor.resize(); }
+               }
+        </script>
+
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}frameworks/jquery/smoothness/jquery-ui.css" />
+	<link type="text/css" rel="stylesheet" href="{{MEDIA_URL}}styles/style.css" />
+	{% block extrahead %}{% endblock %}	
+	<title>{{ site_name }} {% block title %}{% endblock %}</title>
+</head>
+
+<body>
+	<div id="container">
+		<div id="header"><div class="inner">
+			<div id="title">
+				<h1>{{SITE_NAME}}</h1>
+			</div>
+			<div id="user-tools">
+				{% if user.is_authenticated %}
+					Welcome, {% firstof user.get_full_name user.username %} 
+					/ <a href="{% url registration_change %}">Change Account</a>  
+					/ <a href="{% url auth_logout %}">Log-out</a><br/>
+					{% if user.is_staff %}<a href={% url rating_overview %}>{% trans "Rating overview"%}</a> / 
+					<a href="{% url admin:index %}">Admin Panel</a>	{%endif%}
+					{% if user|in_group:"Tutor" %} <a href={% url tutorial_overview %}>{% trans "My Tutorial"%}</a>{%endif%}
+				{% else %}
+					<a href="{% url auth_login %}">Login</a> 
+					<a href="{% url registration_register %}">Register</a> 
+				{%endif%}
+			</div>
+		</div></div>
+		<div id="sub_header"><div class="inner">
+				{% block breadcrumbs %}<a href={% url task_list %}><span class="icon icon-white ui-icon-home"></span>Home</a>{% endblock %} <a href="#" onClick="toggleMaxWidth()"><span style="float:right" class="icon icon-white ui-icon-arrow-2-e-w"></span></a>
+		</div></div>
+		<div id="content">
+			<noscript><div id="javascripterror" class="ui-widget ui-state-error ui-corner-all notification">
+				<p><span class="ui-icon ui-icon-alert"></span> 
+				<strong>Warnig:</strong> This site is designed to use Javascript! Enabling it is advised.</p>
+			</div></noscript>
+			{% comment %} 4 use with messages framework
+				<div class="ui-widget ui-state-highlight ui-corner-all notification">
+					<p><span class="ui-icon ui-icon-info"></span>
+					<strong>Hey!</strong> Sample ui-state-highlight style.</p>
+				</div>
+			{% endcomment %}
+			{% block content %}{% endblock %}
+		</div>
+	</div>
+	{% block footer_js %} {% endblock %}
+</body>
+</html>
