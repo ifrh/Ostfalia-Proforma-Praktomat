@@ -224,6 +224,10 @@ body {
 	font-size: 12px;
 }
 
+.mirror #header {
+	background: #009682;
+}
+
 #sub_header {
 	background: #313d47;
 	overflow: hidden;
@@ -305,13 +309,15 @@ form .help {
 	color: #999999;
 }
 
-form .errors .errorlist{
+.errorlist {
 	color: red;
+}
+
+form .errors .errorlist{
 	display: inline;
 }
 
 form > .errorlist {
-	color: red;
 	margin-left:0px;
 }
 
@@ -625,10 +631,6 @@ body.fullscreen{
 
 /* @group Attestation List */
 
-#attestation_list #download {
-	float: right;
-}
-
 #attestation_list .plagiarism {
 	right: 67px;
 	margin-left: 10px;
@@ -638,9 +640,13 @@ body.fullscreen{
 	display: inline-block;
 }
 
-#attestation_list #comment {
+#attestation_list .comment {
 	color: #c0c0c0;
-	width: 60%;
+	max-width: 40%;
+	height: 1em;
+	vertical-align: bottom;
+	display: inline-block;
+	overflow: hidden;
 	margin-left: 30px;
 }
 
@@ -674,8 +680,26 @@ input[type="submit"]{
 	color: #ff8a00;
 }
 
-#attestation_view div.changed {
+#attestation_view div.added {
 	background-color: #c4ff6f;
+}
+#attestation_view div.removed {
+	background-color: #ffc46f;
+}
+
+#attestation_view div.changed span.addedChar {
+	background-color: #00ff00;
+	font-weight: bold;
+}
+
+#attestation_view div.changed span.deletedChar {
+	background-color: #ff0000;
+	font-weight: bold;
+}
+
+#attestation_view div.changed span.changedChar {
+	background-color: #ffff00;
+	font-weight: bold;
 }
 
 #attestation_view .has_anotations {
@@ -781,6 +805,11 @@ div.result {
 }
 
 div.result div.log {
+	margin-left: 40px;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+div.result div.artefacts {
 	margin-left: 40px;
 	overflow-x: auto;
 	overflow-y: hidden;
@@ -945,3 +974,31 @@ IE8 */
 	float: right;
 }
 
+
+a.checkerinline:link  {text-decoration:none;}
+a.checkerinline:hover   {color:black;}
+a.checkerinline:visited {color:black;}
+a.checkerinline:link    {color:black;}
+a.checkerinline:active  {color:black;}
+
+.shib_hello_shib {
+	font-size:x-large;
+	text-align:center;
+	display:block;
+	margin-top:1em;
+	margin-bottom:1em;
+}
+
+.shib_hello_direct {
+	text-align:right;
+	display:block;
+	text-decoration:none;
+}
+
+table.attestationprogress tr.all_final       { background-color: lightgreen  }
+table.attestationprogress tr.some_unattested { background-color: red  }
+table.attestationprogress tr.some_nonfinal   { background-color: yellow  }
+table.attestationprogress tr td              { text-align: right }
+table.attestationprogress tr td:nth-child(1) { text-align: left }
+table.attestationprogress * > * > a.mail         { visibility:hidden }
+table.attestationprogress *:hover > * > a.mail   { visibility:visible }

@@ -1,0 +1,13 @@
+{% extends "base.html"%}
+
+{% load i18n %}
+{% load chunks %}
+
+{% block breadcrumbs %}
+	{{ block.super }} > {% trans 'Deactivated ' %}
+{% endblock %}
+
+{% block content %}
+
+{% chunk "inactive user" %}
+{% endblock %}
