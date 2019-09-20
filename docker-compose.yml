@@ -1,0 +1,79 @@
+version: '3'
+
+# perform the following steps in buuild the docker container images: 
+# 0.a) fill subfolder 'extra' with needed additional libraries for grading (e.g. JUNIT)
+#   b) adjust src/settings_docker.py to your needs
+# 1. docker-compose up
+# 2. docker exec -ti praktomat ./init_database.sh
+# step 2 is needed in order to initialise the database
+
+
+services:
+  postgres:
+    restart: always
+    environment:
+      POSTGRES_USER: pmuser
+      POSTGRES_PASSWORD: pmuserpass
+      POSTGRES_DB: pmdb  
+      # POSTGRES_INITDB_ARGS: -E UTF8
+    image: postgres
+    container_name: praktomat_database3
+    #ports:
+    # - "5432:5432"
+     
+  praktomat:
+    # cap_add:
+    # - ALL
+    build:
+        context: .
+    container_name: praktomat3
+    # restart container if it exits:
+    restart: always
+    environment:
+      SUPERUSER: praktomat
+      EMAIL: "user@localhost"
+      PASSWORD: setADifficultPassword
+      # todo: check what is needed?
+      DB_NAME: pmdb
+      DB_USER: pmuser
+      DB_PASS: pmuserpass
+      DB_PORT: 5432
+      DB_HOST: postgres
+      DB_DOCKER_SERVICE: praktomat_database3
+      DATABASE: postgres
+      
+    #command: gunicorn wsgi:application --bind 0.0.0.0:8010 --workers=2 # sync!!
+    # number of workers = 2* cumber of CPU cores + 1
+    command: gunicorn wsgi:application --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
+    
+    # command: sleep 100000    
+    #command: ./manage.py runserver 0.0.0.0:8010
+    #command: ./src/manage.py runserver 0.0.0.0:8010
+    # command: gunicorn src.wsgi:application --bind 0.0.0.0:8010
+    
+# for development:
+    # command: sleep 100000    
+
+    volumes:
+     - ./src:/praktomat/src
+     - ./extra:/praktomat/extra    
+     - ./media:/praktomat/media
+    ports:
+      - "8010:8010"
+    depends_on:
+      - postgres
+      
+     
+# ngninx is needed for the browser interface
+  nginx:
+    # do not use '_' in container name because django gets confued with _ in host names (Moodle docker) 
+    container_name: praktomat_nginx3
+    restart: always    
+    build: ./nginx
+    volumes:
+    # static content to serve
+     - ./media:/praktomat/media     
+    ports:
+      - 80:80
+    depends_on:
+      - praktomat
