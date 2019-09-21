@@ -22,7 +22,7 @@ PRAKTOMAT_ID = 'default'
 # developmentserver.
 BASE_HOST = 'http://localhost:8000'
 BASE_PATH = '/'
-ALLOWED_HOSTS = [ 'praktomat.cs.kit.edu', ]
+ALLOWED_HOSTS = [ '*', ]
 
 # URL to use when referring to static files.
 STATIC_URL = BASE_PATH + 'static/'
