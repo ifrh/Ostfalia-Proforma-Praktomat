@@ -11,7 +11,8 @@ if [ -e "$HOME/.DATABASE_INITIALISED" ];  then
 fi
 
 echo "syncing database"
-python ./src/manage-docker.py syncdb --noinput --migrate
+# OLD python3 ./src/manage-docker.py syncdb --noinput --migrate
+# python3 ./src/manage-docker.py migrate --noinput
 #if [ $? -ne 0 ]; then 
 #    exit 1 
 #fi
@@ -19,19 +20,21 @@ python ./src/manage-docker.py syncdb --noinput --migrate
 # update tables in case of a modified or added checker
 echo "migrate schema"
 # do not use exit here!
-python ./src/manage-docker.py schemamigration checker --auto
+# OLD python3 ./src/manage-docker.py schemamigration checker --auto
+python3 ./src/manage-docker.py makemigrations --noinput
 # use initial in order to create initial migrations file
 #python ./src/manage.py schemamigration checker --initial
 echo "migrate checker"
-python ./src/manage-docker.py migrate checker || exit
+#OLD python3 ./src/manage-docker.py migrate checker || exit
+python3 ./src/manage-docker.py migrate || exit
 
 echo "create users"
-echo "from django.contrib.auth.models import User; User.objects.create_superuser('$SUPERUSER', '$EMAIL', '$PASSWORD')" | python ./src/manage.py shell --plain
-echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | python ./src/manage.py shell --plain
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('$SUPERUSER', '$EMAIL', '$PASSWORD')" | python3 ./src/manage-docker.py shell
+echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | python3 ./src/manage-docker.py shell
 
 # update media folder for nginx to serve static django files
 echo "collect static files for webserver"
-python ./src/manage-docker.py collectstatic -i tiny_mce -i django_tinymce  -i django_extensions  --noinput || exit
+python3 ./src/manage-docker.py collectstatic -i tiny_mce -i django_tinymce  -i django_extensions  --noinput || exit
 #save it output the file
 echo $DATABASE_INITIALISED > "$HOME/.DATABASE_INITIALISED"
 echo "Database has been initialised successfully"  
