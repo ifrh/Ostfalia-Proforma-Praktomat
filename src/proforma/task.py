@@ -32,12 +32,12 @@ from xml.dom.minidom import Node
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from django.core.servers.basehttp import FileWrapper
+#from django.core.servers.basehttp import FileWrapper
 from django.db import models
 
-from django.shortcuts import redirect
-from django.template import TemplateSyntaxError
-from django.template.loader import render_to_string
+#from django.shortcuts import redirect
+#from django.template import TemplateSyntaxError
+#from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files import File
 from django.http import HttpResponse
@@ -48,15 +48,14 @@ import zipfile
 import tempfile
 from os.path import basename
 
-from attestation.models import Rating
-from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
-    JavaBuilder, DejaGnu, TextNotChecker, PythonChecker, RemoteSQLChecker, TextChecker, SetlXChecker
-from checker.models import Checker
-from solutions.models import Solution, SolutionFile
-from tasks.models import Task, MediaFile
-import task_v0_94
-import task_v1_01
-import task_v2_00
+#from attestation.models import Rating
+from checker.checker import CreateFileChecker
+#from checker.models import Checker
+#from solutions.models import Solution, SolutionFile
+#from tasks.models import Task, MediaFile
+#from . import task_v0_94
+#from . import task_v1_01
+from . import task_v2_00
 
 
 logger = logging.getLogger(__name__)
@@ -397,7 +396,7 @@ def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test,
 
 
 def creatingFileCheckerNoDep(FileDict, newTask, ns, valOrder, xmlTest):
-    for fileRef in FileDict.itervalues():
+    for fileRef in FileDict.values():
         inst = CreateFileChecker.CreateFileChecker.objects.create(task=newTask,
                                                                   order=valOrder,
                                                                   path=""
@@ -516,11 +515,11 @@ def import_task(request):
 
     except Exception as inst:
         logger.exception(inst)
-        print "Exception caught: " + str(type(inst))  # the exception instance
-        print "Exception caught: " + str(inst.args)  # arguments stored in .args
-        print "Exception caught: " + str(inst)  # __str__ allows args to be printed directly
+        print("Exception caught: " + str(type(inst)))  # the exception instance
+        print("Exception caught: " + str(inst.args))  # arguments stored in .args
+        print("Exception caught: " + str(inst))  # __str__ allows args to be printed directly
         callstack = traceback.format_exc()
-        print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
+        print("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
 
         #x, y = inst.args
         #print 'x =', x
@@ -559,19 +558,19 @@ def import_task_internal(filename, task_file):
     # TODO check against schema
 
     # check Namespace
-    if format_namespace_v0_9_4 in xml_object.nsmap.values():
-        logger.debug('handle 0.9.4 task')
-        response_data = task_v0_94.importTask(task_xml, dict_zip_files)  # request,)
-    elif format_namespace_v1_0_1 in xml_object.nsmap.values():
-        logger.debug('handle 1.0.1 task')
-        response_data = task_v1_01.import_task(task_xml, dict_zip_files)
-    elif format_namespace_v2_0 in xml_object.nsmap.values():
+    #if format_namespace_v0_9_4 in list(xml_object.nsmap.values()):
+    #    logger.debug('handle 0.9.4 task')
+    #    response_data = task_v0_94.importTask(task_xml, dict_zip_files)  # request,)
+    #if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
+    #    logger.debug('handle 1.0.1 task')
+    #    response_data = task_v1_01.import_task(task_xml, dict_zip_files)
+    if format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
         response_data = task_v2_00.import_task(task_xml, dict_zip_files)
     else:
         raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
-                       format_namespace_v0_9_4 + "\r\n" +
-                       format_namespace_v1_0_1 + "\r\n" +
+                       # format_namespace_v0_9_4 + "\r\n" +
+                       # format_namespace_v1_0_1 + "\r\n" +
                        format_namespace_v2_0)
 
     return response_data

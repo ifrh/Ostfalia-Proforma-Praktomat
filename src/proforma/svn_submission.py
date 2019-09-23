@@ -32,8 +32,8 @@ import re
 import requests
 import logging
 import tempfile
-import urllib
-import views
+import urllib.request, urllib.parse, urllib.error
+from . import views
 
 logger = logging.getLogger(__name__)
 

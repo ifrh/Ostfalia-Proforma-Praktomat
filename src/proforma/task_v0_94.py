@@ -36,11 +36,11 @@ from os.path import dirname
 from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
-from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
-    JavaBuilder, DejaGnu, TextNotChecker, PythonChecker, RemoteSQLChecker, TextChecker, SetlXChecker
+from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
+    DejaGnu, TextNotChecker, PythonChecker, RemoteSQLChecker, TextChecker, SetlXChecker
+from checker.builder import JavaBuilder
 
-
-import task
+from . import task
 
 
 logger = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ def importTask(task_xml, dict_zip_files):
     # xmlObject = validation(fXml, schemaObject)
 
     #check Namespace
-    if not 'urn:proforma:task:v0.9.4' in xmlObject.nsmap.values():
+    if not 'urn:proforma:task:v0.9.4' in list(xmlObject.nsmap.values()):
         response.write("The Exercise could not be imported!\r\nOnly support for Namspace: urn:proforma:task:v0.9.4")
         return response
 

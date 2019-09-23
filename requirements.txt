@@ -14,4 +14,5 @@ django-debug-toolbar
 docutils
 psycopg2-binary
 selenium
-
+lxml
+xmlschema

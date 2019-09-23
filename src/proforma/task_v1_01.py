@@ -37,11 +37,13 @@ from os.path import dirname
 from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
-from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
-    JavaBuilder, DejaGnu, TextNotChecker, PythonChecker, RemoteSQLChecker, TextChecker, SetlXChecker, CBuilder
+from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
+    DejaGnu, PythonChecker, RemoteSQLChecker, SetlXChecker
+from checker.checker import TextNotChecker, TextChecker
+from checker.builder import JavaBuilder, CBuilder
 
 
-import task
+from . import task
 
 
 logger = logging.getLogger(__name__)
@@ -91,7 +93,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
     # TODO check against schema
 
     # check Namespace
-    if format_namespace not in xml_object.nsmap.values():
+    if format_namespace not in list(xml_object.nsmap.values()):
         raise Exception("The Exercise could not be imported!\r\nOnly support for Namspace: " + format_namespace)
 
     # TODO datetime max?
@@ -320,58 +322,58 @@ def import_task(task_xml, dict_zip_files_post=None ):
                         inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                         inst.save()
 
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "no-type-TextNotChecker":
-                fine = True
-                inst = TextNotChecker.TextNotChecker.objects.create(task=new_task, order=val_order)
-                if xmlTest.xpath("p:title", namespaces=ns) is not None:
-                        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-                if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
-                                  namespaces=ns) and
-                    xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
-                                  namespaces=ns)[0].text):
-                    inst.text = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
-                                              namespaces=ns)[0].text
-                else:
-                    inst.delete()
-                    fine = False
-                    message = "TextNotChecker removed: no config-text"
+            # elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "no-type-TextNotChecker":
+                # fine = True
+                # inst = TextNotChecker.TextNotChecker.objects.create(task=new_task, order=val_order)
+                # if xmlTest.xpath("p:title", namespaces=ns) is not None:
+                        # inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+                # if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
+                                  # namespaces=ns) and
+                    # xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
+                                  # namespaces=ns)[0].text):
+                    # inst.text = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
+                                              # namespaces=ns)[0].text
+                # else:
+                    # inst.delete()
+                    # fine = False
+                    # message = "TextNotChecker removed: no config-text"
 
-                if (fine and xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                           "praktomat:config-max_occurrence",
-                                           namespaces=ns) and
-                        xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                      "praktomat:config-max_occurrence",
-                                      namespaces=ns)[0].text):
-                    inst.max_occ = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                                 "praktomat:config-max_occurrence",
-                                                 namespaces=ns)[0].text
-                else:
-                    inst.delete()
-                    fine = False
-                    message = "TextNotChecker removed: no max_occurence"
+                # if (fine and xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+                                           # "praktomat:config-max_occurrence",
+                                           # namespaces=ns) and
+                        # xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+                                      # "praktomat:config-max_occurrence",
+                                      # namespaces=ns)[0].text):
+                    # inst.max_occ = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+                                                 # "praktomat:config-max_occurrence",
+                                                 # namespaces=ns)[0].text
+                # else:
+                    # inst.delete()
+                    # fine = False
+                    # message = "TextNotChecker removed: no max_occurence"
 
-                if fine:
-                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                    inst.save()
-                else:
-                    pass
+                # if fine:
+                    # inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    # inst.save()
+                # else:
+                    # pass
 
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "textchecker":
-                inst = TextChecker.TextChecker.objects.create(task=new_task, order=val_order)
-                if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
-                                  namespaces=ns) and
-                    xmlTest.xpath("p:test-configuration/p:test-meta-data/p:praktomat:config-text",
-                                  namespaces=ns)[0].text):
-                    inst.text = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
-                                              namespaces=ns)[0].text
-                    if xmlTest.xpath("p:title", namespaces=ns) is not None:
-                        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-                else:
-                    inst.delete()
-                    message = "Textchecker removed: no config-text"
+            # elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "textchecker":
+                # inst = TextChecker.TextChecker.objects.create(task=new_task, order=val_order)
+                # if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
+                                  # namespaces=ns) and
+                    # xmlTest.xpath("p:test-configuration/p:test-meta-data/p:praktomat:config-text",
+                                  # namespaces=ns)[0].text):
+                    # inst.text = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-text",
+                                              # namespaces=ns)[0].text
+                    # if xmlTest.xpath("p:title", namespaces=ns) is not None:
+                        # inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+                # else:
+                    # inst.delete()
+                    # message = "Textchecker removed: no config-text"
 
-                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                inst.save()
+                # inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                # inst.save()
 
             # setlx with jartest
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "jartest" and \

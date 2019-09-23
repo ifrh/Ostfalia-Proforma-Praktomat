@@ -28,11 +28,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 
-from accounts.templatetags.in_group import in_group
+#from accounts.templatetags.in_group import in_group
 from tasks.models import Task
 from accounts.models import User
 from utilities import encoding
-from urllib2 import Request, urlopen, URLError, HTTPError
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 from solutions.models import Solution, SolutionFile
 from VERSION import version
 
@@ -101,7 +102,7 @@ def file_grader_post(request, response_format, task_id=None):
         fileNameList = []
         DataNameList = []
         fileDict = dict()
-        for filename, file in request.FILES.iteritems():
+        for filename, file in request.FILES.items():
             fileNameList.append(str(filename))
             DataNameList.append(str(file.name))
             actualFileName = re.search(r"([\w\.\-]+)$", filename, re.MULTILINE)
@@ -272,10 +273,10 @@ def saveSolution(solution, fileDict):
         solution_file = SolutionFile(solution=solution)
 
         #save solution in enviroment and get the path
-        filename = fileDict.keys()[index]
+        filename = list(fileDict.keys())[index]
         logger.debug('save file ' + filename)
         #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
-        data = fileDict.values()[index]
+        data = list(fileDict.values())[index]
         #data = fileDict.values()[index].read()
         saved_solution = save_file(data, solution_file, filename)
         #remove the upload path /home/ecult/devel_oli/upload
@@ -392,8 +393,8 @@ def save_file(data, solution_file, filename):
     solution_file.mime_type = get_mimetype(
         filename)  # just define it it will be tested later todo: method wo es passiert
     solution = solution_file.solution
-    full_directory = settings.UPLOAD_ROOT + '/SolutionArchive/Task_' + unicode(
-        solution.task.id) + '/User_' + solution.author.username + '/Solution_' + unicode(
+    full_directory = settings.UPLOAD_ROOT + '/SolutionArchive/Task_' + str(
+        solution.task.id) + '/User_' + solution.author.username + '/Solution_' + str(
         solution.id) + '/'      # directory structure from solution.model
     full_filename = os.path.join(full_directory, filename)
     path = os.path.dirname(full_filename)

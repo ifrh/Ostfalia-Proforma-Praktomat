@@ -32,7 +32,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 
 #import urllib.parse
 #from urlparse import urlparse
-import urlparse
+import urllib.parse
 
 import logging
 
@@ -40,10 +40,10 @@ import requests
 import os.path
 import re
 import tempfile
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import traceback
 
-import svn_submission
+from . import svn_submission
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +174,7 @@ def grade_api_lon_capa(request, fw=None, fw_version=None):
         # check task-send
         if proforma_zip:
             try:
-                for filename, file_obj in proforma_zip.items():
+                for filename, file_obj in list(proforma_zip.items()):
                     task_filename = filename
                     content = file_obj
             except Exception as e:
@@ -215,7 +215,7 @@ def grade_api_lon_capa(request, fw=None, fw_version=None):
             else:
                 raise Exception("submission-uri-type is not known")
         elif submission_zip:
-            for fname, ffile in request.FILES.items():
+            for fname, ffile in list(request.FILES.items()):
                 submission_upload_filename = request.FILES[fname].name  # todo: only works with one file and why no chunks?
                 uploaded_file_obj = ffile.read()  # take the first element
                 uploaded_file = {submission_upload_filename: uploaded_file_obj}
@@ -227,7 +227,7 @@ def grade_api_lon_capa(request, fw=None, fw_version=None):
     except Exception as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()
-        print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
+        print("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
         response = HttpResponse()
         response.write(answer_format_template(award="ERROR", message="Error in grading process: " + str(inst) + callstack))
         #response.write(api_v2.get_http_error_page('Error in grading process', str(inst), callstack))

@@ -23,8 +23,8 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-import api_v2
-import api_non_proforma
+from . import api_v2
+#from . import api_non_proforma
 import VERSION
 
 
@@ -40,9 +40,9 @@ def grade_api_v2(request):
     return api_v2.grade_api_v2(request)
 
 
-@csrf_exempt  # disable csrf-cookie
-def grade_api_v1(request):
-    return api_non_proforma.grade_api_lon_capa(request)
+#@csrf_exempt  # disable csrf-cookie
+#def grade_api_v1(request):
+#    return api_non_proforma.grade_api_lon_capa(request)
 
 
 @csrf_exempt
@@ -58,12 +58,12 @@ def test_post(request, ):
         response.write("No Post-Request")
     else:
         postMessages = request.POST
-        for key, value in postMessages.iteritems():
+        for key, value in postMessages.items():
             response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
         try:
             if not (request.FILES is None):
                 response.write("List of Files: \r\n")
-                for key, value in request.FILES.iteritems():
+                for key, value in request.FILES.items():
                     response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
                     response.write("Content of: " + str(key) + "\r\n")
                     response.write(request.FILES[key].read() + "\r\n")
