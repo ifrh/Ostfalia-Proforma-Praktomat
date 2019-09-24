@@ -61,6 +61,8 @@ class Checker(models.Model):
     always = models.BooleanField(default=True, help_text = _('The test will run on submission time.'))
     critical = models.BooleanField(default=False, help_text = _('If this test fails, do not display further test results.'))
 
+    proforma_id = models.CharField(default="None", max_length=255, help_text = _('Is needed for ProFormA'))
+
     results = GenericRelation("CheckerResult") # enables cascade on delete.
 
     class Meta:
@@ -197,6 +199,19 @@ class CheckerResult(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     runtime = models.IntegerField(default=0, help_text=_('Runtime in milliseconds'))
 
+    # new for handling subtest results in Prforma
+    NORMAL_LOG = '0'
+    PROFORMA_SUBTESTS = '1'
+    LOG_FORMAT_CHOICES = (
+        (NORMAL_LOG, 'Checker_Log'),
+        (PROFORMA_SUBTESTS, 'Proforma_Subtests'),
+    )
+    log_format = models.CharField(
+        max_length=2,
+        choices=LOG_FORMAT_CHOICES,
+        default=NORMAL_LOG,
+    )
+
     def title(self):
         """ Returns the title of the Checker that did run. """
         return self.checker.title()
@@ -217,14 +232,25 @@ class CheckerResult(models.Model):
         """ Checks if further results should not be shown """
         return self.checker.is_critical(self.passed)
 
-    def set_log(self, log,timed_out=False,truncated=False,oom_ed=False):
+    def set_log(self, log,timed_out=False,truncated=False,oom_ed=False, log_format=NORMAL_LOG):
         """ Sets the log of the Checker run. timed_out and truncated indicated if appropriate error messages shall be appended  """
+        if log_format != self.NORMAL_LOG:
+            # no truncation allowed for special logs
+            assert not truncated
+
         if timed_out:
+            self.set_internal_error(True)
             log = '<div class="error">Timeout occured!</div>' + log
+        else:
+            if oom_ed:
+                self.set_internal_error(True)
+                log = '<div class="error">Memory limit exceeded, execution cancelled.</div>' + log
+            else:
+                # set new log format only in case of
+                self.log_format = log_format
+
         if truncated:
             log = '<div class="error">Output too long, truncated</div>' + log
-        if oom_ed:
-            log = '<div class="error">Memory limit exceeded, execution cancelled.</div>' + log
 
         self.log = log
 
@@ -237,6 +263,16 @@ class CheckerResult(models.Model):
         assert os.path.isfile(path)
         artefact = CheckerResultArtefact(result = self, filename=filename)
         artefact.file.save(filename, File(open(path, 'rb')))
+
+    def set_internal_error(self, internal_error):
+        """ Sets the Internbal Error state of the Checker. """
+        assert isinstance(internal_error, int)
+        self.internal_error = internal_error
+
+    def is_proforma_subtests_format(self):
+        """ Template needs a boolean in order to do conditional handling :-( """
+        return self.log_format == self.PROFORMA_SUBTESTS
+    
 
 def get_checkerresultartefact_upload_path(instance, filename):
     result = instance.result
