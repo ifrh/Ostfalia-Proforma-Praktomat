@@ -95,7 +95,7 @@ SYSADMIN_MOTD_URL = "https://praktomat.cs.kit.edu/sysadmin_motd.html"
 USEPRAKTOMATTESTER = False
 
 # Use docker to test submission
-USESAFEDOCKER = True
+USESAFEDOCKER = False
 
 # Various extra files and versions
 CHECKSTYLEALLJAR = '/srv/praktomat/contrib/checkstyle-5.7-all.jar'
@@ -181,7 +181,7 @@ LOGGING = {
         },
         'utilities': {
             'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
