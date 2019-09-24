@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import logging
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -12,6 +13,7 @@ from utilities.file_operations import *
 from solutions.models import Solution
 
 from checker.compiler.JavaBuilder import JavaBuilder
+logger = logging.getLogger(__name__)
 
 RXFAIL       = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|ABBRUCH DURCH ZEITUEBERSCHREITUNG|Could not find class|Killed|failures)(.*)$",    re.MULTILINE)
 
@@ -41,13 +43,22 @@ class JUnitChecker(Checker):
     ignore = models.CharField(max_length=4096, help_text=_("space-separated list of files to be ignored during compilation, i.e.: these files will not be compiled."), default="", blank=True)
 
     JUNIT_CHOICES = (
-      ('junit4', 'JUnit 4'),
-      ('junit3', 'JUnit 3'),
+        (u'junit4', u'JUnit 4'),
+        (u'junit4.10', u'JUnit 4.10'),
+        (u'junit4.12', u'JUnit 4.12'),
+        (u'junit4.12-gruendel', u'JUnit 4.12 with Gruendel Addon'),
+        (u'junit3', u'JUnit 3'),
+
     )
     junit_version = models.CharField(max_length=16, choices=JUNIT_CHOICES, default="junit3")
 
     def runner(self):
-        return {'junit4' : 'org.junit.runner.JUnitCore', 'junit3' : 'junit.textui.TestRunner' }[self.junit_version]
+        return {'junit4' : 'org.junit.runner.JUnitCore',
+                'junit4.10' : 'org.junit.runner.JUnitCore',
+                'junit4.12' : 'org.junit.runner.JUnitCore',
+                'junit4.12-gruendel' : 'org.junit.runner.JUnitCore',
+                'junit3' : 'junit.textui.TestRunner'}[self.junit_version]
+
 
     def title(self):
         return "JUnit Test: " + self.name
@@ -60,6 +71,7 @@ class JUnitChecker(Checker):
         return (RXFAIL.search(output) == None)
 
     def run(self, env):
+        logger.debug('JUNIT Checker build')
         java_builder = IgnoringJavaBuilder(_flags="", _libs=self.junit_version, _file_pattern=r"^.*\.[jJ][aA][vV][aA]$", _output_flags="", _main_required=False)
         java_builder._ignore = self.ignore.split(" ")
 
@@ -67,11 +79,13 @@ class JUnitChecker(Checker):
         build_result = java_builder.run(env)
 
         if not build_result.passed:
+            logger.info('could not compile JUNIT test')
             result = self.create_result(env)
             result.set_passed(False)
             result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
             return result
 
+        logger.debug('JUNIT Checker run')
         environ = {}
 
         environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
@@ -79,17 +93,62 @@ class JUnitChecker(Checker):
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
         environ['POLICY'] = os.path.join(script_dir, "junit.policy")
 
-        cmd = [settings.JVM_SECURE, "-cp", settings.JAVA_LIBS[self.junit_version]+":.", self.runner(), self.class_name]
+        use_run_listener = False
+        if settings.DETAILED_UNITTEST_OUTPUT:
+            #if self.junit_version != 'junit4.12-gruendel':
+                use_run_listener = True
+            #else:
+            #    logger.debug('do not use Run Listener because of gruendel addon')
+
+        if not use_run_listener:
+            classpath = settings.JAVA_LIBS[self.junit_version] + ":."
+            runner = self.runner()
+        else:
+            classpath = settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT_RUN_LISTENER_LIB
+            runner = settings.JUNIT_RUN_LISTENER
+        cmd = [settings.JVM_SECURE, "-cp", classpath, runner, self.class_name]
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir])
+        # logger.debug('JUNIT output:' + str(output))
+        logger.debug('JUNIT error:' + str(error))
+        logger.debug('JUNIT exitcode:' + str(exitcode))
 
         result = self.create_result(env)
+        truncated = False
+        # show normal console output in case of:
+        # - timeout (created by Checker)
+        # - not using RunListener
+        # - exitcode <> 0 with RunListener (means internal error)
+        if timed_out or oom_ed:
+            # ERROR: Execution timed out
+            logger.error('Execution timeout')
+            if use_run_listener:
+                # clean log for timeout with Run Listener
+                output = ''
+                truncated = False
+            (output, truncated) = truncated_log(output)
+            result.set_log(output, timed_out=True, truncated=truncated, oom_ed=oom_ed)
+            result.set_passed(False)
+            return result
 
-        (output, truncated) = truncated_log(output)
-        output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + escape(output) + '</pre>'
+        if use_run_listener:
+            # RUN LISTENER
+            if exitcode == 0:
+                # normal detailed results
+                # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
+                result.set_log(output, timed_out=timed_out, truncated=False, oom_ed=oom_ed, log_format=CheckerResult.PROFORMA_SUBTESTS)
+            else:
+                result.set_internal_error(True)
+                # no XML output => truncate
+                (output, truncated) = truncated_log(output)
+                result.set_log("RunListener Error: " + output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed)
+        else:
+            # show standard log output
+            (output, truncated) = truncated_log(output)
+            output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+                 escape(output) + '</pre>'
+            result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed)
 
-
-        result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed)
-        result.set_passed(not exitcode and not timed_out and not oom_ed and self.output_ok(output) and not truncated)
+        result.set_passed(not exitcode and self.output_ok(output) and not truncated)
         return result
 
 #class JUnitCheckerForm(AlwaysChangedModelForm):
