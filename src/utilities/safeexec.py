@@ -7,6 +7,9 @@ import subprocess
 import signal
 import subprocess
 import resource
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings
 
@@ -53,6 +56,8 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         command = []
     command += args[:]
 
+    logger.debug('execute command in ' + working_directory + ':')
+    logger.debug('command :' + str(command))
 
     # TODO: Dont even read in output longer than fileseeklimit. This might be most conveniently done by supplying a file like object instead of PIPE
 
