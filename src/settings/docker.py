@@ -100,8 +100,30 @@ USESAFEDOCKER = True
 # Various extra files and versions
 CHECKSTYLEALLJAR = '/srv/praktomat/contrib/checkstyle-5.7-all.jar'
 JPLAGJAR = '/srv/praktomat/contrib/jplag.jar'
+
+
+JAVA_LIBS = {'junit3': '/praktomat/extra/junit-3.8.jar',
+             'junit4': '/praktomat/extra/junit-4.10.jar',
+             'junit4.10': '/praktomat/extra/junit-4.10.jar',
+             'junit4.12': '/praktomat/extra/junit-4.12.jar:'
+             '/praktomat/extra/hamcrest-core-1.3.jar',
+             'junit4.12-gruendel': '/praktomat/extra/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/extra/hamcrest-core-1.3.jar'}
+CHECKSTYLE_VER = {'check-6.2': '/praktomat/extra/checkstyle-6.2-all.jar',
+                  'check-7.6': '/praktomat/extra/checkstyle-7.6-all.jar',
+                  'check-5.4': '/praktomat/extra/checkstyle-7.6-all.jar',
+                  'check-8.23': '/praktomat/extra/checkstyle-8.23-all.jar'}
+JCFDUMP = 'jcf-dump'
+SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
+
 #JAVA_BINARY = 'javac-sun-1.7'
 #JVM = 'java-sun-1.7'
+
+DETAILED_UNITTEST_OUTPUT = True
+
+JUNIT_RUN_LISTENER = 'de.ostfalia.zell.praktomat.JunitProFormAListener'
+JUNIT_RUN_LISTENER_LIB = '/praktomat/extra/JunitRunListener.jar'
+
+
 
 # Our VM has 4 cores, so lets try to use them
 NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 6
@@ -110,3 +132,73 @@ NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 6
 # Finally load defaults for missing settings.
 from . import defaults
 defaults.load_defaults(globals())
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            #'format': '%(asctime)s %(relativeCreated)d [%(process)d] [%(levelname)s] %(module)s %(message)s'
+            'format': '%(asctime)s [%(process)d] [%(levelname)s] %(module)s %(message)s'
+}
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(PRAKTOMAT_PATH, 'debug.log'),
+            'formatter': 'verbose'
+        },
+        'error-file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(PRAKTOMAT_PATH, 'error.log'),
+            'formatter': 'verbose'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
+    },
+    'loggers': {
+        'proforma': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'propagate': False,
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        'checker': {
+            'handlers': ['console', 'error-file'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        'utilities': {
+            'handlers': ['console', 'error-file'],
+            'level': 'INFO',  # change debug level as appropiate
+            'maxBytes': 1024 * 1024 * 15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        ## SQL:
+        #'django': {
+        #    'handlers': ['console', 'error-file', 'file'],
+        #    'level': 'DEBUG',  # change debug level as appropiate
+        #    'maxBytes': 1024*1024*4,  # 15MB
+        #    'backupCount': 10,  # keep 10 historical versions
+        #},
+        'django.request': {
+            'handlers': ['console', 'error-file', 'file'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'propagate': False,
+            'maxBytes': 1024*1024*4,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        }
+    }
+}
+

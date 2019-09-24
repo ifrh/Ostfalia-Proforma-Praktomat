@@ -291,7 +291,7 @@ def saveSolution(solution, fileDict):
 def gradeSolution(solution):
     #start the checking process
     logger.debug('execute checks')
-    solution.check(True)
+    solution.check_solution(True)
     #get result object
     logger.debug('get results...')
     result = solution.allCheckerResults()

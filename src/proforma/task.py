@@ -543,8 +543,13 @@ def import_task_internal(filename, task_file):
     if filename[-3:].upper() == 'ZIP':
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
+        logger.debug('task_file[0] class name is ' + task_file[0].__class__.__name__)        
         task_xml = task_file[0].read()  # todo check name
 
+    logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
+    task_xml = task_xml.decode('utf-8')
+    # logger.debug('task_xml = ' + task_xml)  
+    
     encoding = rxcoding.search(task_xml, re.IGNORECASE)
     if encoding is not None:
         enc = encoding.group('enc')
