@@ -351,26 +351,29 @@ def get_submission_file_from_request(searched_file_name, request):
                 file_content = str(file.read())
                 submission_files_dict.update({searched_file_name: file_content})
                 return submission_files_dict
-            elif name.lower().endswith('.java'):
-                # special handling for single java files
-                # add package name to filename
-                # TODO: move to grader
-                logger.debug("SPECIAL HANDLING FOR JAVA FILE")
-                file_content = file.read()
-
-                short_filename = os.path.basename(searched_file_name)
-                if short_filename == searched_file_name: # short filename
-                    package = grade.find_java_package_path(file_content)
-                    logger.debug('classname is ' + file_content.__class__.__name__)
-                    if len(package) > 0:
-                        short_filename =  package + '/' + searched_file_name
-                    else:
-                        short_filename = searched_file_name
-                    submission_files_dict.update({short_filename: file_content})
-                else:
-                    submission_files_dict.update({searched_file_name: file_content})
-
-                return submission_files_dict
+            # elif name.lower().endswith('.java'):
+            #     # special handling for single java files
+            #     # add package name to filename
+            #     # TODO: move to grader
+            #     logger.debug("SPECIAL HANDLING FOR JAVA FILE")
+            #     logger.debug('File class is ' + file.__class__.__name__)
+            #     file.close()
+            #     file.open() # open in text mode
+            #     file_content = file.read()
+            #
+            #     short_filename = os.path.basename(searched_file_name)
+            #     if short_filename == searched_file_name: # short filename
+            #         package = grade.find_java_package_path(file_content)
+            #         logger.debug('classname is ' + file_content.__class__.__name__)
+            #         if len(package) > 0:
+            #             short_filename =  package + '/' + searched_file_name
+            #         else:
+            #             short_filename = searched_file_name
+            #         submission_files_dict.update({short_filename: file_content})
+            #     else:
+            #         submission_files_dict.update({searched_file_name: file_content})
+            #
+            #     return submission_files_dict
             else:
                 file_content = file.read() ##.decode('utf-8')
                 submission_files_dict.update({searched_file_name: file_content})

@@ -237,7 +237,8 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
                                                   order=val_order,
                                                   _flags="",
                                                   _output_flags="",
-                                                  _file_pattern=r"^.*\.[jJ][aA][vV][aA]$"
+                                                  _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
+                                                  _main_required=False
                                                   )
 
     set_test_base_parameters(inst, xmlTest, ns)
@@ -406,7 +407,7 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 #   compiler
 #   JUNIT
 #   Checkstyle
-def import_task(task_xml, dict_zip_files=None):
+def import_task(task_xml, xml_obj, dict_zip_files=None):
     format_namespace = "urn:proforma:v2.0"
     ns = {"p": format_namespace}
     message = ""
@@ -415,11 +416,17 @@ def import_task(task_xml, dict_zip_files=None):
     # (it is only time consuming)
     schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
     # todo: remove because it is very expensive (bom, about 350ms)
-    xml_dict = schema.to_dict(task_xml)
+    # logger.debug('task_xml = ' + str(task_xml))
+    t = tempfile.NamedTemporaryFile(delete=True)
+    t.write(task_xml)  # todo: encoding
+    t.flush()
+    t.seek(0)
+
+    xml_dict = schema.to_dict(t)
 
     # xml_dict = validate_xml(xml=task_xml)
 
-    xml_obj = objectify.fromstring(task_xml)
+    # xml_obj = objectify.fromstring(xml_object) # task_xml)
 
     new_task = Task.objects.create(title="test",
                                    description="",

@@ -452,6 +452,7 @@ def extract_zip_with_xml_and_zip_dict(uploaded_file):
         if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
             zip_file_name_base = basename(zipFileName)
             if zip_file_name_base == "task.xml":
+                # binary
                 task_xml = zip_file.open(zipFileName).read()
             else:
                 t = tempfile.NamedTemporaryFile(delete=True)
@@ -544,20 +545,22 @@ def import_task_internal(filename, task_file):
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
         logger.debug('task_file[0] class name is ' + task_file[0].__class__.__name__)        
-        task_xml = task_file[0].read()  # todo check name
+        task_xml = task_file[0]  # todo check name
+        # task_xml = task_xml.decode('utf-8')
 
     logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
-    task_xml = task_xml.decode('utf-8')
-    # logger.debug('task_xml = ' + task_xml)  
+    # logger.debug('task_xml = ' + task_xml)
     
-    encoding = rxcoding.search(task_xml, re.IGNORECASE)
-    if encoding is not None:
-        enc = encoding.group('enc')
-        if enc.lower() == 'utf-8':
-            task_xml = task_xml.decode(enc).encode('utf-8')
-        else:
-            logger.error('unexpected encoding found: ' + enc)
+    # encoding = rxcoding.search(task_xml, re.IGNORECASE)
+    # if encoding is not None:
+    #     logger.debug('xml encoding is ' + encoding)
+    #     enc = encoding.group('enc')
+    #     if enc.lower() == 'utf-8':
+    #         task_xml = task_xml.decode(enc).encode('utf-8')
+    #     else:
+    #         logger.error('unexpected encoding found: ' + enc)
     xml_object = objectify.fromstring(task_xml)
+    logger.debug('xml_object class name is ' + xml_object.__class__.__name__)
 
     #xml_task = xml_object
     # TODO check against schema
@@ -571,7 +574,7 @@ def import_task_internal(filename, task_file):
     #    response_data = task_v1_01.import_task(task_xml, dict_zip_files)
     if format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
-        response_data = task_v2_00.import_task(task_xml, dict_zip_files)
+        response_data = task_v2_00.import_task(task_xml, xml_object, dict_zip_files)
     else:
         raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
                        # format_namespace_v0_9_4 + "\r\n" +

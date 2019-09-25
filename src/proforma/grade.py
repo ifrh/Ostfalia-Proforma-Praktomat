@@ -419,7 +419,9 @@ def save_file(data, solution_file, filename):
                 short_filename = os.path.basename(filename)
                 if filename == short_filename:
                     # filename does not contain a package yet
-                    data.seek(0) # set file pointer to the beginning of the file
+                    #data.seek(0) # set file pointer to the beginning of the file
+                    data.close()
+                    data.open() # open in text mode
                     file_content = data.read()
                     # logger.debug('look for package path ')
                     package = find_java_package_path(file_content)
@@ -439,6 +441,10 @@ def save_file(data, solution_file, filename):
         elif data.__class__.__name__ == 'unicode':
             fd = open('%s' % (full_filename), 'w')
             fd.write(data.encode("utf-8"))
+            fd.close()
+        elif data.__class__.__name__ == 'bytes':
+            fd = open('%s' % (full_filename), 'wb')
+            fd.write(data)
             fd.close()
         else:
             # string

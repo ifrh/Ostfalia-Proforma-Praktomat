@@ -236,7 +236,8 @@ def importTask(task_xml, dict_zip_files):
                                                           order=valOrder,
                                                           _flags="",
                                                           _output_flags="",
-                                                          _file_pattern=r"^.*\.[jJ][aA][vV][aA]$"
+                                                          _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
+                                                          _main_required=False
                                                           )
             # first check if path exist, second if the element is empty
             if (xmlTest.xpath("proforma:test-configuration/proforma:test-meta-data/praktomat:config-CompilerFlags",

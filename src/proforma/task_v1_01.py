@@ -267,7 +267,8 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                               order=val_order,
                                                               _flags="",
                                                               _output_flags="",
-                                                              _file_pattern=r"^.*\.[jJ][aA][vV][aA]$"
+                                                              _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
+                                                              _main_required=False
                                                               )
                 if xmlTest.attrib is not None:
                     attributes = xmlTest.attrib
