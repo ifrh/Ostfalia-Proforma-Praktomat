@@ -15,6 +15,21 @@ class CheckStyleChecker(Checker):
     name = models.CharField(max_length=100, default="CheckStyle", help_text=_("Name to be displayed on the solution detail page."))
     configuration = CheckerFileField(help_text=_("XML configuration of CheckStyle. See http://checkstyle.sourceforge.net/"))
 
+    allowedWarnings = models.IntegerField(default=0, help_text=_("How many warnings are allowed before the checker "
+                                                                 "is not passed"))
+    allowedErrors = models.IntegerField(default=0, help_text=_("How many errors are allowed before the checker "
+                                                                 "is not passed"))
+    regText = models.CharField(default=".*", max_length=5000,
+                               help_text=_("Regular expression describing files to be analysed."))
+
+    CHECKSTYLE_CHOICES = (
+        (u'check-6.2', u'Checkstyle 6.2 all'),
+        (u'check-7.6', u'Checkstyle 7.6 all'),
+        (u'check-5.4', u'Checkstyle 5.4 all'),
+        (u'check-8.23', u'Checkstyle 8.23 all'),
+    )
+    check_version = models.CharField(max_length=16, choices=CHECKSTYLE_CHOICES, default="check-8.23")
+
     def title(self):
         """ Returns the title for this checker category. """
         return self.name
@@ -32,7 +47,9 @@ class CheckStyleChecker(Checker):
         copy_file(self.configuration.path, config_path)
 
         # Run the tests
-        args = [settings.JVM, "-cp", settings.CHECKSTYLEALLJAR, "-Dbasedir=.", "com.puppycrawl.tools.checkstyle.Main", "-c", "checks.xml"] + [name for (name, content) in env.sources()]
+        args = [settings.JVM, "-cp", settings.CHECKSTYLE_VER[self.check_version], "-Dbasedir=.",
+                "com.puppycrawl.tools.checkstyle.Main", "-c", "checks.xml"] + \
+               [name for (name, content) in env.sources()]
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir())
 
         # Remove Praktomat-Path-Prefixes from result:
