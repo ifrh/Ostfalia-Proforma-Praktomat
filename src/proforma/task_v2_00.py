@@ -36,7 +36,7 @@ from lxml import objectify
 
 
 from accounts.models import User
-from checker.checker import CheckStyleChecker, JUnitChecker, SetlXChecker, \
+from checker.checker import CheckStyleChecker, JUnitChecker, PythonChecker, SetlXChecker, \
     CreateFileChecker
 #from checker.checker import CheckStyleChecker, JUnitChecker, PythonChecker, SetlXChecker, \
 #    CreateFileChecker
@@ -382,8 +382,7 @@ def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 
 
 def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
-    raise 'TODO: implement PythonChecker'
-    # inst = PythonChecker.PythonChecker.objects.create(task=new_task, order=val_order)
+    inst = PythonChecker.PythonChecker.objects.create(task=new_task, order=val_order)
     set_test_base_parameters(inst, xmlTest, ns)
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
         for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):

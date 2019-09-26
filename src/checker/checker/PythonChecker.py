@@ -3,7 +3,8 @@
 import re
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from checker.models import Checker, CheckerFileField, CheckerResult, execute_arglist, truncated_log
+from checker.basemodels import Checker, CheckerFileField, CheckerResult, truncated_log
+from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from django.utils.html import escape
 
@@ -68,11 +69,11 @@ class PythonChecker(Checker):
         # Setup
         test_dir = env.tmpdir()
         replace = [(u'PROGRAM', env.program())] if env.program() else []
-        task_folder(self.doctest.path, test_dir, replace=replace)
+        copy_file(self.doctest.path, os.path.join(test_dir, os.path.basename(self.doctest.path)))
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
 
         # Run the tests -- execute dumped shell script 'script.sh'
-        cmd = ["python", os.path.basename(self.doctest.name), "-v"]
+        cmd = ["python3", os.path.basename(self.doctest.name), "-v"]
         environ = dict()
         environ['USER'] = env.user().get_full_name()
         environ['HOME'] = test_dir
@@ -87,22 +88,20 @@ class PythonChecker(Checker):
 
         # (output, error, exitcode) = execute(args, working_directory=test_dir, environment_variables=environ)
 
-        [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(),
                                                                environment_variables=environ,
-                                                               use_default_user_configuration=True,
+                                                               # use_default_user_configuration=True,
                                                                timeout=settings.TEST_TIMEOUT,
                                                                fileseeklimit=settings.TEST_MAXFILESIZE,
                                                                extradirs=[script_dir])
 
-        result = CheckerResult(checker=self)
+        result = self.create_result(env)
         (output, truncated) = truncated_log(output)
 
         if self.remove:
             output = re.sub(self.remove, "", output)
         if not self.returns_html:
             output = '<pre>' + output + '</pre>'
-        # decode utf-8 really?
-        result.set_log(output.decode("utf-8", "ignore"))
 
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
