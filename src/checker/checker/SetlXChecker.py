@@ -10,7 +10,8 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
-from checker.models import Checker, CheckerResult, CheckerFileField, execute, execute_arglist, truncated_log
+from checker.basemodels import Checker, CheckerResult, CheckerFileField, truncated_log
+from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 
 logger = logging.getLogger(__name__)
@@ -41,8 +42,8 @@ class SetlXChecker(Checker):
             return True
 
     def conCat(self, testdir, studentSubmission, testFile):
-        if studentSubmission.__class__.__name__ != 'unicode':
-            raise Exception('unsupported class ' + studentSubmission.__class__.__name__)
+        #if studentSubmission.__class__.__name__ != 'unicode':
+        #    raise Exception('unsupported class ' + studentSubmission.__class__.__name__)
 
         import codecs
         with codecs.open(os.path.join(testdir, "concat.stlx"), encoding='utf-8', mode='w+') as concat:
@@ -60,11 +61,11 @@ class SetlXChecker(Checker):
         # Setup
         test_dir = env.tmpdir()
         replace = [(u'PROGRAM', env.program())] if env.program() else []
-        copy_file_to_directory(self.testFile.path, test_dir, replace=replace)
+        copy_file(self.testFile.path, os.path.join(test_dir, os.path.basename(self.testFile.path)))
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
 
         # check: only one submission file allowed
-        result = CheckerResult(checker=self)
+        result = self.create_result(env)
         if len(env.sources()) > 1:
             result.set_log("Sie dürfen nur eine Datei angegeben!")
             result.set_passed(False)
@@ -73,7 +74,6 @@ class SetlXChecker(Checker):
         # check submission
         for (name, content) in env.sources():
             if not(self.secureSubmission(content)):
-                result = CheckerResult(checker=self)
                 result.set_passed(False)
                 result.set_log("Bitte keine IO-Befehle verwenden")
                 return result
@@ -92,13 +92,22 @@ class SetlXChecker(Checker):
         cmd = [settings.JVM, '-cp', settings.SETLXJAR, "org.randoom.setlx.pc.ui.SetlX", "concat.stlx"]
         # (output, error, exitcode) = execute(args, env.tmpdir())
 
-        [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
-                                                               use_default_user_configuration=True,
-                                                               timeout=settings.TEST_TIMEOUT,
-                                                               fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                               extradirs=[script_dir])
+        environ = {}
+        environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
 
-        result = CheckerResult(checker=self)
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(),
+                                                                           environment_variables=environ,
+                                                                           timeout=settings.TEST_TIMEOUT,
+                                                                           fileseeklimit=settings.TEST_MAXFILESIZE,
+                                                                           extradirs=[script_dir])
+
+        # [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
+                                                           #  use_default_user_configuration=True,
+                                                           #  timeout=settings.TEST_TIMEOUT,
+                                                           #  fileseeklimit=settings.TEST_MAXFILESIZE,
+                                                           #  extradirs=[script_dir])                                                            extradirs=[script_dir])
+
+
         (output, truncated) = truncated_log(output)
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)

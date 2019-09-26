@@ -133,6 +133,12 @@ NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 6
 from . import defaults
 defaults.load_defaults(globals())
 
+# add unknown mimetype for setlx because otherwise Kit praktomat
+# does not know it and will try and store NULL into database
+# which results in an exception
+defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/x-stlx', '.stlx'))
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

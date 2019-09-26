@@ -36,7 +36,7 @@ from lxml import objectify
 
 
 from accounts.models import User
-from checker.checker import CheckStyleChecker, JUnitChecker,  \
+from checker.checker import CheckStyleChecker, JUnitChecker, SetlXChecker, \
     CreateFileChecker
 #from checker.checker import CheckStyleChecker, JUnitChecker, PythonChecker, SetlXChecker, \
 #    CreateFileChecker
@@ -365,20 +365,19 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
 
 
 def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
-    raise 'TODO: implement SetlXChecker'
-    # inst = None
-    # for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-        # if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-            # if inst is not None:
-                # inst.delete()
-                # raise Exception("Setlx: more than one referenced file per test is not supported")
+    inst = None
+    for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
+        if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
+            if inst is not None:
+                inst.delete()
+                raise Exception("Setlx: more than one referenced file per test is not supported")
 
-            # inst = SetlXChecker.SetlXChecker.objects.create(task=new_task, order=val_order)
-            # inst.testFile = test_file_dict.get(fileref.fileref.attrib.get("refid"))
+            inst = SetlXChecker.SetlXChecker.objects.create(task=new_task, order=val_order)
+            inst.testFile = test_file_dict.get(fileref.fileref.attrib.get("refid"))
 
-    # set_test_base_parameters(inst, xmlTest, ns)
-    # inst = set_visibilty(inst)
-    # inst.save()
+    set_test_base_parameters(inst, xmlTest, ns)
+    inst = set_visibilty(inst)
+    inst.save()
 
 
 
