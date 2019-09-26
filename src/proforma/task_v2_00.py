@@ -38,8 +38,6 @@ from lxml import objectify
 from accounts.models import User
 from checker.checker import CheckStyleChecker, JUnitChecker, PythonChecker, SetlXChecker, \
     CreateFileChecker
-#from checker.checker import CheckStyleChecker, JUnitChecker, PythonChecker, SetlXChecker, \
-#    CreateFileChecker
 from checker.compiler import JavaBuilder, CBuilder
 from os.path import dirname
 from . import task

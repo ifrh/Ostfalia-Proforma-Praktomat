@@ -38,9 +38,9 @@ from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
 from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
-    DejaGnu, PythonChecker, RemoteSQLChecker, SetlXChecker
-from checker.checker import TextNotChecker, TextChecker
-from checker.builder import JavaBuilder, CBuilder
+    PythonChecker, SetlXChecker
+#from checker.checker import TextNotChecker, TextChecker, DejaGnu
+from checker.compiler import JavaBuilder, CBuilder
 
 
 from . import task
@@ -48,7 +48,7 @@ from . import task
 
 logger = logging.getLogger(__name__)
 
-def import_task(task_xml, dict_zip_files_post=None ):
+def import_task(task_xml, xml_object, dict_zip_files_post=None ):
     """
     :param request: request object for getting POST and GET
     :return: response
@@ -83,10 +83,10 @@ def import_task(task_xml, dict_zip_files_post=None ):
           "jartest": 'urn:proforma:tests:jartest:v1',
           }
 
-    encoding = rxcoding.search(xmlexercise, re.IGNORECASE)
-    if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
-        xmlexercise = xmlexercise.decode(encoding.group('enc')).encode('utf-8')
-    xml_object = objectify.fromstring(xmlexercise)
+    #encoding = rxcoding.search(xmlexercise, re.IGNORECASE)
+    #if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
+    #    xmlexercise = xmlexercise.decode(encoding.group('enc')).encode('utf-8')
+    # xml_object = objectify.fromstring(xmlexercise)
 
 
     xml_task = xml_object
@@ -304,24 +304,24 @@ def import_task(task_xml, dict_zip_files_post=None ):
                 inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "dejagnu-setup":
-                for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-                    if embedded_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-                        inst = DejaGnu.DejaGnuSetup.objects.create(task=new_task, order=val_order)
-                        inst.test_defs = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
-                        inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                        inst.save()
-                    # todo else
-
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "dejagnu-tester":
-                for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-                    if embedded_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-                        inst = DejaGnu.DejaGnuTester.objects.create(task=new_task, order=val_order)
-                        inst.test_case = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
-                        if xmlTest.xpath("p:title", namespaces=ns)[0] is not None:
-                            inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-                        inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                        inst.save()
+            # elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "dejagnu-setup":
+            #     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
+            #         if embedded_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
+            #             inst = DejaGnu.DejaGnuSetup.objects.create(task=new_task, order=val_order)
+            #             inst.test_defs = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
+            #             inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+            #             inst.save()
+            #         # todo else
+            #
+            # elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "dejagnu-tester":
+            #     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
+            #         if embedded_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
+            #             inst = DejaGnu.DejaGnuTester.objects.create(task=new_task, order=val_order)
+            #             inst.test_case = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
+            #             if xmlTest.xpath("p:title", namespaces=ns)[0] is not None:
+            #                 inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+            #             inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+            #             inst.save()
 
             # elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "no-type-TextNotChecker":
                 # fine = True

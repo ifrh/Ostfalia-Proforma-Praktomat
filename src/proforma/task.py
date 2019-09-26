@@ -54,7 +54,7 @@ from checker.checker import CreateFileChecker
 #from solutions.models import Solution, SolutionFile
 #from tasks.models import Task, MediaFile
 #from . import task_v0_94
-#from . import task_v1_01
+from . import task_v1_01
 from . import task_v2_00
 
 
@@ -569,10 +569,10 @@ def import_task_internal(filename, task_file):
     #if format_namespace_v0_9_4 in list(xml_object.nsmap.values()):
     #    logger.debug('handle 0.9.4 task')
     #    response_data = task_v0_94.importTask(task_xml, dict_zip_files)  # request,)
-    #if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
-    #    logger.debug('handle 1.0.1 task')
-    #    response_data = task_v1_01.import_task(task_xml, dict_zip_files)
-    if format_namespace_v2_0 in list(xml_object.nsmap.values()):
+    if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
+        logger.debug('handle 1.0.1 task')
+        response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
+    elif format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
         response_data = task_v2_00.import_task(task_xml, xml_object, dict_zip_files)
     else:
