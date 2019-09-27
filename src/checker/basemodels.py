@@ -198,6 +198,8 @@ class CheckerResult(models.Model):
     log = models.TextField(help_text=_('Text result of the checker'))
     creation_date = models.DateTimeField(auto_now_add=True)
     runtime = models.IntegerField(default=0, help_text=_('Runtime in milliseconds'))
+    internal_error = models.BooleanField(default=False,  help_text=_('Indicates whether an error occured during test exceution'))
+
 
     # new for handling subtest results in Prforma
     NORMAL_LOG = '0'
