@@ -90,7 +90,8 @@ def grade_api_v2(request,):
     try:
         # check request
         xml = get_submission_xml(request)
-        #logger.debug("got xml")
+        logger.debug("type(xml): " + str(type(xml)))
+        #logger.debug("got xml: " + xml)
 
         # debugging uploaded files
         #for field_name, file in request.FILES.items():
@@ -225,7 +226,7 @@ def get_submission_xml(request):
                 #logger.debug("xml_dict.keys(): " + str(xml_dict.keys()))
                 #xml = xml_dict.popitem()[1].read()
                 #xml_decoded = xml.decode(encoding)
-                xml = str(request.FILES['submission.xml'].read()) # convert InMemoryUploadedFile to string
+                xml = request.FILES['submission.xml'].read() # convert InMemoryUploadedFile to string
                 #xml_encoded = xml.encode(encoding)
                 return xml # xml_encoded
             elif request.FILES['submission.zip'].name:

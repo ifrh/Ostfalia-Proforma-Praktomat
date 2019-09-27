@@ -419,10 +419,12 @@ def save_file(data, solution_file, filename):
                 short_filename = os.path.basename(filename)
                 if filename == short_filename:
                     # filename does not contain a package yet
-                    #data.seek(0) # set file pointer to the beginning of the file
-                    data.close()
-                    data.open() # open in text mode
+                    data.seek(0) # set file pointer to the beginning of the file
+                    #data.close()
+                    #data.open() # open in text mode
                     file_content = data.read()
+                    # TODO: how to handle text as bytes with unknown decoding???
+
                     # logger.debug('look for package path ')
                     package = find_java_package_path(file_content)
                     if len(package) > 0:

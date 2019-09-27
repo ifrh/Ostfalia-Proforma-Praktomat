@@ -31,6 +31,7 @@ from xml.dom import minidom
 from xml.dom.minidom import Node
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 #from django.core.servers.basehttp import FileWrapper
 from django.db import models
@@ -544,9 +545,11 @@ def import_task_internal(filename, task_file):
     if filename[-3:].upper() == 'ZIP':
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
-        logger.debug('task_file[0] class name is ' + task_file[0].__class__.__name__)        
-        task_xml = task_file[0]  # todo check name
-        # task_xml = task_xml.decode('utf-8')
+        if type(task_file) == InMemoryUploadedFile:
+            task_xml = task_file.read()  # todo check name
+        else:
+            logger.debug('task_file class name is ' + task_file.__class__.__name__)
+            task_xml = task_file  # todo check name
 
     logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
     # logger.debug('task_xml = ' + task_xml)
