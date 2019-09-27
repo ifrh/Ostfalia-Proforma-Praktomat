@@ -50,7 +50,7 @@ class JUnitChecker(Checker):
         (u'junit3', u'JUnit 3'),
 
     )
-    junit_version = models.CharField(max_length=16, choices=JUNIT_CHOICES, default="junit3")
+    junit_version = models.CharField(max_length=100, choices=JUNIT_CHOICES, default="junit3")
 
     def runner(self):
         return {'junit4' : 'org.junit.runner.JUnitCore',
