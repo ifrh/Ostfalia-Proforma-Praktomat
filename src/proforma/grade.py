@@ -419,13 +419,14 @@ def save_file(data, solution_file, filename):
                 short_filename = os.path.basename(filename)
                 if filename == short_filename:
                     # filename does not contain a package yet
+                    # => read file and search for package declaration.
                     data.seek(0) # set file pointer to the beginning of the file
-                    #data.close()
-                    #data.open() # open in text mode
-                    file_content = data.read()
-                    # TODO: how to handle text as bytes with unknown decoding???
-
-                    # logger.debug('look for package path ')
+                    # problem: File can be a binary (not text) file and
+                    # we do not know the encoding!
+                    # => convert result into string
+                    file_content = str(data.read())
+                    #import io
+                    #file_content = str(io.TextIOWrapper(io.BytesIO(data.read())))
                     package = find_java_package_path(file_content)
                     if len(package) > 0:
                         logger.debug('prepend package path ' + package)
