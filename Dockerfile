@@ -66,6 +66,12 @@ COPY cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron
 RUN crontab /etc/cron.d/praktomat-cron
 
+# JAVA
+# add Checkstyle and JUnit runtime libraries
+ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar /praktomat/lib/
+ADD https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.jar /praktomat/lib/
+RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib
+
 # run entrypoint.sh
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
 
