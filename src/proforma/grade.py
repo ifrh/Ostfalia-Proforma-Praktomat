@@ -52,6 +52,13 @@ from solutions.forms import SolutionFormSet
 
 logger = logging.getLogger(__name__)
 
+keep_sandbox = True
+if keep_sandbox:
+    print('*********************************************\n')
+    print('*** Attention! Sandboxes are not deleted! ***\n')
+    print('*********************************************\n')
+
+
 def get_http_error_page(title, message, callstack):
     return """%s
 
@@ -150,28 +157,29 @@ def file_grader_post(request, response_format, task_id=None):
         return response
 
 
+# OBSOLETE, creating class file in correct path cn be done with '-d .' compiler options
 # try and guess the correct JAVA path name derived from the package that
 # is declared in the source code
-def find_java_package_path(file_content):
-    # logger.debug('file_content' + file_content)
-    # remove comment with /* */
-    file_content = re.sub(r'\/\*[\s\S]*?\*\/', '', file_content, re.MULTILINE)
-    file_content = re.sub(r'\/\/.*', '', file_content, re.MULTILINE)
-
-    pattern = re.compile('package([\s\S]*?);')
-    m = pattern.search(file_content)
-    try:
-        package = m.group(2).strip()
-    except:
-        try:
-            package = m.group(1).strip()
-        except:
-            logger.debug("no package found")
-            return ''
-
-    package = re.sub('\.', '/', package)
-    logger.debug("package path: " + package)
-    return package
+# def find_java_package_path(file_content):
+#     # logger.debug('file_content' + file_content)
+#     # remove comment with /* */
+#     file_content = re.sub(r'\/\*[\s\S]*?\*\/', '', file_content, re.MULTILINE)
+#     file_content = re.sub(r'\/\/.*', '', file_content, re.MULTILINE)
+#
+#     pattern = re.compile('package([\s\S]*?);')
+#     m = pattern.search(file_content)
+#     try:
+#         package = m.group(2).strip()
+#     except:
+#         try:
+#             package = m.group(1).strip()
+#         except:
+#             logger.debug("no package found")
+#             return ''
+#
+#     package = re.sub('\.', '/', package)
+#     logger.debug("package path: " + package)
+#     return package
 
 def grader_internal(task_id, files, response_format):
     # check if task exist
@@ -291,9 +299,10 @@ def saveSolution(solution, fileDict):
 def gradeSolution(solution):
     #start the checking process
     logger.debug('execute checks')
-    solution.check_solution(True)
+    solution.check_solution(True, keep_sandbox)
     #get result object
     logger.debug('get results...')
+
     result = solution.allCheckerResults()
     return result, solution
 
@@ -413,24 +422,24 @@ def save_file(data, solution_file, filename):
                     destination.write(chunk)
         elif data.__class__.__name__ == 'File':
             logger.debug('File name is ' + data.name)
-            if full_filename.lower().endswith('.java'):
-                # special handling for java files:
-                # check for package and move to appropriate path
-                short_filename = os.path.basename(filename)
-                if filename == short_filename:
-                    # filename does not contain a package yet
-                    # => read file and search for package declaration.
-                    data.seek(0) # set file pointer to the beginning of the file
-                    # problem: File can be a binary (not text) file and
-                    # we do not know the encoding!
-                    # => convert result into string
-                    file_content = str(data.read())
-                    #import io
-                    #file_content = str(io.TextIOWrapper(io.BytesIO(data.read())))
-                    package = find_java_package_path(file_content)
-                    if len(package) > 0:
-                        logger.debug('prepend package path ' + package)
-                        full_filename = os.path.join(full_directory,  package + '/' + filename)
+            # if False: # full_filename.lower().endswith('.java'):
+            #     # special handling for java files:
+            #     # check for package and move to appropriate path
+            #     short_filename = os.path.basename(filename)
+            #     if filename == short_filename:
+            #         # filename does not contain a package yet
+            #         # => read file and search for package declaration.
+            #         data.seek(0) # set file pointer to the beginning of the file
+            #         # problem: File can be a binary (not text) file and
+            #         # we do not know the encoding!
+            #         # => convert result into string
+            #         file_content = str(data.read())
+            #         #import io
+            #         #file_content = str(io.TextIOWrapper(io.BytesIO(data.read())))
+            #         package = find_java_package_path(file_content)
+            #         if len(package) > 0:
+            #             logger.debug('prepend package path ' + package)
+            #             full_filename = os.path.join(full_directory,  package + '/' + filename)
 
             logger.debug('full_filename name is ' + full_filename)
             tmp = default_storage.save(full_filename, data)
@@ -451,12 +460,27 @@ def save_file(data, solution_file, filename):
             fd.close()
         else:
             # string
-            #fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
-            #fd.write(data)
-            #fd.close()
             fd = open('%s' % (full_filename), 'w')
-            fd.write(data) ## .encode("utf-8"))
+            fd.write(data)
             fd.close()
+
+
+    # if full_filename.lower().endswith('.java'):
+    #     # check if filename contains a package
+    #     short_filename = os.path.basename(filename)
+    #     if filename == short_filename:
+    #         # no package => check if there is a package declared inside code
+    #         # 1. read code
+    #         with open(full_filename, 'r', encoding="latin-1") as f:
+    #             file_content = f.read()
+    #         # 2. seach for package
+    #         package = find_java_package_path(file_content)
+    #         if len(package) > 0:
+    #             # 3. rename file
+    #             logger.debug('prepend package path ' + package)
+    #             old_full_filename = full_filename
+    #             full_filename = os.path.join(full_directory, package + '/' + filename)
+    #             os.replace(old_full_filename, full_filename)
 
     return full_filename
 
