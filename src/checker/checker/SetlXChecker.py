@@ -110,8 +110,11 @@ class SetlXChecker(Checker):
 
         (output, truncated) = truncated_log(output)
         # Remove Praktomat-Path-Prefixes from result:
-        output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
+        # output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
+        output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
+        output = output.encode('utf-8').decode('latin-1')
 
+        # TODO use plaintext instead of html
         output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
         result.set_log(output, timed_out=timed_out, truncated=truncated)
