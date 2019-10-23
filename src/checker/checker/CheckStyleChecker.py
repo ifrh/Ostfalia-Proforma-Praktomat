@@ -25,7 +25,7 @@ class CheckStyleChecker(Checker):
     CHECKSTYLE_CHOICES = (
         (u'check-6.2', u'Checkstyle 6.2 all'),
         (u'check-7.6', u'Checkstyle 7.6 all'),
-        (u'check-5.4', u'Checkstyle 5.4 all'),
+#        (u'check-5.4', u'Checkstyle 5.4 all'),
         (u'check-8.23', u'Checkstyle 8.23 all'),
     )
     check_version = models.CharField(max_length=16, choices=CHECKSTYLE_CHOICES, default="check-8.23")
@@ -49,11 +49,14 @@ class CheckStyleChecker(Checker):
         # Run the tests
         args = [settings.JVM, "-cp", settings.CHECKSTYLE_VER[self.check_version], "-Dbasedir=.",
                 "com.puppycrawl.tools.checkstyle.Main", "-c", "checks.xml"] + \
-               [name for (name, content) in env.sources()]
+               [name for (name, content) in env.sources()] # + [" > ", env.tmpdir() + "/output.txt"]
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir())
 
+        print('=> Checkstyle exitcode is ' + str(exitcode))
+        # checkstyle creates localized output (German) => convert
+        output = output.encode('utf-8').decode('latin-1')
         # Remove Praktomat-Path-Prefixes from result:
-        output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
+        output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
 
         result = self.create_result(env)
 
@@ -65,7 +68,8 @@ class CheckStyleChecker(Checker):
         result.set_log(log)
 
 
-        result.set_passed(not timed_out and not oom_ed and not exitcode and (not re.match('Starting audit...\nAudit done.', output) == None))
+        result.set_passed(not timed_out and not oom_ed and not exitcode)
+        # result.set_passed(not timed_out and not oom_ed and not exitcode and (not re.match('Starting audit...\nAudit done.', output) == None))
 
         return result
 
