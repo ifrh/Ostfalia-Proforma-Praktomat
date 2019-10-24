@@ -154,6 +154,12 @@ class SolutionFile(models.Model):
                     new_solution_file.file.save(zip_file_name, File(temp_file), save=True)        # need to check for filenames begining with / or ..?
         else:
             self.mime_type = mimetypes.guess_type(self.file.name)[0]
+            if self.mime_type == None:
+                # unfortunately there is a not null constraint in the database.
+                # So slution files with unknown mime tyope cannot be stored.
+                # I could remove the constraint but I do not know what happens then...
+                # So I set the mime-type to a dummy value if it is unknown (K.Borm)
+                self.mime_type = 'text/x-unknown'
             models.Model.save(self, force_insert, force_update, using)
 
     def __str__(self):
