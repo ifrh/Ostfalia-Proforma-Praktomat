@@ -53,8 +53,6 @@ class CheckStyleChecker(Checker):
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir())
 
         print('=> Checkstyle exitcode is ' + str(exitcode))
-        # checkstyle creates localized output (German) => convert
-        output = output.encode('utf-8').decode('latin-1')
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
 
