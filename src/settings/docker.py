@@ -139,6 +139,7 @@ defaults.load_defaults(globals())
 # does not know it and will try and store NULL into database
 # which results in an exception
 defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/x-stlx', '.stlx'))
+defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/plain', '.csv'))
 
 
 LOGGING = {
