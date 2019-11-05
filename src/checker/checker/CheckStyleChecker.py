@@ -52,13 +52,14 @@ class CheckStyleChecker(Checker):
                [name for (name, content) in env.sources()] # + [" > ", env.tmpdir() + "/output.txt"]
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir())
 
-        print('=> Checkstyle exitcode is ' + str(exitcode))
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
 
         result = self.create_result(env)
 
-        log = '<pre>' + escape(output) + '</pre>'
+        #log = '<pre>' + escape(output) + '</pre>'
+        log = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+                 escape(output) + '</pre>'
         if timed_out:
             log = log + '<div class="error">Timeout occured!</div>'
         if oom_ed:

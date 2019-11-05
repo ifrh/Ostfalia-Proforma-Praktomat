@@ -33,7 +33,7 @@ TEST_MAXLOGSIZE=512
 
 TEST_MAXFILESIZE=512
 
-TEST_TIMEOUT=180
+TEST_TIMEOUT=15
 
 
 # Absolute path to the directory that shall hold all uploaded files as well as
@@ -177,20 +177,23 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
             'handlers': ['console', 'error-file'],
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'utilities': {
             'handlers': ['console', 'error-file'],
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },

@@ -130,6 +130,10 @@ class JUnitChecker(Checker):
             result.set_passed(False)
             return result
 
+        #import chardet
+        #encoding = chardet.detect(output)
+        #logger.debug('JUNIT output encoding:' + encoding['encoding'])
+
         if use_run_listener:
             # RUN LISTENER
             if exitcode == 0:

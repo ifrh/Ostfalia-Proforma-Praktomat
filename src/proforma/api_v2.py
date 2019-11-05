@@ -162,7 +162,7 @@ def grade_api_v2(request,):
         #grade_result = grader_internal(task_id, submission_zip, answer_format)
 
         # handle situation with German characters in output (e.g. from student code)
-        grade_result = grade_result.encode('utf-8').decode('latin-1')
+        # grade_result = grade_result.encode('utf-8').decode('latin-1')
 
         logger.debug("grading finished")
         response = HttpResponse()
