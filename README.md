@@ -17,7 +17,7 @@ The following programming languages and test frameworks are provided with the Pr
 | :---:        |    :----:   |         
 | Java 8     | Compiler ,  Junit 4.12, Checkstyle 8.23   |
 | SetlX   | Test, Syntax Check        |
-| Python 4   | Doctest        |
+| Python 3   | Doctest        |
 
 For running SetlX tests you need to copy the setlx-2.7.jar into the extra folder.
 
@@ -82,7 +82,7 @@ with the following 'submission.xml'
     </submission>"
 
 'submission.xml' can be transferred as a separate file or simply as data.
-Files are sent as normal 'file upload'.
+Files are sent as normal 'file upload'. The task file can be a zipped file or a simple xml file. 
 
 Note that embedding the submission file(s) into submission.xml as embedded-txt-file is also supported.
 
@@ -107,4 +107,3 @@ You can also omit the relative path for Java source files:
 
         http-file:User.java,File.java
 
-Praktomat parses the source code in order to determine the Java package which results in the relative path.
