@@ -9,6 +9,7 @@ import java.util.List;
 import java.io.StringWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.nio.charset.Charset;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -222,8 +223,28 @@ public class JunitProFormAListener extends RunListener {
     	String consoleOutput = baos.toString();
     	consoleOutput = consoleOutput.trim();
     	if (consoleOutput.length() > 0) {
+    		// replace imvalid UTF-16 char by [?] 
+    		// Note that Java uses UTF-16 as internal representation for Strings!
+    		// So we must find invalid characters in UTF-16
+    	    String xml10pattern = "[^"
+    	            + "\u0009\r\n"
+    	            + "\u0020-\uD7FF"
+    	            + "\uE000-\uFFFD"
+    	            + "\ud800\udc00-\udbff\udfff"
+    	            + "]";
+
+    	    consoleOutput = consoleOutput.replaceAll(xml10pattern, "[?]");
+    	    
     		//consoleOutput = consoleOutput.replace("&#13;", "\n");
-    		
+    		//Charset charset = Charset.forName("UTF-8");
+    		//consoleOutput = charset.decode(charset.encode(consoleOutput)).toString();
+/*    		consoleOutput = consoleOutput.replaceAll(
+                    //"[\\\\x00-\\\\x7F]|" + //single-byte sequences   0xxxxxxx - commented because of capitol letters
+                    "[\\\\xC0-\\\\xDF][\\\\x80-\\\\xBF]|" + //double-byte sequences   110xxxxx 10xxxxxx
+                    "[\\\\xE0-\\\\xEF][\\\\x80-\\\\xBF]{2}|" + //triple-byte sequences   1110xxxx 10xxxxxx * 2
+                    "[\\\\xF0-\\\\xF7][\\\\x80-\\\\xBF]{3}" //quadruple-byte sequence 11110xxx 10xxxxxx * 3
+            , "[?]");	
+*/    		
             Element feedback = doc.createElement("student-feedback");        
             feedbackList.appendChild(feedback);
             Element content = doc.createElement("content");
