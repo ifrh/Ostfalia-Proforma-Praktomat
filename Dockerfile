@@ -1,6 +1,9 @@
-# FROM python:2.7.9
+# debian does not run with this dockerfile
 # FROM debian:jessie
+# FROM debian:buster
 FROM ubuntu:xenial
+# ubuntu 18.04 is very slow so we stay at 16
+# FROM ubuntu:bionic
 
 MAINTAINER Ostfalia
 
@@ -14,8 +17,13 @@ RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
 ENV LANG de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 
-RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
-####RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python-dev python3-pip libpq-dev locales wget cron netcat
+#install python 3.7 which is faster than 3.5 (installed by default)
+RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && apt install -y python3.7 && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+
+RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev locales wget cron netcat
+#RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
 
 # Java:
@@ -54,7 +62,7 @@ RUN mkdir -p /praktomat/upload
 # COPY media media/
 
 # remove staticfiles, otherwise we get problems with collectstatic later on
-RUN pip uninstall staticfiles 
+# RUN pip uninstall staticfiles
 
 
 # clean packages
