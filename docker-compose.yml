@@ -44,9 +44,10 @@ services:
       
     #command: gunicorn wsgi:application --bind 0.0.0.0:8010 --workers=2 # sync!!
     # number of workers = 2* cumber of CPU cores + 1
-    command: python3 ./manage-docker.py runserver 0.0.0.0:8010
-    #####command: gunicorn wsgi:praktomat --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
-    
+    #command: python3 ./manage-docker.py runserver 0.0.0.0:8010
+    command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
+    #command: gunicorn wsgi:praktomat --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
+
     # command: sleep 100000    
     #command: ./manage.py runserver 0.0.0.0:8010
     #command: ./src/manage.py runserver 0.0.0.0:8010
@@ -61,7 +62,7 @@ services:
      - ./media:/praktomat/media
     ports:
       - "8010:8010"
-      - "8000:8000"
+#      - "8000:8000"
 #      - "80:80"
     depends_on:
       - postgres
