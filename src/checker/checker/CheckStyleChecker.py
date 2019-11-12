@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
-from checker.basemodels import Checker, CheckerFileField
+from checker.basemodels import Checker, CheckerFileField, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 
@@ -54,8 +54,11 @@ class CheckStyleChecker(Checker):
 
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
+        warnings = str.count(output, '[WARN]')
+        errors = str.count(output, '[ERROR]')
 
         result = self.create_result(env)
+        (output, truncated) = truncated_log(output)
 
         #log = '<pre>' + escape(output) + '</pre>'
         log = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
@@ -66,8 +69,9 @@ class CheckStyleChecker(Checker):
             log = log + '<div class="error">Out of memory!</div>'
         result.set_log(log)
 
-
-        result.set_passed(not timed_out and not oom_ed and not exitcode)
+        result.set_passed(not timed_out and not oom_ed and not exitcode and
+                          warnings <= self.allowedWarnings and
+                          errors <= self.allowedErrors and not truncated)
         # result.set_passed(not timed_out and not oom_ed and not exitcode and (not re.match('Starting audit...\nAudit done.', output) == None))
 
         return result
