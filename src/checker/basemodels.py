@@ -176,7 +176,12 @@ def truncated_log(log):
     log_length = len(log)
     if log_length > settings.TEST_MAXLOGSIZE*1024:
         # since we might be truncating utf8 encoded strings here, result may be erroneous, so we explicitly replace faulty byte tokens
-        return (force_text('======= Warning: Output too long, hence truncated ======\n' + log[0:(settings.TEST_MAXLOGSIZE*1024)/2] + "\n...\n...\n...\n...\n" + log[log_length-((settings.TEST_MAXLOGSIZE*1024)/2):], errors='replace'), True)
+        # bugfix Ostfalia: do not calc settings.TEST_MAXLOGSIZE*1024/2 since this results in a float value
+        # which cannot be used for indexing
+        endindex = settings.TEST_MAXLOGSIZE*512 # 512 = 1024 / 2
+        return (force_text('======= Warning: Output too long, hence truncated ======\n' +
+                           log[0:endindex] + "\n...\n...\n...\n...\n" +
+                           log[log_length-endindex:], errors='replace'), True)
     return (log, False)
 
 
