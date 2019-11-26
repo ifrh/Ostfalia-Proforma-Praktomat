@@ -370,18 +370,21 @@ def testVisibility(inst, xmlTest, namespace, public=None):
 
     return inst
 
-def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test, required=None):
+def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test, checker, required=None):
     order_counter = 1
-
+    
+    logger.debug('create file checker for test')
     for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
-        if embedded_file_dict.get(fileref.attrib.get("refid")) is not None:
+        reffile = embedded_file_dict.get(fileref.attrib.get("refid"))    
+        if reffile is not None:
+            logger.debug('create file checker ' + reffile.name)        
             inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=new_task,
                                                                        order=val_order,
                                                                        path=""
                                                                        )
-            inst2.file = embedded_file_dict.get(fileref.attrib.get("refid"))  # check if the refid is there
-            if dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name) is not None:
-                inst2.path = dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name)
+            inst2.file = reffile  # check if the refid is there
+            if dirname(reffile.name) is not None:
+                inst2.path = dirname(reffile.name)
             else:
                 pass
             if required is True:
@@ -389,6 +392,7 @@ def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test,
             else:
                 inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
             inst2.save()
+            checker.files.add(inst2)            
             order_counter += 1
             val_order += 1  # to push the junit-checker behind create-file checkers
     return val_order

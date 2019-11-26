@@ -510,7 +510,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
                                               namespaces=ns)[0].text
                 if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
                     val_order = task.creating_file_checker(embedded_file_dict=embedded_file_dict, new_task=new_task, ns=ns,
-                                                      val_order=val_order, xml_test=xmlTest)
+                                                      val_order=val_order, xml_test=xmlTest, checker=inst)
 
                 inst.order = val_order
                 inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
@@ -613,7 +613,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
                                                                      "praktomat:config-returnHtml",
                                                                      namespaces=ns)[0].text)
                 if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-                    val_order = task.creating_file_checker(embedded_file_dict, new_task, ns, val_order, xmlTest)
+                    val_order = task.creating_file_checker(embedded_file_dict, new_task, ns, val_order, xmlTest, checker=inst)
 
                 inst.order = val_order
                 inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)

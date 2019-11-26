@@ -7,10 +7,11 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
 from checker.basemodels import Checker, CheckerFileField, truncated_log
+from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 
-class CheckStyleChecker(Checker):
+class CheckStyleChecker(ProFormAChecker):
 
     name = models.CharField(max_length=100, default="CheckStyle", help_text=_("Name to be displayed on the solution detail page."))
     configuration = CheckerFileField(help_text=_("XML configuration of CheckStyle. See http://checkstyle.sourceforge.net/"))
@@ -41,7 +42,8 @@ class CheckStyleChecker(Checker):
 
 
     def run(self, env):
-
+        self.copy_files(env)
+        
         # Save save check configuration
         config_path = os.path.join(env.tmpdir(), "checks.xml")
         copy_file(self.configuration.path, config_path)

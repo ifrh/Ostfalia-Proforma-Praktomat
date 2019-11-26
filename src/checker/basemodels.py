@@ -26,6 +26,9 @@ from django.db import transaction
 from django import db
 from django.db import connection
 
+import logging
+logger = logging.getLogger(__name__)
+
 def get_checkerfile_storage_path(instance, filename):
     """ Use this function as upload_to parameter for filefields. """
     return 'CheckerFiles/Task_%s/%s/%s' % (instance.task.pk, instance.__class__.__name__, filename)
@@ -328,18 +331,20 @@ def check_solution(solution, run_all = 0, debug_keep_tmp = True):
 
     # Delete previous results if the checkers have already been run
     solution.checkerresult_set.all().delete()
+    
+    # OSTFALIA/ProFormA each checker runs in its own sandbox
     # set up environment
-    env = CheckerEnvironment(solution)
+    #env = CheckerEnvironment(solution)
 
-    solution.copySolutionFiles(env.tmpdir())
-    run_checks(solution, env, run_all)
+    #solution.copySolutionFiles(env.tmpdir())
+    run_checks(solution, None, run_all)
 
     # Delete temporary directory
-    if not(debug_keep_tmp and settings.DEBUG):
-        try:
-            shutil.rmtree(env.tmpdir())
-        except:
-            pass
+    #if not(debug_keep_tmp and settings.DEBUG):
+    #    try:
+    #        shutil.rmtree(env.tmpdir())
+    #    except:
+    #        pass
 
 # Assumes to be called from within a @transaction.autocommit Context!!!!
 def check_with_own_connection(solution,run_all = True, debug_keep_tmp = True):
@@ -380,6 +385,22 @@ def run_checks(solution, env, run_all):
     solution.warnings = False
     for checker in checkers:
         if (checker.always or run_all):
+            # OSTFALIA/ProFormA each checker runs in its own sandbox
+            if checker.__class__.__name__ == 'CreateFileChecker':
+                # CreateFileChecker is not an actual checker => skip
+                logger.debug('skip CreateFileChecker')
+                continue
+
+            if checker.__class__.__name__ == 'ProFormAChecker':
+                # ?? why do we have such a checker here
+                logger.debug('skip ProFormAChecker')
+                continue
+
+            logger.debug('=> run check ' + checker.__class__.__name__)
+            env = CheckerEnvironment(solution)
+
+            solution.copySolutionFiles(env.tmpdir())
+            
             # Check dependencies -> This requires the right order of the checkers
             can_run_checker = True
             for requirement in checker.requires():
@@ -422,5 +443,13 @@ def run_checks(solution, env, run_all):
 
             if result.passed:
                 passed_checkers.add(checker.__class__)
+                
+            # Delete temporary directory
+            if not settings.DEBUG:
+                try:
+                    shutil.rmtree(env.tmpdir())
+                except:
+                    pass
+                    
     solution.accepted = solution_accepted
     solution.save()

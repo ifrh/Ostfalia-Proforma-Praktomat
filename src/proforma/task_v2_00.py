@@ -201,29 +201,31 @@ def create_testfiles(file_dict, new_task, ns, val_order, xml_test, firstHandler 
     count = 0
     for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
         refid = fileref.attrib.get("refid")
-        if file_dict.get(refid) is None:
+        reffile = file_dict.get(refid)
+        if reffile is None:        
             raise TaskXmlException('cannot find file with id = ' + refid)
-        logger.debug('handle test file ' + refid)
+        logger.debug('handle test file ' + reffile.name)
         if count == 0:
             if firstHandler is not None:
-                logger.debug('handle first test file ')
-                firstHandler(inst, file_dict.get(refid))
+                logger.debug('handle first test file ' + reffile.name)
+                firstHandler(inst, reffile)
             count = count +1
         else:
-            logger.debug('create normal test file')
+            logger.debug('create normal test file' + reffile.name)
             inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=new_task,
                                                                        order=val_order,
                                                                        path=""
                                                                        )
-            inst2.file = file_dict.get(refid)  # check if the refid is there
-            if dirname(file_dict.get(refid).name) is not None:
-                inst2.path = dirname(file_dict.get(refid).name)
+            inst2.file = reffile # check if the refid is there
+            if dirname(reffile.name) is not None:
+                inst2.path = dirname(reffile.name)
             inst2.always = True
             inst2.public = False
             inst2.required = False
             inst2.save()
             order_counter += 1
             val_order += 1  # to push the junit-checker behind create-file checkers
+            inst.files.add(inst2)            
     return val_order
 
 
@@ -289,22 +291,9 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
         # todo create: something like TaskException class
         raise Exception("Junit-Version is not supported: " + str(junit_version))
 
-    # if int(version[0]) == 3:
-    #     inst.junit_version = 'junit3'
-    # elif int(version[0]) == 4:
-    #     if str(version[1]) == "12-gruendel":
-    #         inst.junit_version = 'junit4.12-gruendel'
-    #     elif str(version[1]) == "12":
-    #         inst.junit_version = 'junit4.12'
-    #     else:
-    #         inst.junit_version = 'junit4'
-    # else:
-    #     inst.delete()
-    #     raise Exception("JUnit-Version is not supported: " + str(version))
-
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
-                                          val_order=val_order, xml_test=xmlTest)
+                                          val_order=val_order, xml_test=xmlTest, checker=inst)
 
     inst.order = val_order
     inst = set_visibilty(inst)

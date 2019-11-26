@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import re
-import logging
+
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
 from checker.basemodels import Checker, CheckerResult, CheckerFileField, truncated_log
 from checker.admin import    CheckerInline, AlwaysChangedModelForm
+from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from solutions.models import Solution
 
 from checker.compiler.JavaBuilder import JavaBuilder
+import logging
 logger = logging.getLogger(__name__)
 
 RXFAIL       = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|ABBRUCH DURCH ZEITUEBERSCHREITUNG|Could not find class|Killed|failures)(.*)$",    re.MULTILINE)
@@ -29,8 +31,8 @@ class IgnoringJavaBuilder(JavaBuilder):
         assert isinstance(env.solution(), Solution)
         return CheckerResult(checker=self, solution=env.solution())
 
-class JUnitChecker(Checker):
-    """ New Checker for JUnit3 Unittests. """
+class JUnitChecker(ProFormAChecker):
+    """ New Checker for JUnit Unittests. """
 
     # Add fields to configure checker instances. You can use any of the Django fields. (See online documentation)
     # The fields created, task, public, required and always will be inherited from the abstract base class Checker
@@ -71,6 +73,8 @@ class JUnitChecker(Checker):
         return (RXFAIL.search(output) == None)
 
     def run(self, env):
+        self.copy_files(env)
+        
         logger.debug('JUNIT Checker build')
         java_builder = IgnoringJavaBuilder(_flags="", _libs=self.junit_version, _file_pattern=r"^.*\.[jJ][aA][vV][aA]$", _output_flags="", _main_required=False)
         java_builder._ignore = self.ignore.split(" ")
