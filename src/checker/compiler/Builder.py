@@ -13,8 +13,9 @@ from django.template.loader import get_template
 from checker.basemodels import Checker
 from utilities.safeexec import execute_arglist
 from functools import reduce
+from checker.checker.ProFormAChecker import ProFormAChecker
 
-class Builder(Checker):
+class Builder(ProFormAChecker):
     """ Build a program. This contains the general infrastructure to build a program with a compiler.  Specialized subclass are provided for different languages and compilers. """
 
     class Meta(Checker.Meta):

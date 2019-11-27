@@ -13,6 +13,8 @@ class ProFormAChecker(Checker):
 
     # Add fields to configure checker instances. You can use any of the Django fields. (See online documentation)
 
+    proforma_id = models.CharField(default="None", max_length=255, help_text = _('Is needed for ProFormA'))
+
     files = models.ManyToManyField(CreateFileChecker, help_text=_("Files needed to run the test"))
 
     def copy_files(self, env):

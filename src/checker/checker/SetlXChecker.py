@@ -13,6 +13,7 @@ from django.utils.html import escape
 from checker.basemodels import Checker, CheckerResult, CheckerFileField, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
+from checker.checker.ProFormAChecker import ProFormAChecker
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ RXSECURE = re.compile(r"(deleteFile|appendFile|load|readFile|writeFile|stop|asse
                       re.MULTILINE)
 RXFAIL = re.compile(r"(fail|:\s*false|syntax error|Error|Internal error|Evaluation of iterator)",
                       re.MULTILINE)
-class SetlXChecker(Checker):
+class SetlXChecker(ProFormAChecker):
 
     name = models.CharField(max_length=100, default="SetlXChecker", help_text=_("Name to be displayed "
                                                                               "on the solution detail page."))
@@ -59,6 +60,7 @@ class SetlXChecker(Checker):
     def run(self, env):
 
         # Setup
+        self.copy_files(env)
         test_dir = env.tmpdir()
         replace = [(u'PROGRAM', env.program())] if env.program() else []
         copy_file(self.testFile.path, os.path.join(test_dir, os.path.basename(self.testFile.path)))

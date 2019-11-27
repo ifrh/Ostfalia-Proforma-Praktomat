@@ -7,6 +7,7 @@ from checker.basemodels import Checker, CheckerFileField, CheckerResult, truncat
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from django.utils.html import escape
+from checker.checker.ProFormAChecker import ProFormAChecker
 
 RXFAIL = re.compile(
     r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|"
@@ -22,7 +23,7 @@ RXCODING = re.compile(r"coding[=:]\s*([-\w.]+)")
 
 RXSHEBANG = re.compile(r"(#!)+.*", re.MULTILINE)
 
-class PythonChecker(Checker):
+class PythonChecker(ProFormAChecker):
     name = models.CharField(max_length=100, default="Externen Tutor ausführen",
                             help_text=_("Name to be displayed on the solution detail page."))
     doctest = CheckerFileField(
@@ -67,6 +68,7 @@ class PythonChecker(Checker):
         This runs the check in the environment ENV, returning a CheckerResult. """
 
         # Setup
+        self.copy_files(env)
         test_dir = env.tmpdir()
         replace = [(u'PROGRAM', env.program())] if env.program() else []
         copy_file(self.doctest.path, os.path.join(test_dir, os.path.basename(self.doctest.path)))

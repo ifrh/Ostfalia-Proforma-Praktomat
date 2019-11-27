@@ -64,8 +64,6 @@ class Checker(models.Model):
     always = models.BooleanField(default=True, help_text = _('The test will run on submission time.'))
     critical = models.BooleanField(default=False, help_text = _('If this test fails, do not display further test results.'))
 
-    proforma_id = models.CharField(default="None", max_length=255, help_text = _('Is needed for ProFormA'))
-
     results = GenericRelation("CheckerResult") # enables cascade on delete.
 
     class Meta:

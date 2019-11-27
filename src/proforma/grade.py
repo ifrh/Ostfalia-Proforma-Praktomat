@@ -648,7 +648,7 @@ def get_solution_xml(result, solution, file_name, response_format):
     max = len(res_arr) - 1
     for index in range(len(res_arr)):
         indexReverse = max - index
-        if res_arr[indexReverse].checker.proforma_id == "None" and response_format == "proformav2":
+        if not hasattr(res_arr[indexReverse].checker, 'proforma_id') and response_format == "proformav2":
             # CopyFile checker has no attribute passed!
             if not res_arr[indexReverse].passed:
             #    # todo if fail add Error-Message

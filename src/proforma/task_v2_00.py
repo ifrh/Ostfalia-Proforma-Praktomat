@@ -113,21 +113,6 @@ def set_task_title(xml_dict, new_task):
     #new_task.save()
 
 
-#def toJSON(task_object):
-#        return json.dumps(task_object, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-# def _try(o):
-#     try:
-#         return o.__dict__
-#     except:
-#         return str(o)
-
-
-# def to_json(task_object):
-#     return json.dumps(task_object, default=lambda o: _try(o), sort_keys=True, indent=0,
-#                       separators=(',', ':')).replace('\n', '')
-
-
 def set_default_user(user_name, new_task):
     try:
         sys_user = User.objects.get(username=user_name)
@@ -300,9 +285,6 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     inst.save()
 
 
-def set_checkstyle_config(inst, value):
-    inst.configuration = value
-
 def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
     checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
@@ -333,35 +315,19 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
                                              "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
     inst = set_visibilty(inst)
 
-    create_testfiles(test_file_dict, new_task, ns, val_order, xmlTest, set_checkstyle_config, inst)
-    # count = 0
-    # for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-    #     if test_file_dict.get(fileref.fileref.attrib.get("refid")) is None:
-    #         raise Exception('No File for checkstyle-checker found')
-    #     if count == 0 :
-    #         logger.debug('handle first checkstyle file')
-    #         inst.configuration = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-    #         count = 1
-    #     else:
-    #         logger.debug('handle checkstyle with more than one referred file')
-    #         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
-    #                                                val_order=val_order, xml_test=xmlTest)
-
+    def set_mainfile(inst, value):
+        inst.configuration = value
+    create_testfiles(test_file_dict, new_task, ns, val_order, xmlTest, set_mainfile, inst)
     inst.order = val_order
     inst.save()
 
 
 def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
-    inst = None
-    for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-        if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-            if inst is not None:
-                inst.delete()
-                raise Exception("Setlx: more than one referenced file per test is not supported")
+    inst = SetlXChecker.SetlXChecker.objects.create(task=new_task, order=val_order)
 
-            inst = SetlXChecker.SetlXChecker.objects.create(task=new_task, order=val_order)
-            inst.testFile = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-
+    def set_mainfile(inst, value):
+        inst.testFile = value
+    create_testfiles(test_file_dict, new_task, ns, val_order, xmlTest, firstHandler=set_mainfile, inst=inst)
     set_test_base_parameters(inst, xmlTest, ns)
     inst = set_visibilty(inst)
     inst.save()
@@ -371,14 +337,9 @@ def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     inst = PythonChecker.PythonChecker.objects.create(task=new_task, order=val_order)
     set_test_base_parameters(inst, xmlTest, ns)
-    if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-        for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-            if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-                inst.doctest = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-            else:
-                inst.delete()
-                raise Exception("No File for python-checker found")
-
+    def set_mainfile(inst, value):
+        inst.doctest = value
+    create_testfiles(test_file_dict, new_task, ns, val_order, xmlTest, firstHandler=set_mainfile, inst=inst)
     inst = set_visibilty(inst)
     inst.save()
 
