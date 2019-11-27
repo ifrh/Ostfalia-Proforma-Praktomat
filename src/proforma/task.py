@@ -48,6 +48,8 @@ import logging
 import zipfile
 import tempfile
 from os.path import basename
+import hashlib
+from tasks.models import Task
 
 #from attestation.models import Rating
 from checker.checker import CreateFileChecker
@@ -534,6 +536,17 @@ def import_task(request):
         response.write("Error while importing task\r\n" + str(inst) + '\r\n' + callstack)
 
 
+def get_task(hash, uuid, title) :
+    #logger.debug('search for' + str(hash) + ' - ' + str(uuid) + ' - ' + title)
+    tasks = Task.objects.filter(proformatask_hash = hash).filter(proformatask_uuid = uuid).filter(proformatask_title = title)
+    for task in tasks:
+        logger.debug('task is stored in database')
+        return task
+
+    logger.debug('task is not stored in database')
+    return None
+
+
 def import_task_internal(filename, task_file):
 
     logger.debug('import_task_internal called')
@@ -543,7 +556,7 @@ def import_task_internal(filename, task_file):
     format_namespace_v1_0_1 = "urn:proforma:task:v1.0.1"
     format_namespace_v2_0 = "urn:proforma:v2.0"
 
-    rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
+    # rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
 
     dict_zip_files = None
     if filename[-3:].upper() == 'ZIP':
@@ -557,20 +570,16 @@ def import_task_internal(filename, task_file):
 
     logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
     # logger.debug('task_xml = ' + task_xml)
-    
-    # encoding = rxcoding.search(task_xml, re.IGNORECASE)
-    # if encoding is not None:
-    #     logger.debug('xml encoding is ' + encoding)
-    #     enc = encoding.group('enc')
-    #     if enc.lower() == 'utf-8':
-    #         task_xml = task_xml.decode(enc).encode('utf-8')
-    #     else:
-    #         logger.error('unexpected encoding found: ' + enc)
     xml_object = objectify.fromstring(task_xml)
     logger.debug('xml_object class name is ' + xml_object.__class__.__name__)
 
-    #xml_task = xml_object
-    # TODO check against schema
+
+    md5 = hashlib.md5(task_xml).hexdigest()
+    import uuid
+    hash = uuid.UUID(md5) # as uuid
+    logger.debug('task hash is ' + str(hash))
+
+    # TODO check against schema??
 
     # check Namespace
     #if format_namespace_v0_9_4 in list(xml_object.nsmap.values()):
@@ -581,7 +590,7 @@ def import_task_internal(filename, task_file):
         response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
     elif format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
-        response_data = task_v2_00.import_task(task_xml, xml_object, dict_zip_files)
+        response_data = task_v2_00.import_task(task_xml, xml_object, hash, dict_zip_files)
     else:
         raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
                        # format_namespace_v0_9_4 + "\r\n" +

@@ -24,13 +24,13 @@ py3clean .
 find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 # update tables in case of a modified or added checker
-echo "migrate schema"
+echo "make migrations"
 # do not use exit here!
-python3 ./src/manage-docker.py makemigrations --noinput
+python3 ./src/manage-docker.py makemigrations tasks 
+python3 ./src/manage-docker.py makemigrations checker
+python3 ./src/manage-docker.py makemigrations
 
-# use initial in order to create initial migrations file
-#python ./src/manage.py schemamigration checker --initial
-echo "migrate checker"
+echo "migrate"
 python3 ./src/manage-docker.py migrate || exit
 
 echo "create users"

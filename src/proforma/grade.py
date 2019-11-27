@@ -52,7 +52,7 @@ from solutions.forms import SolutionFormSet
 
 logger = logging.getLogger(__name__)
 
-keep_sandbox = True
+keep_sandbox = False
 if keep_sandbox:
     print('*********************************************\n')
     print('*** Attention! Sandboxes are not deleted! ***\n')

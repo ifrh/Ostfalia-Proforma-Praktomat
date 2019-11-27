@@ -353,10 +353,23 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 #   compiler
 #   JUNIT
 #   Checkstyle
-def import_task(task_xml, xml_obj, dict_zip_files=None):
+def import_task(task_xml, xml_obj, hash, dict_zip_files=None):
     format_namespace = "urn:proforma:v2.0"
     ns = {"p": format_namespace}
     message = ""
+
+    task_in_xml = xml_obj.xpath("/p:task", namespaces=ns)
+    task_uuid = task_in_xml[0].attrib.get("uuid")
+    logger.debug('uuid is ' + task_uuid)
+    task_title = xml_obj.xpath("/p:task/p:title", namespaces=ns)[0]
+    logger.debug('title is "' + task_title + '"')
+
+    old_task = task.get_task(hash, task_uuid, task_title)
+    if old_task != None:
+        response_data = dict()
+        response_data['taskid'] = old_task.id
+        response_data['message'] = message
+        return response_data
 
     # no need to actually validate xml against xsd
     # (it is only time consuming)
@@ -415,11 +428,14 @@ def import_task(task_xml, xml_obj, dict_zip_files=None):
         new_task.delete()
         raise
 
+    new_task.proformatask_hash = hash
+    new_task.proformatask_uuid = task_uuid
+    new_task.proformatask_title = task_title
     new_task.save()
     response_data = dict()
     response_data['taskid'] = new_task.id
     response_data['message'] = message
-    return response_data # HttpResponse(json.dumps(response_data), content_type="application/json")
+    return response_data
 
 def getitem_from_dict(dataDict, mapList):
     """Iterate nested dictionary"""
