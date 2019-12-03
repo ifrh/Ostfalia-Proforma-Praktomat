@@ -181,10 +181,10 @@ def file_grader_post(request, response_format, task_id=None):
 #     logger.debug("package path: " + package)
 #     return package
 
-def grader_internal(task_id, files, response_format):
+def grader_internal(task, files, response_format):
     # check if task exist
-    if not check_task_id(task_id):
-        raise Exception("task does not exist. Task number " + str(task_id))
+    # if not check_task_id(task_id):
+    #    raise Exception("task does not exist. Task number " + str(task_id))
 
     DEFINED_USER = "sys_prod"
     ziptype_re = re.compile(r'^application/(zip|x-zip|x-zip-compressed|x-compressed)$')
@@ -200,7 +200,7 @@ def grader_internal(task_id, files, response_format):
     #        raise Exception("system user does not exist")
 
     #create task_object for submitting data
-    task = get_object_or_404(Task, pk=task_id)
+    # task = get_object_or_404(Task, pk=task_id)
     supported_types_re = re.compile(task.supported_file_types)
 
     #print files
@@ -235,9 +235,6 @@ def grader_internal(task_id, files, response_format):
     #solution = initSolution(request, task)
 
     user_id = None
-    #author = get_object_or_404(User, pk=user_id) \
-    #    if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
-    #author = get_object_or_404(User, pk=user_id)
     sysProd = User.objects.get(username=DEFINED_USER)
     #solution object for submission
     logger.debug("save solution")
@@ -245,7 +242,6 @@ def grader_internal(task_id, files, response_format):
     solution = Solution(task=task, author=sysProd)
     #save the solution model in the database
     solution.save()
-
 
     # todo: copy from solution/views -> files from form could use default checks
     # formset = SolutionFormSet(solution, request.FILES, instance=solution)
@@ -256,7 +252,7 @@ def grader_internal(task_id, files, response_format):
 
     logger.debug("file_grader_post finished")
 
-    return lcxml #HttpResponse(lcxml)
+    return lcxml
 
 
 

@@ -19,6 +19,8 @@ from configuration import get_settings
 from utilities.deleting_file_field import DeletingFileField
 from utilities.safeexec import execute_arglist
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Task(models.Model):
     title = models.CharField(max_length=100, help_text = _("The name of the task"))
@@ -35,7 +37,7 @@ class Task(models.Model):
     jplag_up_to_date = models.BooleanField(default=False, help_text = _("No new solution uploads since the last jPlag run"))
 
     # UUIDField used instead of BinaryField for performance reasons (16 or 32 bytes??)
-    proformatask_hash = models.UUIDField(editable=False, null=True, help_text = _("Hash for proforma task file"))
+    proformatask_hash = models.UUIDField(db_index=True, editable=False, null=True, help_text = _("Hash for proforma task file"))
     proformatask_uuid = models.UUIDField(editable=False, null=True, help_text = _("UUID of proforma task"))
     proformatask_title = models.TextField(editable=False, null=True, help_text = _("title of proforma task"))
 
@@ -70,10 +72,16 @@ class Task(models.Model):
 
     def get_checkers(self):
         from checker.basemodels import Checker
+        from checker.checker.ProFormAChecker import ProFormAChecker
+
+        logger.debug('apps.get_app_config...')
         checker_app = apps.get_app_config('checker')
 
-        checker_classes = [x for x in checker_app.get_models() if issubclass(x, Checker)]
+        # logger.debug('checker_classes = ...' + str(checker_app))
+        checker_classes = [x for x in checker_app.get_models() if issubclass(x, ProFormAChecker)] # Checker)]
+        # logger.debug('unsorted_checker = ...' + str(checker_classes))
         unsorted_checker = sum([list(x.objects.filter(task=self)) for x in checker_classes], [])
+        # logger.debug('checkers = ...')
         checkers = sorted(unsorted_checker, key=lambda checker: checker.order)
         return checkers
 

@@ -190,20 +190,27 @@ LOGGING = {
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
-        'utilities': {
+        'tasks': {
             'handlers': ['console', 'error-file'],
             'level': 'INFO',  # change debug level as appropiate
 #            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
+        'utilities': {
+            'handlers': ['console', 'error-file'],
+            'level': 'INFO',  # change debug level as appropiate
+#           'level': 'DEBUG',  # change debug level as appropiate
+            'maxBytes': 1024 * 1024 * 15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
         ## SQL:
-        #'django': {
-        #    'handlers': ['console', 'error-file', 'file'],
-        #    'level': 'DEBUG',  # change debug level as appropiate
-        #    'maxBytes': 1024*1024*4,  # 15MB
-        #    'backupCount': 10,  # keep 10 historical versions
-        #},
+#        'django': {
+#            'handlers': ['console', 'error-file', 'file'],
+#            'level': 'DEBUG',  # change debug level as appropiate
+#            'maxBytes': 1024*1024*4,  # 15MB
+#            'backupCount': 10,  # keep 10 historical versions
+#        },
         'django.request': {
             'handlers': ['console', 'error-file', 'file'],
             'level': 'DEBUG',  # change debug level as appropiate

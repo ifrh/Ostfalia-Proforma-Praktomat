@@ -517,7 +517,10 @@ def import_task(request):
     try:
         check_post_request(request)
         filename, uploaded_file = request.FILES.popitem()  # returns list?
-        response_data = import_task_internal(filename, uploaded_file[0])
+        task = import_task_internal(filename, uploaded_file[0])
+        response_data = dict()
+        response_data['taskid'] = task.id
+        response_data['message'] = ''
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -539,9 +542,11 @@ def import_task(request):
 def get_task(hash, uuid, title) :
     #logger.debug('search for' + str(hash) + ' - ' + str(uuid) + ' - ' + title)
     tasks = Task.objects.filter(proformatask_hash = hash).filter(proformatask_uuid = uuid).filter(proformatask_title = title)
-    for task in tasks:
+    if len(tasks) > 1:
+        raise Exception('task with uuid ' + str(uuid) + ' is not unique')
+    elif len(tasks) == 1:
         logger.debug('task is stored in database')
-        return task
+        return tasks[0]
 
     logger.debug('task is not stored in database')
     return None

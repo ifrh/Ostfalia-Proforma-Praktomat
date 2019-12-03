@@ -81,11 +81,6 @@ def grade_api_v2(request,):
     xml_version = None
     answer_format = "proformav2"
 
-#    logger.debug('HTTP_USER_AGENT: ' + request.META.get('HTTP_USER_AGENT') +
-#                 '\nHTTP_HOST: ' + request.META.get('HTTP_HOST') +
-#                 '\nrequest.path: ' + request.path +
-#     '\nrequest.POST:' + str(list(request.POST.items())))
-
     # create task and get Id
     try:
         # check request
@@ -139,26 +134,21 @@ def grade_api_v2(request,):
                     raise Exception("could not find task in submission.xml")
         #logger.debug("got task")
 
-
         # xml2dict is very slow
         #submission_dict = xml2dict(xml)
         #logger.debug("xml->dict")
 
         # task_type_dict = check_task_type(submission_dict)
         submission_files = get_submission_files(root, request) # returns a dictionary (filename -> contant)
-
         logger.info("grading request for task " + task_filename)
         logger.debug('import task')
-        response_data = task.import_task_internal(task_filename, task_file)
-        #print 'result for Task-ID: ' + str(response_data)
-        task_id = str(response_data['taskid'])
-        message = response_data['message']
-        if task_id == None:
+        proformatask = task.import_task_internal(task_filename, task_file)
+        if proformatask == None:
             raise Exception("could not create task")
 
         # send submission to grader
         logger.debug('grade submission')
-        grade_result = grade.grader_internal(task_id, submission_files, answer_format)
+        grade_result = grade.grader_internal(proformatask, submission_files, answer_format)
         #grade_result = grader_internal(task_id, submission_zip, answer_format)
 
         # handle situation with German characters in output (e.g. from student code)

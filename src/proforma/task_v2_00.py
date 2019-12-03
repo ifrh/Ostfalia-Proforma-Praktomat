@@ -36,7 +36,8 @@ from lxml import objectify
 
 
 from accounts.models import User
-from checker.checker import CheckStyleChecker, JUnitChecker, PythonChecker, SetlXChecker, \
+from checker.checker import PythonChecker, SetlXChecker
+from checker.checker import CheckStyleChecker, JUnitChecker,  \
     CreateFileChecker
 from checker.compiler import JavaBuilder, CBuilder
 from os.path import dirname
@@ -356,7 +357,7 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 def import_task(task_xml, xml_obj, hash, dict_zip_files=None):
     format_namespace = "urn:proforma:v2.0"
     ns = {"p": format_namespace}
-    message = ""
+    #message = ""
 
     task_in_xml = xml_obj.xpath("/p:task", namespaces=ns)
     task_uuid = task_in_xml[0].attrib.get("uuid")
@@ -366,10 +367,11 @@ def import_task(task_xml, xml_obj, hash, dict_zip_files=None):
 
     old_task = task.get_task(hash, task_uuid, task_title)
     if old_task != None:
-        response_data = dict()
-        response_data['taskid'] = old_task.id
-        response_data['message'] = message
-        return response_data
+        #response_data = dict()
+        #response_data['taskid'] = old_task.id
+        #response_data['message'] = message
+        #return response_data
+        return old_task
 
     # no need to actually validate xml against xsd
     # (it is only time consuming)
@@ -432,10 +434,12 @@ def import_task(task_xml, xml_obj, hash, dict_zip_files=None):
     new_task.proformatask_uuid = task_uuid
     new_task.proformatask_title = task_title
     new_task.save()
-    response_data = dict()
-    response_data['taskid'] = new_task.id
-    response_data['message'] = message
-    return response_data
+    return new_task
+
+#    response_data = dict()
+#    response_data['taskid'] = new_task.id
+#    response_data['message'] = message
+#    return response_data
 
 def getitem_from_dict(dataDict, mapList):
     """Iterate nested dictionary"""

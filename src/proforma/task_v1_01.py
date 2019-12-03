@@ -21,6 +21,7 @@
 # functions for importing ProFormA tasks version 1.0.1 into Praktomat database.
 # Version 1.0.1 is depricated, do not use anymore!!
 
+# TASK VERSION 1.0.1 IS NO LONGER SUPPORTED
 
 
 from django.views.decorators.csrf import csrf_exempt
@@ -636,7 +637,8 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
         raise
 
     new_task.save()
-    response_data = dict()
-    response_data['taskid'] = new_task.id
-    response_data['message'] = message
-    return response_data # HttpResponse(json.dumps(response_data), content_type="application/json")
+    return new_task
+    #response_data = dict()
+    #response_data['taskid'] = new_task.id
+    #response_data['message'] = message
+    #return response_data # HttpResponse(json.dumps(response_data), content_type="application/json")
