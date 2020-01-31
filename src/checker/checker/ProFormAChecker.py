@@ -20,4 +20,5 @@ class ProFormAChecker(Checker):
     def copy_files(self, env):
         logger.debug('copy test files')
         for file in self.files.all():
+            logger.debug('file: ' + file.file.path)
             file.run(env)

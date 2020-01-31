@@ -45,6 +45,7 @@ class JUnitChecker(ProFormAChecker):
     ignore = models.CharField(max_length=4096, help_text=_("space-separated list of files to be ignored during compilation, i.e.: these files will not be compiled."), default="", blank=True)
 
     JUNIT_CHOICES = (
+        (u'junit5', u'JUnit 5'),
         (u'junit4', u'JUnit 4'),
         (u'junit4.10', u'JUnit 4.10'),
         (u'junit4.12', u'JUnit 4.12'),
@@ -55,11 +56,13 @@ class JUnitChecker(ProFormAChecker):
     junit_version = models.CharField(max_length=100, choices=JUNIT_CHOICES, default="junit3")
 
     def runner(self):
-        return {'junit4' : 'org.junit.runner.JUnitCore',
-                'junit4.10' : 'org.junit.runner.JUnitCore',
-                'junit4.12' : 'org.junit.runner.JUnitCore',
-                'junit4.12-gruendel' : 'org.junit.runner.JUnitCore',
-                'junit3' : 'junit.textui.TestRunner'}[self.junit_version]
+        return {
+            'junit5': '',
+            'junit4' : 'org.junit.runner.JUnitCore',
+            'junit4.10' : 'org.junit.runner.JUnitCore',
+            'junit4.12' : 'org.junit.runner.JUnitCore',
+            'junit4.12-gruendel' : 'org.junit.runner.JUnitCore',
+            'junit3' : 'junit.textui.TestRunner'}[self.junit_version]
 
 
     def title(self):
@@ -71,6 +74,38 @@ class JUnitChecker(ProFormAChecker):
 
     def output_ok(self, output):
         return (RXFAIL.search(output) == None)
+
+    def run_junit4(self):
+        pass
+
+
+    def get_run_command_junit5(self):
+        # java -jar junit-platform-console-standalone-<version>.jar <Options>
+        # does not work!!
+        # jar = settings.JAVA_LIBS[self.junit_version]
+        # cmd = [settings.JVM_SECURE, "-jar", jar, "-cp", ".", "--select-class", self.class_name]
+
+        # java -cp.:/praktomat/extra/junit-platform-console-standalone-<version>.jar:/praktomat/extra/Junit5RunListener.jar
+        # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
+        cmd = ["java", #settings.JVM_SECURE,
+               "-cp", ".:" + settings.JAVA_LIBS[self.junit_version] + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
+               settings.JUNIT5_RUN_LISTENER, self.class_name]
+        return cmd, True
+
+
+    def get_run_command_junit4(self):
+        use_run_listener = False
+        if settings.DETAILED_UNITTEST_OUTPUT:
+            use_run_listener = True
+
+        if not use_run_listener:
+            classpath = settings.JAVA_LIBS[self.junit_version] + ":."
+            runner = self.runner()
+        else:
+            classpath = settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT4_RUN_LISTENER_LIB
+            runner = settings.JUNIT4_RUN_LISTENER
+        cmd = [settings.JVM_SECURE, "-cp", classpath, runner, self.class_name]
+        return cmd, use_run_listener
 
     def run(self, env):
         self.copy_files(env)
@@ -97,21 +132,17 @@ class JUnitChecker(ProFormAChecker):
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
         environ['POLICY'] = os.path.join(script_dir, "junit.policy")
 
-        use_run_listener = False
-        if settings.DETAILED_UNITTEST_OUTPUT:
-            #if self.junit_version != 'junit4.12-gruendel':
-                use_run_listener = True
-            #else:
-            #    logger.debug('do not use Run Listener because of gruendel addon')
-
-        if not use_run_listener:
-            classpath = settings.JAVA_LIBS[self.junit_version] + ":."
-            runner = self.runner()
+        if self.junit_version == 'junit5':
+            # JUNIT5
+            [cmd, use_run_listener] = self.get_run_command_junit5()
         else:
-            classpath = settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT_RUN_LISTENER_LIB
-            runner = settings.JUNIT_RUN_LISTENER
-        cmd = [settings.JVM_SECURE, "-cp", classpath, runner, self.class_name]
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir])
+            # JUNIT4
+            [cmd, use_run_listener] = self.get_run_command_junit4()
+
+        [output, error, exitcode, timed_out, oom_ed] = \
+            execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
+                            fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir])
+
         # logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))
         logger.debug('JUNIT exitcode:' + str(exitcode))

@@ -102,12 +102,14 @@ CHECKSTYLEALLJAR = '/srv/praktomat/contrib/checkstyle-5.7-all.jar'
 JPLAGJAR = '/srv/praktomat/contrib/jplag.jar'
 
 
-JAVA_LIBS = {'junit3': '/praktomat/extra/junit-3.8.jar', # is not included
-             # map junit4 and junit 4.10 to 4.12
-             'junit4': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
-             'junit4.10': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
-             'junit4.12': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
-             'junit4.12-gruendel': '/praktomat/lib/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/lib/hamcrest-core-1.3.jar'}
+JAVA_LIBS = {
+    'junit5': '/praktomat/extra/junit-platform-console-standalone-1.6.0.jar',
+    'junit3': '/praktomat/extra/junit-3.8.jar', # is not included
+     # map junit4 and junit 4.10 to 4.12
+     'junit4': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
+     'junit4.10': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
+     'junit4.12': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
+     'junit4.12-gruendel': '/praktomat/lib/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/lib/hamcrest-core-1.3.jar'}
 
 # map old checkstlye version to 8.23
 CHECKSTYLE_VER = {'check-6.2': '/praktomat/lib/checkstyle-8.23-all.jar',
@@ -122,9 +124,10 @@ SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 
 DETAILED_UNITTEST_OUTPUT = True
 
-JUNIT_RUN_LISTENER = 'de.ostfalia.zell.praktomat.JunitProFormAListener'
-JUNIT_RUN_LISTENER_LIB = '/praktomat/extra/JunitRunListener.jar'
-
+JUNIT4_RUN_LISTENER = 'de.ostfalia.zell.praktomat.JunitProFormAListener'
+JUNIT4_RUN_LISTENER_LIB = '/praktomat/extra/JunitRunListener.jar'
+JUNIT5_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit5ProFormAListener'
+JUNIT5_RUN_LISTENER_LIB = '/praktomat/extra/Junit5RunListener.jar'
 
 
 # Our VM has 4 cores, so lets try to use them
@@ -177,30 +180,30 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
             'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'tasks': {
             'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'utilities': {
             'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
-#           'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+           'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
