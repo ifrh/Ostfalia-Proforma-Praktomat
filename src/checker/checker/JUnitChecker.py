@@ -75,19 +75,25 @@ class JUnitChecker(ProFormAChecker):
     def output_ok(self, output):
         return (RXFAIL.search(output) == None)
 
-    def run_junit4(self):
-        pass
-
 
     def get_run_command_junit5(self):
+        use_run_listener = False
+        if settings.DETAILED_UNITTEST_OUTPUT:
+            use_run_listener = True
+
         # java -jar junit-platform-console-standalone-<version>.jar <Options>
         # does not work!!
         # jar = settings.JAVA_LIBS[self.junit_version]
-        # cmd = [settings.JVM_SECURE, "-jar", jar, "-cp", ".", "--select-class", self.class_name]
+#        cmd = [settings.JVM_SECURE, "-jar", settings.JAVA_LIBS[self.junit_version], "-cp", ".",
+#               "--include-classname", ".*", "--disable-ansi-colors",
+#               "--disable-banner",
+#               "--select-class", self.class_name]
 
         # java -cp.:/praktomat/extra/junit-platform-console-standalone-<version>.jar:/praktomat/extra/Junit5RunListener.jar
         # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
-        cmd = ["java", #settings.JVM_SECURE,
+
+        cmd = [# "sh", "-x",
+               "java", # settings.JVM_SECURE,
                "-cp", ".:" + settings.JAVA_LIBS[self.junit_version] + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
                settings.JUNIT5_RUN_LISTENER, self.class_name]
         return cmd, True

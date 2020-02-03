@@ -80,10 +80,7 @@ ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/c
 ADD https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.jar /praktomat/lib/
 RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib
 # JUnit 5
-#ADD https://search.maven.org/remotecontent?filepath=org/junit/jupiter/junit-jupiter/5.6.0/junit-jupiter-5.6.0.jar /praktomat/lib/
-#ADD https://search.maven.org/remotecontent?filepath=org/junit/vintage/junit-vintage-engine/5.6.0/junit-vintage-engine-5.6.0.jar /praktomat/lib/
-#ADD https://search.maven.org/remotecontent?filepath=org/junit/platform/junit-platform-console-standalone/1.6.0/junit-platform-console-standalone-1.6.0.jar /praktomat/lib/
-
+ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.0/junit-platform-console-standalone-1.6.0.jar /praktomat/lib/
 # run entrypoint.sh
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
 
