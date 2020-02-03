@@ -1,12 +1,5 @@
 grant {
-    // JUNIT5
-	permission java.util.PropertyPermission "org.junit.platform.console.shadow.picocli.trace","read";
-	permission java.util.PropertyPermission "org.junit.platform.console.shadow.picocli.converters.excludes","read";
-	permission java.util.PropertyPermission "org.junit.platform.console.shadow.picocli.trimQuotes","read";
 	permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
-	permission java.lang.RuntimePermission "setContextClassLoader";
-	permission java.lang.RuntimePermission "closeClassLoader";
-
 	permission java.util.PropertyPermission "user.home","read";
 	permission java.io.FilePermission "/home/praktomat/junit.properties", "read";
 	permission java.io.FilePermission "/home/tester/junit.properties", "read";
