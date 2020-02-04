@@ -38,8 +38,7 @@ import org.junit.runner.notification.RunListener;
 	String value();
 }
 
-
-public class JunitProFormAListener extends RunListener {
+public class Junit4ProFormAListener extends RunListener {
 
 	
     private final PrintStream writer;
@@ -59,7 +58,7 @@ public class JunitProFormAListener extends RunListener {
     Element studentFeedback;    
     
 
-    public JunitProFormAListener() {
+    public Junit4ProFormAListener() {
     	writer = System.out;
         // redirect stdout and stderr
         baos = new ByteArrayOutputStream();        
@@ -68,7 +67,7 @@ public class JunitProFormAListener extends RunListener {
 
     }
 
-    public JunitProFormAListener(PrintStream writer) {
+    public Junit4ProFormAListener(PrintStream writer) {
         this.writer = writer;
     }
 
@@ -467,7 +466,7 @@ public class JunitProFormAListener extends RunListener {
         PrintStream originalErr = System.err;
         
 		JUnitCore core= new JUnitCore();
-		JunitProFormAListener listener = new JunitProFormAListener();
+		Junit4ProFormAListener listener = new Junit4ProFormAListener();
 		core.addListener(listener);
 		listener.setTestclassname(args[0]);
 				

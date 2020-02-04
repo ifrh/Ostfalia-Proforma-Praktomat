@@ -94,7 +94,8 @@ class JUnitChecker(ProFormAChecker):
             # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
             cmd = [# "sh", "-x",
                settings.JVM_SECURE,
-               "-cp", ".:" + settings.JAVA_LIBS[self.junit_version] + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
+               "-cp", ".:" + settings.JAVA_LIBS[self.junit_version],
+#               "-cp", ".:" + settings.JAVA_LIBS[self.junit_version] + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
                settings.JUNIT5_RUN_LISTENER, self.class_name]
 
         return cmd, True

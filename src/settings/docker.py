@@ -103,7 +103,7 @@ JPLAGJAR = '/srv/praktomat/contrib/jplag.jar'
 
 
 JAVA_LIBS = {
-    'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar',
+    'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar:/praktomat/extra/Junit5RunListener.jar',
     'junit3': '/praktomat/extra/junit-3.8.jar', # is not included
      # map junit4 and junit 4.10 to 4.12
      'junit4': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
@@ -124,10 +124,10 @@ SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 
 DETAILED_UNITTEST_OUTPUT = True
 
-JUNIT4_RUN_LISTENER = 'de.ostfalia.zell.praktomat.JunitProFormAListener'
-JUNIT4_RUN_LISTENER_LIB = '/praktomat/extra/JunitRunListener.jar'
+JUNIT4_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit4ProFormAListener'
+JUNIT4_RUN_LISTENER_LIB = '/praktomat/extra/Junit4RunListener.jar'
 JUNIT5_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit5ProFormAListener'
-JUNIT5_RUN_LISTENER_LIB = '/praktomat/extra/Junit5RunListener.jar'
+#JUNIT5_RUN_LISTENER_LIB = '/praktomat/extra/Junit5RunListener.jar'
 
 
 # Our VM has 4 cores, so lets try to use them
