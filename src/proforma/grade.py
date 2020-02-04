@@ -637,7 +637,7 @@ def get_solution_xml(result, solution, file_name, response_format):
             if not result[index].passed:
                 solution.accepted = False
                 false_required_hidden_test = True
-        logger.debug("Checker: " + str(result[index].checker))
+        logger.debug("Checker " + str(result[index].checker.order) + ": " + str(result[index].checker))
 
     # remove 'None' tests from proforma2
     res_arr = list(result)

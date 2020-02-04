@@ -71,6 +71,7 @@ class Task_2_00:
         self.dict_zip_files = dict_zip_files
         self.new_task = None
         self.xml_dict = None
+        self.val_order = 1
 
     # (static) helper functions
     def get_optional_xml_attribute_text(self, xmlTest, xpath, attrib, namespaces):
@@ -194,7 +195,7 @@ class Task_2_00:
         inst.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
 
 
-    def create_testfiles(self, file_dict, val_order, xml_test, firstHandler = None, inst = None):
+    def create_testfiles(self, file_dict, xml_test, firstHandler = None, inst = None):
         order_counter = 1
 
         count = 0
@@ -212,7 +213,7 @@ class Task_2_00:
             else:
                 logger.debug('create normal test file' + reffile.name)
                 inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=self.new_task,
-                                                                           order=val_order,
+                                                                           order=self.val_order,
                                                                            path=""
                                                                            )
                 inst2.file = reffile # check if the refid is there
@@ -223,14 +224,14 @@ class Task_2_00:
                 inst2.required = False
                 inst2.save()
                 order_counter += 1
-                val_order += 1  # to push the junit-checker behind create-file checkers
+                self.val_order += 1  # to push the junit-checker behind create-file checkers
+                logger.debug('create_testfiles: increment vald_order, new value= ' + str(self.val_order))
                 inst.files.add(inst2)
-        return val_order
 
 
-    def create_java_compiler_checker(self, xmlTest, val_order):
+    def create_java_compiler_checker(self, xmlTest):
         inst = JavaBuilder.JavaBuilder.objects.create(task=self.new_task,
-                                                      order=val_order,
+                                                      order=self.val_order,
                                                       _flags="",
                                                       _output_flags="",
                                                       _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
@@ -245,12 +246,12 @@ class Task_2_00:
 
 
 
-    def create_java_unit_checker(self, xmlTest, val_order, test_file_dict):
+    def create_java_unit_checker(self, xmlTest, test_file_dict):
         checker_ns = self.ns.copy()
         checker_ns['unit_new'] = 'urn:proforma:tests:unittest:v1.1'
         checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
 
-        inst = JUnitChecker.JUnitChecker.objects.create(task=self.new_task, order=val_order)
+        inst = JUnitChecker.JUnitChecker.objects.create(task=self.new_task, order=self.val_order)
         self.set_test_base_parameters(inst, xmlTest)
         #if xmlTest.xpath("p:title", namespaces=ns) is not None:
         #        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
@@ -284,19 +285,19 @@ class Task_2_00:
             raise Exception("Junit-Version is not supported: " + str(junit_version))
 
         if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-            val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=self.new_task, ns=checker_ns,
-                                              val_order=val_order, xml_test=xmlTest, checker=inst)
+            self.val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=self.new_task, ns=checker_ns,
+                                              val_order=self.val_order, xml_test=xmlTest, checker=inst)
 
-        inst.order = val_order
+        inst.order = self.val_order
         inst = self.set_visibilty(inst)
         inst.save()
 
 
-    def create_java_checkstyle_checker(self, xmlTest, val_order, test_file_dict):
+    def create_java_checkstyle_checker(self, xmlTest, test_file_dict):
         checker_ns = self.ns.copy()
         checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
-        inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=self.new_task, order=val_order)
+        inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=self.new_task, order=self.val_order)
         self.set_test_base_parameters(inst, xmlTest)
         if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
                          namespaces=checker_ns)[0].attrib.get("version"):
@@ -324,29 +325,29 @@ class Task_2_00:
 
         def set_mainfile(inst, value):
             inst.configuration = value
-        self.create_testfiles(test_file_dict, val_order, xmlTest, set_mainfile, inst)
-        inst.order = val_order
+        self.create_testfiles(test_file_dict, xmlTest, set_mainfile, inst)
+        inst.order = self.val_order
         inst.save()
 
 
-    def create_setlx_checker(self, xmlTest, val_order, test_file_dict):
-        inst = SetlXChecker.SetlXChecker.objects.create(task=self.new_task, order=val_order)
+    def create_setlx_checker(self, xmlTest, test_file_dict):
+        inst = SetlXChecker.SetlXChecker.objects.create(task=self.new_task, order=self.val_order)
 
         def set_mainfile(inst, value):
             inst.testFile = value
-        self.create_testfiles(test_file_dict, val_order, xmlTest, firstHandler=set_mainfile, inst=inst)
+        self.create_testfiles(test_file_dict, xmlTest, firstHandler=set_mainfile, inst=inst)
         self.set_test_base_parameters(inst, xmlTest)
         inst = self.set_visibilty(inst)
         inst.save()
 
 
 
-    def create_python_checker(self, xmlTest, val_order, test_file_dict):
-        inst = PythonChecker.PythonChecker.objects.create(task=self.new_task, order=val_order)
+    def create_python_checker(self, xmlTest, test_file_dict):
+        inst = PythonChecker.PythonChecker.objects.create(task=self.new_task, order=self.val_order)
         self.set_test_base_parameters(inst, xmlTest)
         def set_mainfile(inst, value):
             inst.doctest = value
-        self.create_testfiles(test_file_dict, val_order, xmlTest, firstHandler=set_mainfile, inst=inst)
+        self.create_testfiles(test_file_dict, xmlTest, firstHandler=set_mainfile, inst=inst)
         inst = self.set_visibilty(inst)
         inst.save()
 
@@ -409,33 +410,34 @@ class Task_2_00:
                 create_file_dict, test_file_dict, list_of_modelsolution_refs_path = \
                     self.create_file_dict_func(xml_obj=self.xml_obj, external_file_dict=self.dict_zip_files)
 
-            val_order = 1
             #inst = None
             # create library and internal-library with create FileChecker
-            val_order = task.creatingFileCheckerNoDep(create_file_dict, self.new_task, self.ns,
-                                                                             val_order, xmlTest=None)
+            self.val_order = task.creatingFileCheckerNoDep(create_file_dict, self.new_task, self.ns,
+                                                                             self.val_order, xmlTest=None)
             for xmlTest in self.xml_obj.tests.iterchildren():
                 testtype = xmlTest.xpath("p:test-type", namespaces=self.ns)[0].text
                 if testtype == "java-compilation":  # todo check compilation_xsd
                     logger.debug('** create_java_compiler_checker')
-                    self.create_java_compiler_checker(xmlTest, val_order)
+                    self.create_java_compiler_checker(xmlTest)
                 elif testtype == "unittest":
                     logger.debug('** create_java_unit_checker')
-                    self.create_java_unit_checker(xmlTest, val_order, test_file_dict)
+                    self.create_java_unit_checker(xmlTest, test_file_dict)
                 elif testtype == "java-checkstyle":
-                    self.create_java_checkstyle_checker(xmlTest, val_order, test_file_dict)
+                    self.create_java_checkstyle_checker(xmlTest, test_file_dict)
                 elif testtype == "setlx": # and xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
-                    self.create_setlx_checker(xmlTest, val_order, test_file_dict)
+                    self.create_setlx_checker(xmlTest, test_file_dict)
                 elif testtype == "python-doctest":
                     logger.debug('** create_python_checker')
-                    self.create_python_checker(xmlTest, val_order, test_file_dict)
-                val_order += 1
+                    self.create_python_checker(xmlTest, test_file_dict)
+                self.val_order += 1
+                logger.debug('import_task/llop: increment vald_order, new value= ' + str(self.val_order))
+
         except Exception:
             self.new_task.delete()
             self.new_task = None
             raise
 
-        self.new_task.proformatask_hash = hash
+        self.new_task.proformatask_hash = self.hash
         self.new_task.proformatask_uuid = task_uuid
         self.new_task.proformatask_title = task_title
         self.new_task.save()
