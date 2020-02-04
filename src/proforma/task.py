@@ -595,7 +595,8 @@ def import_task_internal(filename, task_file):
         response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
     elif format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
-        response_data = task_v2_00.import_task(task_xml, xml_object, hash, dict_zip_files)
+        task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files)
+        response_data = task_2.import_task()
     else:
         raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
                        # format_namespace_v0_9_4 + "\r\n" +
