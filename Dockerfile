@@ -17,10 +17,16 @@ RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
 ENV LANG de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 
-#install python 3.7 which is faster than 3.5 (installed by default)
-RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && apt install -y python3.7 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+
+# do not use Python 3.7 because of incompatibility with eventlet
+# https://github.com/eventlet/eventlet/issues/592
+# do not use Python 3.8 because of expected incompatibility with Praktomat (safeexec-Popen with preexec_fn and threads)
+# https://docs.python.org/3/library/subprocess.html
+# install Python 3.6 (is not faster than 3.5) => stay at 3.5
+# RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && \
+#    apt-get update && apt install -y python3.6 && \
+#    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
+
 
 RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev locales wget cron netcat
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat

@@ -15,7 +15,7 @@ The following programming languages and test frameworks are provided with the Pr
 
 | Language      | Test Frameworks |
 | :---:        |    :----:   |         
-| Java 8     | Compiler ,  Junit 4.12, Checkstyle 8.23   |
+| Java 8     | Compiler ,  JUnit 4.12 / JUnit 5, Checkstyle 8.23   |
 | SetlX   | Test, Syntax Check        |
 | Python 3   | Doctest        |
 
@@ -107,3 +107,13 @@ You can also omit the relative path for Java source files:
 
         http-file:User.java,File.java
 
+### Administration
+
+Praktomat stores tasks and results in a database and in the filesystem. In order to
+save disk space everything should be deleted when possible (e.g. before starting a new semester).
+The easiest way to do this is to delete the whole docker composition.
+
+    docker-compose down
+    docker-dompose up 
+  
+There is no need to back-up anything of the container!
