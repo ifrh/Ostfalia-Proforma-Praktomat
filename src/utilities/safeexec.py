@@ -5,9 +5,9 @@ from os.path import *
 import time
 import subprocess
 import signal
-import subprocess
 import resource
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +83,17 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
     oom_ed = False
     try:
         [output, error] = process.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        timed_out = True
+    # except subprocess.TimeoutExpired:
+    # Ostfalia: this specific exception is raised but is not caught that way (I do not know why!).
+    # So I catch every exception and check for type (very strange)
+    except Exception as e:
+        logger.error("exception occured:" + str(type(e)))
+        #logger.error("expected:" + str(subprocess.TimeoutExpired))
+        if str(type(e) == str(subprocess.TimeoutExpired)):
+        # if (type(e) == subprocess.TimeoutExpired):
+            logger.error("TIMEOUT")
+            timed_out = True
+        logger.error("try and kill subprocess")
         term_cmd = ["pkill", "-TERM", "-s", str(process.pid)]
         kill_cmd = ["pkill", "-KILL", "-s", str(process.pid)]
         if not unsafe and settings.USEPRAKTOMATTESTER:
@@ -94,7 +103,9 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         time.sleep(5)
         subprocess.call(kill_cmd)
         [output, error] = process.communicate()
-        #killpg(process.pid, signal.SIGKILL)
+        # killpg(process.pid, signal.SIGKILL)
+        if not timed_out:
+            raise # no timeout
 
     if settings.USESAFEDOCKER and process.returncode == 23: #magic value
         timed_out = True
