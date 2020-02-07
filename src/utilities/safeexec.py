@@ -91,9 +91,9 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         #logger.error("expected:" + str(subprocess.TimeoutExpired))
         if str(type(e) == str(subprocess.TimeoutExpired)):
         # if (type(e) == subprocess.TimeoutExpired):
-            logger.error("TIMEOUT")
+            logger.debug("TIMEOUT")
             timed_out = True
-        logger.error("try and kill subprocess")
+        logger.debug("try and kill subprocess")
         term_cmd = ["pkill", "-TERM", "-s", str(process.pid)]
         kill_cmd = ["pkill", "-KILL", "-s", str(process.pid)]
         if not unsafe and settings.USEPRAKTOMATTESTER:

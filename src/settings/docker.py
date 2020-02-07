@@ -127,7 +127,6 @@ DETAILED_UNITTEST_OUTPUT = True
 JUNIT4_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit4ProFormAListener'
 JUNIT4_RUN_LISTENER_LIB = '/praktomat/extra/Junit4RunListener.jar'
 JUNIT5_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit5ProFormAListener'
-#JUNIT5_RUN_LISTENER_LIB = '/praktomat/extra/Junit5RunListener.jar'
 
 
 # Our VM has 4 cores, so lets try to use them
@@ -180,30 +179,30 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console', 'file'],
-#            'level': 'INFO',  # change debug level as appropiate
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
             'handlers': ['console', 'error-file'],
-#            'level': 'INFO',  # change debug level as appropiate
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'tasks': {
             'handlers': ['console', 'error-file'],
-#            'level': 'INFO',  # change debug level as appropiate
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'utilities': {
             'handlers': ['console', 'error-file'],
-#            'level': 'INFO',  # change debug level as appropiate
-           'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#           'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
