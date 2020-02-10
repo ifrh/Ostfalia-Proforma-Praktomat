@@ -12,7 +12,7 @@ ENV PYTHONUNBUFFERED 1
 # for praktomat itself
 RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
 
-# change locale to somethin UTF-8 
+# change locale to something UTF-8
 # RUN apt-get install -y locales && locale-gen de_DE.UTF-8 
 ENV LANG de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
@@ -33,15 +33,17 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 
 
 # Java:
-# install OpenJDK (only needed if you want to run Java Compiler checker)
-# install OpenJFK for GUI tests
+# install OpenJDK (for Java Compiler checks)
+# install OpenJFK for GUI tests (for Java JFX tasks)
 RUN apt-get update && apt-get install -y default-jdk openjfx
 #RUN apt-get update && apt-get install -y openjdk-8-jdk openjfx
  
 
+# SVN (delete if you do not want to access submissions from SVN repository)
+RUN apt-get update && apt-get install -y subversion
 
 
-# && apt-get autoremove -y
+
 
 
  
@@ -66,20 +68,18 @@ RUN mkdir -p /praktomat/upload
 # COPY extra extra/
 # COPY media media/
 
-# remove staticfiles, otherwise we get problems with collectstatic later on
-# RUN pip uninstall staticfiles
-
 
 # clean packages
 ###### RUN apt-get clean
 ###### RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+# && apt-get autoremove -y
 
 # create cron job for deleting temporary files
 COPY cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron
 RUN crontab /etc/cron.d/praktomat-cron
 
-# JAVA test specific libraries
+# add JAVA test specific libraries
 # Checkstyle
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar /praktomat/lib/
 # JUnit4 runtime libraries
@@ -87,6 +87,7 @@ ADD https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.jar 
 RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && apt-get install unzip -y && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib
 # JUnit 5
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.0/junit-platform-console-standalone-1.6.0.jar /praktomat/lib/
+
 # run entrypoint.sh
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
 

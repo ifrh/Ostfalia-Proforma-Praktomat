@@ -41,6 +41,8 @@ services:
       DB_HOST: postgres
       DB_DOCKER_SERVICE: praktomat_database3
       DATABASE: postgres
+      SVNUSER: ${SVNUSERNAME}
+      SVNPASS: ${SVNPASSWORD}
       
     #command: gunicorn wsgi:application --bind 0.0.0.0:8010 --workers=2 # sync!!
     # number of workers = 2* cumber of CPU cores + 1
