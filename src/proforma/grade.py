@@ -187,27 +187,20 @@ def grader_internal(task, files, response_format):
     #    raise Exception("task does not exist. Task number " + str(task_id))
 
     DEFINED_USER = "sys_prod"
-    ziptype_re = re.compile(r'^application/(zip|x-zip|x-zip-compressed|x-compressed)$')
+    # ziptype_re = re.compile(r'^application/(zip|x-zip|x-zip-compressed|x-compressed)$')
 
     response = HttpResponse()
     # save files
     # start grading
 
-
-    # check if user is authenticated if not login
-    #if not request.user.is_authenticated():
-    #    if authenticate_user(DEFINED_USER, request) is None:
-    #        raise Exception("system user does not exist")
-
     #create task_object for submitting data
     # task = get_object_or_404(Task, pk=task_id)
-    supported_types_re = re.compile(task.supported_file_types)
+    # supported_types_re = re.compile(task.supported_file_types)
 
     #print files
     fileDict = dict()
     fileNameList = []
     fileDict = files
-    #fileDict["submission.zip"] = files["submission.zip"]
     fileNameList.append("submission.zip")
 
     # DataNameList = []
@@ -454,6 +447,11 @@ def save_file(data, solution_file, filename):
             fd = open('%s' % (full_filename), 'wb')
             fd.write(data)
             fd.close()
+        elif data.__class__.__name__ == 'PhysicalFile':
+            # file already exists => move to correct location
+            # logger.debug('PhysicalFile =>  ' + full_filename)
+            import shutil
+            shutil.move(data.path, full_filename)
         else:
             # string
             fd = open('%s' % (full_filename), 'w')

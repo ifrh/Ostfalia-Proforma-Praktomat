@@ -57,6 +57,18 @@ logger = logging.getLogger(__name__)
 
 NAMESPACES = {'dns': 'urn:proforma:v2.0'}
 
+# exception class for handling situations where
+# the submission cannot be found from external resource
+class ExternalSubmissionException(Exception):
+    pass
+
+# wrapper class for handling submissions already stored on disk
+class PhysicalFile:
+    def __init__(self, path):
+        self.path = path
+
+
+# string format for exception return message in HTTP
 def get_http_error_page(title, message, callstack):
     return """%s
 
@@ -146,24 +158,29 @@ def grade_api_v2(request,):
         if proformatask == None:
             raise Exception("could not create task")
 
-        # send submission to grader
+        # run tests
         logger.debug('grade submission')
         grade_result = grade.grader_internal(proformatask, submission_files, answer_format)
-        #grade_result = grader_internal(task_id, submission_zip, answer_format)
 
-        # handle situation with German characters in output (e.g. from student code)
-        # grade_result = grade_result.encode('utf-8').decode('latin-1')
-
+        # return result
         logger.debug("grading finished")
         response = HttpResponse()
         response.write(grade_result)
         response.status_code = 200
         return response
 
+    except ExternalSubmissionException as inst:
+        logger.exception(inst)
+        callstack = traceback.format_exc()
+        print("ExternalSubmissionException caught Stack Trace: " + str(callstack))
+        response = HttpResponse()
+        response.write(get_http_error_page('Could not get submission files', str(inst), callstack))
+        response.status_code = 404 # file not found
+        return response
     except Exception as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()
-        print("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
+        print("Exception caught Stack Trace: " + str(callstack))
         response = HttpResponse()
         response.write(get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
@@ -244,15 +261,6 @@ def get_submission_xml(request):
 
 
 
-# def response_error(msg, format):
-#     """
-#
-#     :param msg:
-#     :return: response
-#     """
-#     return HttpResponse(answer_format("error", msg, format))
-
-
 # def get_xml_version(submission_xml):
 #     pass  # todo check namespace for version
 #     return "proforma_v2.0"
@@ -291,23 +299,6 @@ def get_submission_xml(request):
 #     schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, 'xsd/proforma_v2.0.xsd'))  # todo fix this
 #     xml_dict = xmlschema.to_dict(xml_document=xml, schema=schema)
 #     return xml_dict
-
-
-# def check_task_type(submission_dict):
-#     if submission_dict.get("external-task"):
-#         task_path = submission_dict["external-task"]["$"]
-#         task_uuid = submission_dict["external-task"]["@uuid"]
-#         return {"external-task": {"task_path": task_path, "task_uuid": task_uuid}}
-#     elif submission_dict.get("task"):
-#         return "task"
-#     elif submission_dict.get("inline-task-zip"):
-#         return "inline-task-zip"
-#     else:
-#         return None
-
-
-
-
 
 
 
@@ -374,59 +365,60 @@ def get_submission_file_from_request(searched_file_name, request):
                 submission_files_dict.update({searched_file_name: file_content})
                 return submission_files_dict
 
-
-    # logger.debug("not found => relative path?: " + searched_file_name)
-    #
-    # # special handling for filenames containing a relative path (Java):
-    # # if file_name is not found:
-    # for filename, file in request.FILES.items():
-    #     # name = request.FILES[filename].name
-    #     # logger.debug("request.FILES[" + name + "]")
-    #     pure_filename = os.path.basename(searched_file_name)  # remove path
-    #     if filename == pure_filename:
-    #         submission_files_dict = dict()
-    #         file_content = file.read().decode('utf-8')
-    #         submission_files_dict.update({searched_file_name: file_content})
-    #         return submission_files_dict
-
     raise Exception("could not find external submission " + searched_file_name)
+
+
 
 def get_submission_files(root, request):
     ## TODO: read binary if possible and write binary without conversion
 
+    # check for external submission
     submission_element = root.find(".//dns:external-submission", NAMESPACES)
     if submission_element is not None:
         # handle external submission
-        field_name = submission_element.text
-        if not field_name:
+        submission_uri = submission_element.text
+        if not submission_uri:
             raise Exception("invalid value for external-submission (none)")
 
         # extract filename (list)
-        m = re.match(r"(http\-file\:)(?P<file_name>.+)", field_name)
-        if not m:
-            raise Exception("unsupported external-submission: " + field_name)
-        file_names = m.group('file_name')
-        if file_names is None:
-            raise Exception("missing filename in external-submission")
+        m = re.match(r"(http\-file\:)(?P<file_name>.+)", submission_uri)
+        if m:
+            logger.debug('submission attached to request')
+            # special case for attached submission
+            file_names = m.group('file_name')
+            if file_names is None:
+                raise Exception("missing filename in external-submission")
 
-        logger.debug("submission filename(s): " + str(file_names))
-        # filename may be a list of filenames
-        names = str(file_names).split(',')
-        submission_files_dict = dict()
-        for searched_file_name in names:
-            # collect all files
-            submission_files_dict.update(get_submission_file_from_request(searched_file_name, request))
-        return submission_files_dict
+            logger.debug("submission filename(s): " + str(file_names))
+            # filename may be a list of filenames
+            names = str(file_names).split(',')
+            submission_files_dict = dict()
+            for searched_file_name in names:
+                # collect all files
+                submission_files_dict.update(get_submission_file_from_request(searched_file_name, request))
+            return submission_files_dict
+        else:
+            # expect actual URI
+            # SVN:
+            # export submission from URI
+            logger.debug('SVN submission')
+            return get_submission_files_from_svn(submission_uri)
 
+
+    #embedded submission
+    logger.debug('embedded submission')
+    return get_submission_files_from_submission_xml(root)
+
+
+def get_submission_files_from_submission_xml(root):
     submission_files_dict = dict()
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
     for sub_file in submission_elements:
-        #logger.debug(sub_file)
+        # logger.debug(sub_file)
         filename = sub_file.attrib["filename"]
-        #logger.debug('classname is ' + sub_file.text.__class__.__name__)
+        # logger.debug('classname is ' + sub_file.text.__class__.__name__)
         file_content = sub_file.text  # no need to encode because it is already a Unicode object
         submission_files_dict.update({filename: file_content})
-
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-bin-file", NAMESPACES)
     if len(submission_elements) > 0:
         raise Exception("embedded-bin-file in submission is not supported")
@@ -436,97 +428,45 @@ def get_submission_files(root, request):
     submission_elements = root.findall(".//dns:files/dns:file/dns:attached-txt-file", NAMESPACES)
     if len(submission_elements) > 0:
         raise Exception("attached-txt-file in submission is not supported")
-
     if len(submission_files_dict) == 0:
         raise Exception("No submission attached")
-
     return submission_files_dict
 
-# compress file dictionary as zip file
-# def file_dict2zip(file_dict):
-#     tmp_dir = tempfile.mkdtemp()
-#
-#     try:
-#
-#         os.chdir(os.path.dirname(tmp_dir))
-#         for key in file_dict:
-#             logger.debug("file_dict2zip Key: " + key)
-#             if os.path.dirname(key) == '':
-#                 with open(os.path.join(tmp_dir, key), 'w') as f:
-#                     f.write(file_dict[key])
-#             else:
-#                 if not os.path.exists(os.path.join(tmp_dir, os.path.dirname(key))):
-#                     os.makedirs(os.path.join(tmp_dir, os.path.dirname(key)))
-#                 with open(os.path.join(tmp_dir, key), 'w') as f:
-#                     f.write(file_dict[key])
-#
-#         submission_zip = shutil.make_archive(base_name="submission", format="zip", root_dir=tmp_dir)
-#         submission_zip_fileobj = open(submission_zip, 'rb')
-#         return submission_zip_fileobj
-#     except IOError as e:
-#         raise IOError("IOError:", "An error occurred while open zip-file", e)
-#     #except Exception as e:
-#     #    raise Exception("zip-creation error:", "An error occurred while creating zip: E125001: "
-#     #                    "Couldn't determine absolute path of '.'", e)
-#     finally:
-#         shutil.rmtree(tmp_dir)
+
+def get_submission_files_from_svn(submission_uri):
+    from utilities.safeexec import execute_arglist
+    from django.conf import settings
+
+    folder = tempfile.mkdtemp()
+    tmp_dir = os.path.join(folder, "submission")
+    cmd = ['svn', 'export', '--username', os.environ['SVNUSER'], '--password', os.environ['SVNPASS'], submission_uri,
+           tmp_dir]
+    logger.debug(cmd)
+    [output, error, exitcode, timed_out, oom_ed] = \
+        execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
+                        fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[])
+    if exitcode != 0:
+        message = ''
+        if error != None:
+            logger.debug('error: ' + str(error))
+            message += error + ' '
+        if output != None:
+            logger.debug('output: ' + str(output))
+            message += output
+        raise ExternalSubmissionException(message)
+    if timed_out:
+        raise ExternalSubmissionException('timeout when getting svn submission')
+
+    # create filename dictionary
+    submission_files_dict = dict()
+    import glob
+    for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
+        if not os.path.isfile(file_name):  # ignore directories
+            continue
+
+        shortname = file_name[len(tmp_dir) + 1:]
+        logger.debug('add ' + str(shortname))
+        submission_files_dict[shortname] = PhysicalFile(file_name)
+    return submission_files_dict
 
 
-# def create_external_task(content_file_obj, server, taskFilename, formatVersion):
-#
-#
-#
-#     #if settings.server.get(server):
-#     #    LOGINBYSERVER
-#     FILENAME = taskFilename
-#     #f = codecs.open(content_file_obj.name, 'r+', 'utf-8')
-#     #files = {FILENAME: codecs.open(content_file_obj.name, 'r+', 'utf-8')}
-#
-#     try:
-#         files = {FILENAME: open(content_file_obj.name, 'rb')}
-#     except IOError:  #
-#         files = {FILENAME: content_file_obj}
-#     url = urlparse.urljoin(server, 'importTask')
-# #    url = urllib.parse.urljoin(server, 'importTask')
-#     result = requests.post(url, files=files)
-#
-#     message = ''
-#     if result.headers['Content-Type'] == 'application/json':
-#         logger.debug(result.text)
-#         #try:
-#         taskid = result.json().get('taskid')
-#         message = result.json().get('message')
-#
-#         #except ValueError:
-#         #    message = "Error while creating task on grader: " + str(ValueError)
-#         #    raise ValueError(message)
-#         #except Exception:
-#         #    message = "Error while creating task on grader: " + str(Exception)
-#         #    raise Exception(message)
-#     else:
-#         message = "Could not create task on grader: " + result.text
-#         raise IOError(message)
-#
-#     if taskid == None:
-#         logger.debug('could not create task: ' + str(message))
-#         raise Exception('could not create task: ' + str(message))
-#
-#     return taskid
-
-
-# def send_submission2external_grader(request, server, taskID, files, answer_format):
-#     logger.debug("send_submission2external_grader called")
-#     serverpath = urlparse.urlparse(server)#
-# ##    serverpath = urllib.parse.urlparse(server)
-#     domainOutput = "external_grade/" + str(answer_format) + "/v1/task/"
-#     path = "/".join([str(x).rstrip('/') for x in [serverpath.path, domainOutput, str(taskID)]])
-#     gradingURL = urlparse.urljoin(server, path)
-# ##    gradingURL = urllib.parse.urljoin(server, path)
-#     logger.debug("gradingURL: " + gradingURL)
-#     result = requests.post(url=gradingURL, files=files)
-#     return result
-#     #if result.status_code == requests.codes.ok:
-#     #    return result.text
-#     #else:
-#     #    logger.exception("send_submission2external_grader: " + str(result.status_code) + "result_text: " + result.text)
-#     #    raise Exception(result.text)

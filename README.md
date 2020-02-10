@@ -21,6 +21,22 @@ The following programming languages and test frameworks are provided with the Pr
 
 For running SetlX tests you need to copy the setlx-2.7.jar into the extra folder.
 
+Note: For installation of other framework versions then you need to modify 
+- src/checker/JUnitChecker.py
+- src/checker/CheckStyleChecker.py
+- URLs in Dockerfile
+- src/settings.docker.py
+
+## Submission
+
+The following types of submission are supported:
+
+* one single file (embedded or attached to request) 
+* several files (embedded or attached to request) 
+* zip file containing several files
+* URI of SVN repository to export the submission from (credentials are stored in .env file)
+ 
+
 ## Docker
 
 In order to build and start the docker composition simply run 
@@ -29,11 +45,7 @@ In order to build and start the docker composition simply run
         docker-compose up
       
 
-Note: For installation of other framework versions then you need to modify 
-- src/checker/JUnitChecker.py
-- src/checker/CheckStyleChecker.py
-- URLs in Dockerfile
-- src/settings.docker.py
+
 
 <!--
 TODO: The Web-Interface seems to be buggy.  
@@ -110,10 +122,16 @@ You can also omit the relative path for Java source files:
 ### Administration
 
 Praktomat stores tasks and results in a database and in the filesystem. In order to
-save disk space everything should be deleted when possible (e.g. before starting a new semester).
-The easiest way to do this is to delete the whole docker composition.
+save disk space everything should be reset from time to time (e.g. before starting a new semester).
+This can easily be done by calling 
 
     docker-compose down
     docker-dompose up 
   
 There is no need to back-up anything of the container!
+
+In case of a software update this is the recommended way to start after updating:
+
+    docker-compose down
+    docker-dompose build    
+    docker-dompose up 
