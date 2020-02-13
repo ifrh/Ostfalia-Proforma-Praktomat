@@ -158,9 +158,11 @@ def grade_api_v2(request,):
         if proformatask == None:
             raise Exception("could not create task")
 
+        # save solution in database
+        solution = grade.save_solution(proformatask, submission_files)
+
         # run tests
-        logger.debug('grade submission')
-        grade_result = grade.grader_internal(proformatask, submission_files, answer_format)
+        grade_result = grade.grade(solution, answer_format)
 
         # return result
         logger.debug("grading finished")
@@ -441,7 +443,7 @@ def get_submission_files_from_svn(submission_uri):
     tmp_dir = os.path.join(folder, "submission")
     cmd = ['svn', 'export', '--username', os.environ['SVNUSER'], '--password', os.environ['SVNPASS'], submission_uri,
            tmp_dir]
-    logger.debug(cmd)
+    # logger.debug(cmd)
     [output, error, exitcode, timed_out, oom_ed] = \
         execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
                         fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[])
@@ -457,6 +459,15 @@ def get_submission_files_from_svn(submission_uri):
     if timed_out:
         raise ExternalSubmissionException('timeout when getting svn submission')
 
+    # logger.debug('SVN-output: ' + output)
+    # find revision
+    m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
+    revision = 'unknown revision'
+    if m:
+        if m.group('revision') is not None:
+            revision = m.group('revision')
+        logger.debug("SVN revision is: " + revision)
+
     # create filename dictionary
     submission_files_dict = dict()
     import glob
@@ -465,7 +476,7 @@ def get_submission_files_from_svn(submission_uri):
             continue
 
         shortname = file_name[len(tmp_dir) + 1:]
-        logger.debug('add ' + str(shortname))
+        # logger.debug('add ' + str(shortname))
         submission_files_dict[shortname] = PhysicalFile(file_name)
     return submission_files_dict
 
