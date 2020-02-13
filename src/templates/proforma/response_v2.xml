@@ -3,7 +3,11 @@
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" {% if solution.lang %}lang="{{solution.lang }} }}"{% endif %}>
     {% if solution.seperate %}<separate-test-feedback>
         <submission-feedback-list>
-        </submission-feedback-list>
+{% if solution.versioncontrol %}            <student-feedback level="info">
+                <title>Version Control System</title>
+                <content format="plaintext">{{solution.versioncontrol.system}}: {{solution.versioncontrol.uri}} Revision: {{solution.versioncontrol.revision}}</content>
+            </student-feedback>
+{% endif %}        </submission-feedback-list>
         <tests-response>
             {% for testResult in testResultList %}
             <test-response id="{{ testResult.checker.proforma_id }}">

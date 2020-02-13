@@ -68,6 +68,13 @@ class PhysicalFile:
         self.path = path
 
 
+# class for storing information about source control
+class VersionControlSystem:
+    def __init__(self, revision, uri):
+        self.system = 'SVN'
+        self.revision = revision
+        self.uri = uri
+
 # string format for exception return message in HTTP
 def get_http_error_page(title, message, callstack):
     return """%s
@@ -144,15 +151,13 @@ def grade_api_v2(request,):
                     raise Exception ("inline-task-zip in submission.xml is not supported")
                 else:
                     raise Exception("could not find task in submission.xml")
-        #logger.debug("got task")
 
         # xml2dict is very slow
         #submission_dict = xml2dict(xml)
-        #logger.debug("xml->dict")
 
-        # task_type_dict = check_task_type(submission_dict)
-        submission_files = get_submission_files(root, request) # returns a dictionary (filename -> contant)
         logger.info("grading request for task " + task_filename)
+
+        submission_files, version_control = get_submission_files(root, request) # returns a dictionary (filename -> contant)
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
         if proformatask == None:
@@ -160,6 +165,8 @@ def grade_api_v2(request,):
 
         # save solution in database
         solution = grade.save_solution(proformatask, submission_files)
+        if version_control != None:
+            solution.versioncontrol = version_control
 
         # run tests
         grade_result = grade.grade(solution, answer_format)
@@ -190,7 +197,6 @@ def grade_api_v2(request,):
 
 
 def get_external_task(request, task_uri):
-
     # logger.debug("task_uri: " + str(task_uri))
     ##
     # test file-field
@@ -226,7 +232,6 @@ def get_submission_xml(request):
     # todo check encoding of the xml -> first line
     encoding = 'utf-8'
     if not request.POST:
-
         #if not request.FILES:
         #    raise KeyError("No submission attached")
 
@@ -234,14 +239,8 @@ def get_submission_xml(request):
             # submission.xml in request.Files
             logger.debug("FILES.keys(): " + str(list(request.FILES.keys())))
             if request.FILES['submission.xml'].name is not None:
-                #xml_dict = dict()
-                #xml_dict[request.FILES['submission.xml'].name] = request.FILES['submission.xml']
-                #logger.debug("xml_dict.keys(): " + str(xml_dict.keys()))
-                #xml = xml_dict.popitem()[1].read()
-                #xml_decoded = xml.decode(encoding)
                 xml = request.FILES['submission.xml'].read() # convert InMemoryUploadedFile to string
-                #xml_encoded = xml.encode(encoding)
-                return xml # xml_encoded
+                return xml
             elif request.FILES['submission.zip'].name:
                 # todo zip handling -> praktomat zip
                 raise Exception("zip handling is not implemented")
@@ -398,7 +397,7 @@ def get_submission_files(root, request):
             for searched_file_name in names:
                 # collect all files
                 submission_files_dict.update(get_submission_file_from_request(searched_file_name, request))
-            return submission_files_dict
+            return submission_files_dict, None
         else:
             # expect actual URI
             # SVN:
@@ -432,7 +431,7 @@ def get_submission_files_from_submission_xml(root):
         raise Exception("attached-txt-file in submission is not supported")
     if len(submission_files_dict) == 0:
         raise Exception("No submission attached")
-    return submission_files_dict
+    return submission_files_dict, None
 
 
 def get_submission_files_from_svn(submission_uri):
@@ -468,6 +467,9 @@ def get_submission_files_from_svn(submission_uri):
             revision = m.group('revision')
         logger.debug("SVN revision is: " + revision)
 
+    versioncontrolinfo = VersionControlSystem(revision, submission_uri)
+
+
     # create filename dictionary
     submission_files_dict = dict()
     import glob
@@ -478,6 +480,6 @@ def get_submission_files_from_svn(submission_uri):
         shortname = file_name[len(tmp_dir) + 1:]
         # logger.debug('add ' + str(shortname))
         submission_files_dict[shortname] = PhysicalFile(file_name)
-    return submission_files_dict
+    return submission_files_dict, versioncontrolinfo
 
 
