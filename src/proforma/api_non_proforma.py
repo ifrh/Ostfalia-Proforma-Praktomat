@@ -358,3 +358,81 @@ def getStudentSubmissionFile(filePathList, domain):
 #     except Exception:
 #         return HttpResponse("Could not read version")
 #     return HttpResponse(contents)
+
+
+# def error_page(error_code):
+#     """
+#     error_page(error_code)
+#     return (LON-CAPA ERROR RESPONSE)
+#
+#     error_code 1: task does not exist
+#     error_code 2: no data is send to script
+#     error_code 3: server couldn\'t fulfill the request. (get_data)
+#     """
+#     # todo: instead of using if-statements use switch-statement
+#     if error_code == 1:
+#         award = "ERROR"
+#         message = "task does not exist"
+#     elif error_code == 2:
+#         award = "INTERNAL_ERROR"
+#         message = "no data is send to script"
+#     elif error_code == 3:
+#         award = "INTERNAL_ERROR"
+#         message = "server couldn\'t fulfill the request. (get_data)"
+#     elif error_code == 4:
+#         award = "INTERNAL_ERROR"
+#         message = "server not reachable"
+#     elif error_code == 5:
+#         award = "INTERNAL_ERROR"
+#         message = "file could not saved on praktomat"
+#     else:
+#         award = "INTERNAL_ERROR"
+#         message = "error not specified"
+#     return """<loncapagrade>
+#     <awarddetail>%s</awarddetail>
+#     <message><![CDATA[grade: %s]]></message>
+#     <awarded></awarded>
+#     </loncapagrade>""" % (award, message)
+
+
+# def get_solution(result, result_message, solution):
+#     result_message += "<h2>" + "Aufgabe: " + solution.task.title + "</h2>"
+#
+#     #check for all tests
+#     if solution.accepted:
+#         result_message += "<p style=\"color:#008500;\">All required tests have been passed.</p>"
+#         result_award = "EXACT_ANS"
+#     else:
+#         result_award = "INCORRECT"
+#         result_message += "<p style=\"color:red;\">Not all required tests have been passed.</p>"
+#
+#     # Details
+#     result_message += "<h2>Ergebnisse</h2>"
+#     for index in range(len(result)):
+#         if result[index].checker.public:
+#             result_message += "<h3>" + result[index].checker.title()
+#             if result[index].passed:
+#                 result_message += " : <span style=\"color:#008500;\"> bestanden</span></h3>"
+#             else:
+#                 result_message += " : <span style=\"color:red;\"> nicht bestanden</span></h3>"
+#
+#             result_message += "<div class=\"log\">log: " + result[index].log + "</div>"
+#
+#     return result_award, result_message
+
+
+# def result_page(award, message):
+#     return """<loncapagrade>
+#     <awarddetail>%s</awarddetail>
+#     <message><![CDATA[grade: %s]]></message>
+#     <awarded></awarded>
+#     </loncapagrade>""" % (award, message)
+
+# def print_submitted_files(result_message, solution, file_name_string):
+#     # print submitted files
+#     solutionfiles = solution.solutionfile_set.all()
+#     result_message += "<h2>Files</h2>"
+#     for index in range(len(solutionfiles)):
+#         result_message += "<h3>" + file_name_string + "</h3>"
+#         result_message += "<pre>" + solutionfiles[index].content() + "</pre>"
+#     return result_message

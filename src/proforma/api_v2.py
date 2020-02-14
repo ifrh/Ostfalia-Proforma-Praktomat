@@ -23,8 +23,6 @@
 
 
 #import tempfile
-#from urllib.parse import urlparse # version 3
-#import urlparse
 import traceback
 
 from lxml import etree
@@ -34,8 +32,6 @@ from lxml import etree
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files import File
-#from django.views.decorators.csrf import csrf_exempt
-#from django.conf import settings
 
 import os
 import re
@@ -49,7 +45,6 @@ import zipfile
 import tempfile
 import VERSION
 
-#from proforma_taskget.views import login_phantomjs, get_task_from_externtal_server, answer_format_template
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -468,7 +463,6 @@ def get_submission_files_from_svn(submission_uri):
         logger.debug("SVN revision is: " + revision)
 
     versioncontrolinfo = VersionControlSystem(revision, submission_uri)
-
 
     # create filename dictionary
     submission_files_dict = dict()

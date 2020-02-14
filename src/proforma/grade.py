@@ -2,7 +2,7 @@
 
 # This file is part of Ostfalia-Praktomat.
 #
-# Copyright (C) 2012-2019 Ostfalia University (eCULT-Team)
+# Copyright (C) 2012-2020 Ostfalia University (eCULT-Team)
 # http://ostfalia.de/cms/de/ecult/
 #
 # This program is free software; you can redistribute it and/or
@@ -21,25 +21,17 @@
 # functions for grading a student's submission
 
 from django.conf import settings
-#from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render_to_response
-#from django.contrib.auth import login
 from django.core.exceptions import ObjectDoesNotExist
-#from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 
 #from accounts.templatetags.in_group import in_group
 from tasks.models import Task
 from accounts.models import User
-#from utilities import encoding
-#from urllib.request import Request, urlopen
-#from urllib.error import URLError, HTTPError
 from solutions.models import Solution, SolutionFile
 from VERSION import version
 
 from django.template.loader import render_to_string
 
-#import mimetypes
 import os
 #import codecs
 #import re
@@ -47,7 +39,6 @@ import logging
 #import chardet
 #import traceback
 
-#from solutions.forms import SolutionFormSet
 
 logger = logging.getLogger(__name__)
 
@@ -66,94 +57,6 @@ def get_http_error_page(title, message, callstack):
 Callstack:
     %s""" % (title, message, callstack)
 
-
-# internal proforma entry point
-# @csrf_exempt  # disable csrf-cookie
-# def file_grader_post(request, response_format, task_id=None):
-#     try:
-#
-#         logger.debug("file_grader_post start")
-#
-#         DEFINED_USER = "sys_prod"
-#         ziptype_re = re.compile(r'^application/(zip|x-zip|x-zip-compressed|x-compressed)$')
-#
-#         response = HttpResponse()
-#         # save files
-#         # start grading
-#
-#         # check post
-#         if request.method != 'POST':
-#             raise Exception("No POST-Request")
-#
-#         postData = request.POST.copy()
-#
-#         #if len(postData) > 1:
-#         #    result_message = "Error: Please only one file "
-#         #    response.write(result_page(award="ERROR", message=result_message))
-#         #    return response
-#
-#         #check if task exist
-#         if not check_task_id(task_id):
-#             raise Exception("task does not exist. Task number " +  str(task_id))
-#
-#         #check if user is authenticated if not login
-#         if not request.user.is_authenticated():
-#             if authenticate_user(DEFINED_USER, request) is None:
-#                 raise Exception("system user does not exist")
-#
-#         #create task_object for submitting data
-#         task = get_object_or_404(Task, pk=task_id)
-#         supported_types_re = re.compile(task.supported_file_types)
-#
-#         fileNameList = []
-#         DataNameList = []
-#         fileDict = dict()
-#         for filename, file in request.FILES.items():
-#             fileNameList.append(str(filename))
-#             DataNameList.append(str(file.name))
-#             actualFileName = re.search(r"([\w\.\-]+)$", filename, re.MULTILINE)
-#             contentType = mimetypes.guess_type(filename)[0]  #todo: really?
-#             if not actualFileName:
-#                 raise Exception("Incorrect filename")
-#
-#             if (contentType is None) or (not (supported_types_re.match(contentType) or ziptype_re.match(contentType))):
-#                 result_message = "Mime-type %s is not supported by this task" % contentType
-#                 raise Exception(result_message)
-#
-#             try:
-#                 filename.decode('ascii')
-#                 fileDict[str(filename)] = file
-#             except UnicodeEncodeError:
-#                 raise Exception("filename must not contain any special characters:" + filename)
-#
-#         #two lists with fileName and DataName
-#
-#         solution = initSolution(request, task)
-#
-#         # todo: copy from solution/views -> files from form could use default checks
-#         # formset = SolutionFormSet(solution, request.FILES, instance=solution)
-#         saveSolution(solution, fileDict)
-#         result, solution = gradeSolution(solution)
-#         lcxml = get_solution_xml(result, solution, fileNameList, response_format)
-#
-#         logger.debug("file_grader_post finished")
-#
-#         return HttpResponse(lcxml)
-#
-#         #result_message = "Everything is fine"
-#         #response.write(result_page(award="CORRECT", message=result_message))
-#         #response.status_code = 200
-#         #return response
-#
-#     except Exception as inst:
-#         logger.exception(inst)
-#         callstack = traceback.format_exc()
-#         #print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
-#
-#         #result_message = str(inst) + "\n" + callstack
-#         response.write(get_http_error_page('Error in grading process', str(inst), callstack))
-#         response.status_code = 500 # internal error
-#         return response
 
 
 # OBSOLETE, creating class file in correct path cn be done with '-d .' compiler options
@@ -189,8 +92,6 @@ def save_solution(task, fileDict):
     # save the solution model in the database
     solution.save()
 
-    # todo: copy from solution/views -> files from form could use default checks
-    # formset = SolutionFormSet(solution, request.FILES, instance=solution)
     for index in range(len(fileDict)):
         # create solution_file
         solution_file = SolutionFile(solution=solution)
@@ -200,9 +101,8 @@ def save_solution(task, fileDict):
         #logger.debug('save file ' + filename)
         #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
         data = list(fileDict.values())[index]
-        #data = fileDict.values()[index].read()
         saved_solution = save_file(data, solution_file, filename)
-        #remove the upload path /home/ecult/devel_oli/upload
+        #remove the upload path
         shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
         #remove the beginnning slash -> relative path
         super_short_solution = shorter_saved_solution[1:]
@@ -228,118 +128,6 @@ def grade(solution, response_format):
     logger.debug("file_grader_post finished")
 
     return lcxml
-
-
-
-#
-# def initSolution(request, task):
-#     #create author_object for submitting data
-#     user_id = None
-#     author = get_object_or_404(User,
-#                                pk=user_id) if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
-#     #solution object for submission
-#     solution = Solution(task=task, author=author)
-#     #save the solution model in the database
-#     solution.save()
-#
-#    return solution
-
-
-
-
-# def gradeSolution(solution):
-#     #start the checking process
-#     logger.debug('execute checks')
-#     solution.check_solution(True, keep_sandbox)
-#     #get result object
-#     logger.debug('get results...')
-#
-#     result = solution.allCheckerResults()
-#     return result, solution
-
-
-# @csrf_exempt  # disable csrf-cookie
-# def text_grader(request, user_name=None, task_id=None, file_name=None, lms=None):
-#     """
-#
-#     :param request:
-#     :param user_name:
-#     :param task_id:
-#     :param file_name:
-#     :return:
-#     """
-#     response = HttpResponse()
-#     result_message = ""
-#     DEFINED_USER = "sys_prod"  # username in praktomat
-#     DEFINED_FILENAME = "submit.java"
-#     response_format = "loncapa"
-#     # todo: user_name erase
-#
-#     if file_name is None:
-#         file_name = DEFINED_FILENAME
-#     else:
-#         try:
-#             # only ascii characters are allowed
-#             file_name = file_name.encode("utf-8")
-#         except UnicodeEncodeError:
-#             result_message = "Der Text darf keine Sonderzeichen enthalten"
-#             response.write(result_page(award="ERROR", message=result_message))
-#             response.status_code = 200
-#             return response
-#
-#     # check if task exist
-#     if not check_task_id(task_id):
-#         response.write(error_page(1))
-#         response.status_code = 200
-#         return response
-#
-#     #create task_object for submitting data
-#     task = get_object_or_404(Task, pk=task_id)
-#
-#     if request.POST:  # check if it is a POST.Request
-#         student_response = request.POST.get('LONCAPA_student_response')  # get string of post-message
-#         if not student_response:
-#             result_message = "Keine Einreichung angegeben"
-#             response.write(result_page(award="ERROR", message=result_message))
-#             response.status_code = 200
-#             return response
-#             #  todo: max file size? anything i should remove?
-#     else:
-#         result_message = "Keine Einreichung angegeben"
-#         response.write(result_page(award="ERROR", message=result_message))
-#         response.status_code = 200
-#         return response
-#
-#     #check if user is authenticated if not login
-#     if not request.user.is_authenticated():
-#         if authenticate_user(DEFINED_USER, request) is None:
-#             result_message = "Der System_User existiert nicht auf dem Bewertungssystem"
-#             response.write(result_page(award="ERROR", message=result_message))
-#             response.status_code = 200
-#             return response
-#     try:
-#         result, solution = grade_task(student_response, request, file_name, task)
-#     except Exception as e:
-#         result_message = "%s" % e
-#         response.write(result_page(award="ERROR", message=result_message))
-#         response.status_code = 200
-#         return response
-#         #result printing
-#
-#     if lms == 'lcxml':
-#         fileList = list()
-#         fileList.append(file_name)  # one file is the exception -> list needed
-#         lcxml = get_solution_xml(result, solution, fileList, response_format)
-#         return HttpResponse(lcxml)
-#     else:
-#         result_award, result_message = get_solution(result, result_message, solution)  # print submitted files
-#         #print_submitted_files
-#         result_message = print_submitted_files(result_message, solution, file_name)
-#
-#         response.write(result_page(award=result_award, message=result_message))
-#         response.status_code = 200
-#     return response
-
 
 
 def save_file(data, solution_file, filename):
@@ -441,17 +229,6 @@ def save_file(data, solution_file, filename):
     return full_filename
 
 
-def check_task_id(task_id):
-    """
-    check_task_id(task_id)
-    return task object or None
-    """
-    try:
-        task = Task.objects.get(pk=task_id)
-        return task
-    except ObjectDoesNotExist:
-        return None
-
 
 def get_mimetype(txt):
     """
@@ -463,130 +240,14 @@ def get_mimetype(txt):
     return 'text/plain'
 
 
-# def error_page(error_code):
-#     """
-#     error_page(error_code)
-#     return (LON-CAPA ERROR RESPONSE)
-#
-#     error_code 1: task does not exist
-#     error_code 2: no data is send to script
-#     error_code 3: server couldn\'t fulfill the request. (get_data)
-#     """
-#     # todo: instead of using if-statements use switch-statement
-#     if error_code == 1:
-#         award = "ERROR"
-#         message = "task does not exist"
-#     elif error_code == 2:
-#         award = "INTERNAL_ERROR"
-#         message = "no data is send to script"
-#     elif error_code == 3:
-#         award = "INTERNAL_ERROR"
-#         message = "server couldn\'t fulfill the request. (get_data)"
-#     elif error_code == 4:
-#         award = "INTERNAL_ERROR"
-#         message = "server not reachable"
-#     elif error_code == 5:
-#         award = "INTERNAL_ERROR"
-#         message = "file could not saved on praktomat"
-#     else:
-#         award = "INTERNAL_ERROR"
-#         message = "error not specified"
-#     return """<loncapagrade>
-#     <awarddetail>%s</awarddetail>
-#     <message><![CDATA[grade: %s]]></message>
-#     <awarded></awarded>
-#     </loncapagrade>""" % (award, message)
-
-
-# def result_page(award, message):
-#     return """<loncapagrade>
-#     <awarddetail>%s</awarddetail>
-#     <message><![CDATA[grade: %s]]></message>
-#     <awarded></awarded>
-#     </loncapagrade>""" % (award, message)
-
-
-# def authenticate_user(defined_user, request):
-#     try:
-#         user = User.objects.get(username__exact=defined_user)  # check if user exist in system
-#         user.backend = 'django.contrib.auth.backends.ModelBackend'  # prevent error 'User' object
-#         # has no attribute 'backend'
-#         login(request, user)
-#         return True
-#     except ObjectDoesNotExist:
-#         return None
-
-
-# def grade_task(data, request, submitted_file_name, task):
-#     #create author_object for submitting data
-#     user_id = None
-#     author = get_object_or_404(User,
-#                                pk=user_id) if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
-#     #get model_solution
-#     modelSolution = task.model_solution
-#     #add model_solutionpath to submission file
-#     #modelSolutionFileObj = SolutionFile.objects.get(pk=task.model_solution_id) # really? create FileObject
-#     modelSolutionFileObj = SolutionFile(solution=modelSolution)
-#     modelSolutionFilenamePath = modelSolutionFileObj.file.name
-#     unwantedPath = "SolutionArchive/Task_" + str(task.id) + "/User_" + str(author.username) + "/Solution_" + \
-#                    str(task.model_solution_id) + "/"
-#     modelSolutionPath = os.path.dirname(modelSolutionFilenamePath[len(unwantedPath):])
-#     submitted_file_name = os.path.join(modelSolutionPath, submitted_file_name)
-#     solution = Solution(task=task, author=author)
-#     #save the solution model in the database
-#     solution.save()
-#     #create solution_file
-#     solution_file = SolutionFile(solution=solution)
-#     #save solution in environment and get the path
-#     saved_solution = save_file(data, solution_file, submitted_file_name)
-#
-#     #remove the upload path /home/ecult/devel_oli/upload
-#     shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
-#     #remove the beginnning slash -> relative path
-#     super_short_solution = shorter_saved_solution[1:]
-#     #save solution file
-#     solution_file.file = super_short_solution
-#     solution_file.save()
-#     run_all_checker = bool(
-#         User.objects.filter(id=user_id, tutorial__tutors__pk=request.user.id) or
-#         in_group(request.user, 'Trainer'))  # true show also hidden tests
-#     #start the checking process
-#     solution.check(run_all_checker)
-#     #get result object
-#     result = solution.allCheckerResults()
-#     return result, solution
-
-
-# def get_solution(result, result_message, solution):
-#     result_message += "<h2>" + "Aufgabe: " + solution.task.title + "</h2>"
-#
-#     #check for all tests
-#     if solution.accepted:
-#         result_message += "<p style=\"color:#008500;\">All required tests have been passed.</p>"
-#         result_award = "EXACT_ANS"
-#     else:
-#         result_award = "INCORRECT"
-#         result_message += "<p style=\"color:red;\">Not all required tests have been passed.</p>"
-#
-#     # Details
-#     result_message += "<h2>Ergebnisse</h2>"
-#     for index in range(len(result)):
-#         if result[index].checker.public:
-#             result_message += "<h3>" + result[index].checker.title()
-#             if result[index].passed:
-#                 result_message += " : <span style=\"color:#008500;\"> bestanden</span></h3>"
-#             else:
-#                 result_message += " : <span style=\"color:red;\"> nicht bestanden</span></h3>"
-#
-#             result_message += "<div class=\"log\">log: " + result[index].log + "</div>"
-#
-#     return result_award, result_message
-
 
 def get_solution_xml(result, solution, file_name, response_format):
     # have to set it manually because it will only check visible tests
     false_required_hidden_test = False
     solution.seperate = True
+    from datetime import datetime
+    solution.timestamp = datetime.now().isoformat()
+
     # solution.versioncontrol = True
     grader = dict()
     grader.update({"name": "praktomat"})
@@ -635,12 +296,5 @@ def get_solution_xml(result, solution, file_name, response_format):
     return response_xml
 
 
-# def print_submitted_files(result_message, solution, file_name_string):
-#     # print submitted files
-#     solutionfiles = solution.solutionfile_set.all()
-#     result_message += "<h2>Files</h2>"
-#     for index in range(len(solutionfiles)):
-#         result_message += "<h3>" + file_name_string + "</h3>"
-#         result_message += "<pre>" + solutionfiles[index].content() + "</pre>"
-#     return result_message
+
 

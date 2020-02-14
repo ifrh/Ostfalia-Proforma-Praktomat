@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<response xmlns="urn:proforma:v2.0"
+<response xmlns="urn:proforma:v2.0" xmlns:praktomat="urn:proforma:praktomat:v2.0"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" {% if solution.lang %}lang="{{solution.lang }} }}"{% endif %}>
     {% if solution.seperate %}<separate-test-feedback>
         <submission-feedback-list>
-{% if solution.versioncontrol %}            <student-feedback level="info">
-                <title>Version Control System</title>
-                <content format="plaintext">{{solution.versioncontrol.system}}: {{solution.versioncontrol.uri}} Revision: {{solution.versioncontrol.revision}}</content>
-            </student-feedback>
-{% endif %}        </submission-feedback-list>
+        </submission-feedback-list>
         <tests-response>
             {% for testResult in testResultList %}
             <test-response id="{{ testResult.checker.proforma_id }}">
@@ -50,5 +46,9 @@
     </files>
     <response-meta-data>
         <grader-engine name="{{ grader.name }}" version="{{ grader.version }}"/>
+        <praktomat:response-meta-data>
+            <praktomat:response-datetime>{{ solution.timestamp }}</praktomat:response-datetime>
+{% if solution.versioncontrol %}            <praktomat:version-control-system name="{{solution.versioncontrol.system}}" submission-uri="{{solution.versioncontrol.uri}}" submission-revision="{{solution.versioncontrol.revision}}"/>{% endif %}
+        </praktomat:response-meta-data>
     </response-meta-data>
 </response>

@@ -130,8 +130,11 @@ This can easily be done by calling
   
 There is no need to back-up anything of the container!
 
-In case of a software update this is the recommended way to start after updating:
+#### Software Update
 
-    docker-compose down
-    docker-dompose build    
-    docker-dompose up 
+In case of a software update this is the recommended process:
+
+    1. docker-compose down
+    2. <update software>
+    3. docker-dompose build    
+    4. docker-dompose up 
