@@ -335,7 +335,7 @@ def check_solution(solution, run_all = 0, debug_keep_tmp = True):
     #env = CheckerEnvironment(solution)
 
     #solution.copySolutionFiles(env.tmpdir())
-    run_checks(solution, None, run_all)
+    run_checks(solution, None, run_all, debug_keep_tmp)
 
     # Delete temporary directory
     #if not(debug_keep_tmp and settings.DEBUG):
@@ -373,7 +373,7 @@ def check_multiple(solutions, run_secret = False, debug_keep_tmp = False):
 
 
 
-def run_checks(solution, env, run_all):
+def run_checks(solution, env, run_all, debug_keep_tmp=True):
     """  """
 
     passed_checkers = set()
@@ -395,59 +395,62 @@ def run_checks(solution, env, run_all):
                 continue
 
             logger.debug('=> run check ' + checker.__class__.__name__)
-            env = CheckerEnvironment(solution)
+            try:
+                env = CheckerEnvironment(solution)
 
-            solution.copySolutionFiles(env.tmpdir())
-            
-            # Check dependencies -> This requires the right order of the checkers
-            can_run_checker = True
-            for requirement in checker.requires():
-                passed_requirement = False
-                for passed_checker in passed_checkers:
-                    passed_requirement = passed_requirement or issubclass(passed_checker, requirement)
-                can_run_checker = can_run_checker and passed_requirement
+                solution.copySolutionFiles(env.tmpdir())
 
-            start_time = time.time()
+                # Check dependencies -> This requires the right order of the checkers
+                can_run_checker = True
+                for requirement in checker.requires():
+                    passed_requirement = False
+                    for passed_checker in passed_checkers:
+                        passed_requirement = passed_requirement or issubclass(passed_checker, requirement)
+                    can_run_checker = can_run_checker and passed_requirement
 
-            if can_run_checker:
-                # Invoke Checker
-                if settings.DEBUG or 'test' in sys.argv:
-                    result = checker.run(env)
-                else:
-                    try:
+                start_time = time.time()
+
+                if can_run_checker:
+                    # Invoke Checker
+                    if settings.DEBUG or 'test' in sys.argv:
                         result = checker.run(env)
-                    except:
-                        result = checker.create_result(env)
-                        result.set_log("The Checker caused an unexpected internal error.")
-                        result.set_passed(False)
-                        #TODO: Email Admins
-            else:
-                # make non passed result
-                # this as well as the dependency check should propably go into checker class
-                result = checker.create_result(env)
-                result.set_log("Checker konnte nicht ausgeführt werden, da benötigte Checker nicht bestanden wurden.")
-                result.set_passed(False)
-
-            elapsed_time = time.time() - start_time
-            result.runtime = int(elapsed_time*1000)
-            result.log = result.log.replace("\x00", "")
-            result.save()
-
-            if not result.passed and checker.show_publicly(result.passed):
-                if checker.required:
-                    solution_accepted = False
+                    else:
+                        try:
+                            result = checker.run(env)
+                        except:
+                            result = checker.create_result(env)
+                            result.set_log("The Checker caused an unexpected internal error.")
+                            result.set_passed(False)
+                            #TODO: Email Admins
                 else:
-                    solution.warnings= True
+                    # make non passed result
+                    # this as well as the dependency check should propably go into checker class
+                    result = checker.create_result(env)
+                    result.set_log("Checker konnte nicht ausgeführt werden, da benötigte Checker nicht bestanden wurden.")
+                    result.set_passed(False)
 
-            if result.passed:
-                passed_checkers.add(checker.__class__)
-                
-            # Delete temporary directory
-            if not settings.DEBUG:
-                try:
-                    shutil.rmtree(env.tmpdir())
-                except:
-                    pass
-                    
+                elapsed_time = time.time() - start_time
+                result.runtime = int(elapsed_time*1000)
+                result.log = result.log.replace("\x00", "")
+                result.save()
+
+                if not result.passed and checker.show_publicly(result.passed):
+                    if checker.required:
+                        solution_accepted = False
+                    else:
+                        solution.warnings= True
+
+                if result.passed:
+                    passed_checkers.add(checker.__class__)
+
+            finally:
+                # Delete temporary directory
+                if not(debug_keep_tmp and settings.DEBUG):
+                    try:
+                        logger.debug('delete sandbox '+ env.tmpdir())
+                        shutil.rmtree(env.tmpdir())
+                    except:
+                        pass
+
     solution.accepted = solution_accepted
     solution.save()
