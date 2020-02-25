@@ -38,6 +38,7 @@ import org.junit.runner.notification.RunListener;
 	String value();
 }
 
+
 public class Junit4ProFormAListener extends RunListener {
 
 	
@@ -56,6 +57,8 @@ public class Junit4ProFormAListener extends RunListener {
     Element score;
     Element feedbackList;
     Element studentFeedback;    
+    
+    private boolean failureOutsideTest = false;    
     
 
     public Junit4ProFormAListener() {
@@ -117,6 +120,12 @@ public class Junit4ProFormAListener extends RunListener {
 			e1.printStackTrace();
 		}
 
+        
+        if (this.failureOutsideTest) {
+        	// no xml creation
+        	return;
+        }
+        
     	
         // Transform Document to XML String
         TransformerFactory tf = TransformerFactory.newInstance();
@@ -316,6 +325,7 @@ public class Junit4ProFormAListener extends RunListener {
         //Throwable cause1 = exception.getCause();
         
         String exceptionText = exception.toString(); // name of exception
+           
         
         boolean showStackTraceToStudent = true;
         StackTraceElement[] strippedStacktrace = this.stripStackTrace(failure.getException().getStackTrace());
@@ -324,6 +334,14 @@ public class Junit4ProFormAListener extends RunListener {
         	stackTraceString = stackTraceString + s.toString() + "\n";
         }  
         stackTraceString = stackTraceString +  "[...]\n";
+        
+    	if (studentFeedback == null) {
+    		this.failureOutsideTest = true;
+    		writer.println(failure);
+    		writer.println("");
+    		writer.println(stackTraceString);        		
+    		return;    		
+    	}          
         
         if (strippedStacktrace.length > 0) {
         	if (strippedStacktrace[0].getClassName().startsWith("org.junit.")) {
@@ -488,6 +506,9 @@ public class Junit4ProFormAListener extends RunListener {
 			System.err.println(e.getMessage());
 	        System.exit(1);				
 		}
+		
+		if (listener.failureOutsideTest) 
+	        System.exit(1);
 		
         System.exit(0);			
 	}    

@@ -55,6 +55,8 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     
     private Exception exception = null;
     
+    private boolean failureOutsideTest = false;
+   
 
 	public void executionStarted(TestIdentifier testIdentifier) {
 		if (testIdentifier.getType() == Type.CONTAINER)
@@ -110,8 +112,12 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 	
 	
 	public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-		if (testIdentifier.getType() == Type.CONTAINER)
+		if (testIdentifier.getType() == Type.CONTAINER) {
+	    	if (studentFeedback == null) {
+	            testFailure(testExecutionResult);  	    		
+	    	}
 			return;		
+		}
         // writer.append("executionFinished: " + testIdentifier.getDisplayName()+ ": " + testExecutionResult + "\n");
         // todo: bei failed noch den Fehlertext
     	
@@ -195,6 +201,11 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 			e1.printStackTrace();
 		}
 
+        
+        if (this.failureOutsideTest) {
+        	// no xml creation
+        	return;
+        }        
     	
         // Transform Document to XML String
         TransformerFactory tf = TransformerFactory.newInstance();
@@ -266,6 +277,14 @@ public class Junit5ProFormAListener implements TestExecutionListener {
         	stackTraceString = stackTraceString + s.toString() + "\n";
         }  
         stackTraceString = stackTraceString +  "[...]\n";
+        
+    	if (studentFeedback == null) {
+    		this.failureOutsideTest = true;
+    		writer.println(exceptionText);
+    		writer.println("");
+    		writer.println(stackTraceString);        		
+    		return;    		
+    	}           
         
         if (strippedStacktrace.length > 0) {
         	if (strippedStacktrace[0].getClassName().startsWith("org.junit.")) {
@@ -390,6 +409,8 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 				System.err.println(listener.exception.getMessage());
 		        System.exit(1);						
 			}
+			if (listener.failureOutsideTest) 
+		        System.exit(1);					
 		} catch (Exception e) {
 			// reset redirection
 	        System.setOut(originalOut);           
@@ -398,6 +419,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 			System.err.println(e.getMessage());
 	        System.exit(1);				
 		}
+		
 		
         System.exit(0);			
 	}
