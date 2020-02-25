@@ -42,6 +42,11 @@ from checker.builder import JavaBuilder
 
 from . import task
 
+########################################
+# THIS FILE CONTAINS UNUSED CODE       #
+# VERSION 0.9.4 is no longer supported #
+########################################
+
 
 logger = logging.getLogger(__name__)
 

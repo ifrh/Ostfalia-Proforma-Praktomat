@@ -15,7 +15,7 @@ The following programming languages and test frameworks are provided with the Pr
 
 | Language      | Test Frameworks |
 | :---:        |    :----:   |         
-| Java 8     | Compiler ,  JUnit 4.12 / JUnit 5, Checkstyle 8.23   |
+| Java 8     | Compiler ,  JUnit 4.12 / JUnit 5, Checkstyle 8.23 / 8.29   |
 | SetlX   | Test, Syntax Check        |
 | Python 3   | Doctest        |
 

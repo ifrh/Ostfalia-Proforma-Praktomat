@@ -115,7 +115,9 @@ JAVA_LIBS = {
 CHECKSTYLE_VER = {'check-6.2': '/praktomat/lib/checkstyle-8.23-all.jar',
                   'check-7.6': '/praktomat/lib/checkstyle-8.23-all.jar',
 #                  'check-5.4': '/praktomat/lib/checkstyle-8.23-all.jar',
-                  'check-8.23': '/praktomat/lib/checkstyle-8.23-all.jar'}
+                  'check-8.23': '/praktomat/lib/checkstyle-8.23-all.jar',
+                  'check-8.29': '/praktomat/lib/checkstyle-8.29-all.jar'
+                  }
 JCFDUMP = 'jcf-dump'
 SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 

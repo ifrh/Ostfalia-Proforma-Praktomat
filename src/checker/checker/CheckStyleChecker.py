@@ -28,8 +28,9 @@ class CheckStyleChecker(ProFormAChecker):
         (u'check-7.6', u'Checkstyle 7.6 all'),
 #        (u'check-5.4', u'Checkstyle 5.4 all'),
         (u'check-8.23', u'Checkstyle 8.23 all'),
+        (u'check-8.29', u'Checkstyle 8.29 all'),
     )
-    check_version = models.CharField(max_length=16, choices=CHECKSTYLE_CHOICES, default="check-8.23")
+    check_version = models.CharField(max_length=16, choices=CHECKSTYLE_CHOICES, default="check-8.29")
 
     def title(self):
         """ Returns the title for this checker category. """
