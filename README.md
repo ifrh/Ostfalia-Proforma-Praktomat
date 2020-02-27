@@ -69,7 +69,8 @@ and port 8010 (circumventing the web server)
 For enabling https (port 443) you must 
 
 * put your certificate files into /data/certs (or adjust folder name in docker-compose.yml)
-* set servername and adjust certificate file names in nginx.conf  
+* comment in 443 configuration in nginx/nginx.conf
+* set servername and adjust certificate file names in nginx/nginx.conf  
 
 ## ProFormA API (CURL)
 
