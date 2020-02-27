@@ -1,12 +1,9 @@
 version: '3'
 
 # perform the following steps in buuild the docker container images: 
-# 0.a) fill subfolder 'extra' with needed additional libraries for grading (e.g. JUNIT)
+# 1.a) fill subfolder 'extra' with needed additional libraries for grading (e.g. JUNIT)
 #   b) adjust src/settings_docker.py to your needs
-# 1. docker-compose up
-# 2. docker exec -ti praktomat ./init_database.sh
-# step 2 is needed in order to initialise the database
-
+# 2. docker-compose up
 
 services:
   postgres:
@@ -31,8 +28,8 @@ services:
     restart: always
     environment:
       SUPERUSER: praktomat
-      EMAIL: "user@localhost"
-      PASSWORD: setADifficultPassword
+      EMAIL: ${PRAKTOMATMAIL}
+      PASSWORD: ${PRAKTOMATPASSWORD}
       # todo: check what is needed?
       DB_NAME: pmdb
       DB_USER: pmuser
@@ -44,7 +41,6 @@ services:
       SVNUSER: ${SVNUSERNAME}
       SVNPASS: ${SVNPASSWORD}
       
-    #command: gunicorn wsgi:application --bind 0.0.0.0:8010 --workers=2 # sync!!
     # number of workers = 2* cumber of CPU cores + 1
     #command: python3 ./manage-docker.py runserver 0.0.0.0:8010
     command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
@@ -53,10 +49,6 @@ services:
     # command: sleep 100000    
     #command: ./manage.py runserver 0.0.0.0:8010
     #command: ./src/manage.py runserver 0.0.0.0:8010
-    # command: gunicorn src.wsgi:application --bind 0.0.0.0:8010
-    
-# for development:
-    #command: sleep 100000    
 
     volumes:
      - ./src:/praktomat/src
@@ -64,22 +56,23 @@ services:
      - ./media:/praktomat/media
     ports:
       - "8010:8010"
-#      - "8000:8000"
-#      - "80:80"
     depends_on:
       - postgres
       
      
 # ngninx is needed for the browser interface
   nginx:
-   # do not use '_' in container name because django gets confued with _ in host names (Moodle docker) 
+   # do not use '_' in container name because django gets confused with _ in host names (Moodle docker)
    container_name: praktomat_nginx3
    restart: always    
    build: ./nginx
    volumes:
    # static content to serve
-    - ./media:/praktomat/media     
+    - ./media:/praktomat/media
+    # ssl certificate
+    - /data/certs:/etc/nginx/certs
    ports:
      - 80:80
+     - 443:443
    depends_on:
      - praktomat

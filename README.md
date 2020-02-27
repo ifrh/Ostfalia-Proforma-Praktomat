@@ -58,14 +58,18 @@ For login see the credentials in your docker-compose.yml file (SUPERUSER and PAS
 
 -->
 
-The REST API is available on port 80 and port 8010:  
+The REST API is available on port 80  
 
-        http://localhost:80/api/v2/submissions
+        http://localhost/api/v2/submissions
 
-or (circumventing the web server)
+and port 8010 (circumventing the web server)
 
         http://localhost:8010/api/v2/submissions
+        
+For enabling https (port 443) you must 
 
+* put your certificate files into /data/certs (or adjust folder name in docker-compose.yml)
+* set servername and adjust certificate file names in nginx.conf  
 
 ## ProFormA API (CURL)
 
