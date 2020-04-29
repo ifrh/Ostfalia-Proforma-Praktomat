@@ -58,6 +58,36 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     private boolean failureOutsideTest = false;
    
 
+    private String cleanXmlUtf8Char(String text) {
+		// replace invalid UTF-16/XML char by '[?]' 
+		// Note that Java uses UTF-16 as internal representation for Strings!
+    	// https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html
+    	
+    	// Problem: Some of the invalid characters are escaped. These
+    	// escaped characters can result in problems in the receiver of the 'message'
+    	// because they are still invalid.
+    	
+    	// UTF-8 (used for xml) Codepoint range is U+0000 to U+10FFFF.   	
+   	
+    	// https://stackoverflow.com/questions/4237625/removing-invalid-xml-characters-from-a-string-in-java
+    	// So we must find invalid characters in UTF-16.
+    	// We also replace invalid XML 1.0 char in order to avoid further problems.
+    	// XML 1.0
+    	// #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+	    final String xml10pattern = "[^"
+	            + "\u0009\r\n"
+	            + "\u0020-\uD7FF"
+	            // U+D800 to U+DFFF is reserved in UTF-16 (Wikipedia): 
+	            // The Unicode standard permanently reserves these code 
+	            // point values for UTF-16 encoding of the high and low surrogates.
+	            + "\uE000-\uFFFD"
+	            + "\ud800\udc00-\udbff\udfff"
+	            + "]";
+	
+    
+    	return text.replaceAll(xml10pattern, "[?]");
+    }    
+    
 	public void executionStarted(TestIdentifier testIdentifier) {
 		if (testIdentifier.getType() == Type.CONTAINER)
 			return;
@@ -107,7 +137,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
         
         Element xmlTitle = doc.createElement("title");
         studentFeedback.appendChild(xmlTitle);    
-        xmlTitle.appendChild(doc.createTextNode(title));        	
+        xmlTitle.appendChild(doc.createTextNode(cleanXmlUtf8Char(title)));        	
 	}
 	
 	
@@ -123,29 +153,13 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     	
     	String consoleOutput = baos.toString();
     	consoleOutput = consoleOutput.trim();
-    	if (consoleOutput.length() > 0) {
-    		// replace imvalid UTF-16 char by [?] 
-    		// Note that Java uses UTF-16 as internal representation for Strings!
-    		// So we must find invalid characters in UTF-16
-    	    String xml10pattern = "[^"
-    	            + "\u0009\r\n"
-    	            + "\u0020-\uD7FF"
-    	            + "\uE000-\uFFFD"
-    	            + "\ud800\udc00-\udbff\udfff"
-    	            + "]";
-
-    	    consoleOutput = consoleOutput.replaceAll(xml10pattern, "[?]");
-    	    
-    		//consoleOutput = consoleOutput.replace("&#13;", "\n");
-    		//Charset charset = Charset.forName("UTF-8");
-    		//consoleOutput = charset.decode(charset.encode(consoleOutput)).toString();
-   		
+    	if (consoleOutput.length() > 0) {       
             Element feedback = doc.createElement("student-feedback");        
             feedbackList.appendChild(feedback);
             Element content = doc.createElement("content");
             content.setAttribute("format", "plaintext");        
             feedback.appendChild(content);                		
-            content.appendChild(doc.createTextNode(consoleOutput));  
+            content.appendChild(doc.createTextNode(cleanXmlUtf8Char(consoleOutput)));  
     	}
         baos.reset();
 
@@ -307,7 +321,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
                 Element xmlFailure = doc.createElement("content");
                 xmlFailure.setAttribute("format", "plaintext");        
                 studentFeedback.appendChild(xmlFailure);
-            	xmlFailure.appendChild(doc.createTextNode(exceptionText));
+            	xmlFailure.appendChild(doc.createTextNode(cleanXmlUtf8Char(exceptionText)));
             	//xmlFailure.appendChild(doc.createTextNode("EXCEPTION TEXT: " + exceptionText));
         	} else {
                 this.createFeedback("", exceptionText, false); // no title        		
@@ -365,12 +379,12 @@ public class Junit5ProFormAListener implements TestExecutionListener {
         
     	Element xmlTitle = doc.createElement("title");
     	xmlFeedback.appendChild(xmlTitle);    
-    	xmlTitle.appendChild(doc.createTextNode(title));        
+    	xmlTitle.appendChild(doc.createTextNode(cleanXmlUtf8Char(title)));        
 
     	Element xmlContent = doc.createElement("content");
     	xmlContent.setAttribute("format", "plaintext");        
     	xmlFeedback.appendChild(xmlContent);           		
-    	xmlContent.appendChild(doc.createTextNode(content));      	
+    	xmlContent.appendChild(doc.createTextNode(cleanXmlUtf8Char(content)));      	
     }    
     
 
