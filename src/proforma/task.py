@@ -374,7 +374,7 @@ def testVisibility(inst, xmlTest, namespace, public=None):
 
 def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test, checker, required=None):
     order_counter = 1
-    
+
     logger.debug('create file checker for test')
     for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
         reffile = embedded_file_dict.get(fileref.attrib.get("refid"))    
@@ -565,6 +565,13 @@ def import_task_internal(filename, task_file):
 
     dict_zip_files = None
     if filename[-3:].upper() == 'ZIP':
+        if type(task_file) == InMemoryUploadedFile:
+            logger.debug('compute MD5 for zip file')
+            md5 = hashlib.md5(task_file.read()).hexdigest()
+        else:
+            # todo
+            raise Exception('cannot compute MD5')
+        # md5 = hashlib.md5(task_file).hexdigest()
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
         if type(task_file) == InMemoryUploadedFile:
@@ -572,14 +579,14 @@ def import_task_internal(filename, task_file):
         else:
             logger.debug('task_file class name is ' + task_file.__class__.__name__)
             task_xml = task_file  # todo check name
+        md5 = hashlib.md5(task_xml).hexdigest()
 
     logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
     # logger.debug('task_xml = ' + task_xml)
     xml_object = objectify.fromstring(task_xml)
     logger.debug('xml_object class name is ' + xml_object.__class__.__name__)
 
-
-    md5 = hashlib.md5(task_xml).hexdigest()
+    # convert MD5 hash to UUID (easier to store in Django)
     import uuid
     hash = uuid.UUID(md5) # as uuid
     logger.debug('task hash is ' + str(hash))
