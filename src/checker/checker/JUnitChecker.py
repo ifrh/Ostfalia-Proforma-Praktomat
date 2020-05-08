@@ -21,6 +21,19 @@ RXFAIL       = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limi
 
 class IgnoringJavaBuilder(JavaBuilder):
     _ignore = []
+    # list of jar files belonging to task
+    _custom_libs = []
+
+    def add_custom_lib(self, file):
+        filename = file.path_relative_to_sandbox()
+        # logger.debug('test contains JAR file: ' + filename)
+        self._custom_libs.append(':' + filename)
+
+    # add jar files belonging to task
+    def libs(self):
+        classpath = super().libs()
+        classpath[1] += (":".join(self._custom_libs))
+        return classpath
 
     def get_file_names(self, env):
         rxarg = re.compile(self.rxarg())
@@ -57,7 +70,7 @@ class JUnitChecker(ProFormAChecker):
 
     def runner(self):
         return {
-            'junit5': '',
+            'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar',
             'junit4' : 'org.junit.runner.JUnitCore',
             'junit4.10' : 'org.junit.runner.JUnitCore',
             'junit4.12' : 'org.junit.runner.JUnitCore',
@@ -75,8 +88,7 @@ class JUnitChecker(ProFormAChecker):
     def output_ok(self, output):
         return (RXFAIL.search(output) == None)
 
-
-    def get_run_command_junit5(self):
+    def get_run_command_junit5(self, classpath):
         use_run_listener = False
         if settings.DETAILED_UNITTEST_OUTPUT:
             use_run_listener = True
@@ -85,7 +97,7 @@ class JUnitChecker(ProFormAChecker):
             # java -jar junit-platform-console-standalone-<version>.jar <Options>
             # does not work!!
             # jar = settings.JAVA_LIBS[self.junit_version]
-            cmd = [settings.JVM_SECURE, "-jar", settings.JAVA_LIBS[self.junit_version], "-cp", ".",
+            cmd = [settings.JVM_SECURE, "-jar", self.runner(), "-cp", classpath,
               "--include-classname", ".*", "--disable-ansi-colors",
                "--disable-banner",
                "--select-class", self.class_name]
@@ -93,35 +105,36 @@ class JUnitChecker(ProFormAChecker):
             # java -cp.:/praktomat/extra/junit-platform-console-standalone-<version>.jar:/praktomat/extra/Junit5RunListener.jar
             # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
             cmd = [# "sh", "-x",
-               settings.JVM_SECURE,
-               "-cp", ".:" + settings.JAVA_LIBS[self.junit_version],
-#               "-cp", ".:" + settings.JAVA_LIBS[self.junit_version] + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
+               settings.JVM_SECURE, "-cp", classpath, 
                settings.JUNIT5_RUN_LISTENER, self.class_name]
-
         return cmd, True
 
 
-    def get_run_command_junit4(self):
+    def get_run_command_junit4(self, classpath):
         use_run_listener = False
         if settings.DETAILED_UNITTEST_OUTPUT:
             use_run_listener = True
 
         if not use_run_listener:
-            classpath = settings.JAVA_LIBS[self.junit_version] + ":."
             runner = self.runner()
         else:
-            classpath = settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT4_RUN_LISTENER_LIB
+            classpath += ":.:" + settings.JUNIT4_RUN_LISTENER_LIB
             runner = settings.JUNIT4_RUN_LISTENER
         cmd = [settings.JVM_SECURE, "-cp", classpath, runner, self.class_name]
         return cmd, use_run_listener
 
     def run(self, env):
         self.copy_files(env)
-        
-        logger.debug('JUNIT Checker build')
-        java_builder = IgnoringJavaBuilder(_flags="", _libs=self.junit_version, _file_pattern=r"^.*\.[jJ][aA][vV][aA]$", _output_flags="", _main_required=False)
-        java_builder._ignore = self.ignore.split(" ")
 
+        # compile test
+        logger.debug('JUNIT Checker build')
+        java_builder = IgnoringJavaBuilder(_flags="", _libs=self.junit_version, _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
+                                           _output_flags="", _main_required=False)
+        # add JAR files from test task
+        for file in self.files.all():
+            if file.file.path.lower().endswith('.jar'):
+                java_builder.add_custom_lib(file)
+        java_builder._ignore = self.ignore.split(" ")
 
         build_result = java_builder.run(env)
 
@@ -132,6 +145,7 @@ class JUnitChecker(ProFormAChecker):
             result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
             return result
 
+        # run test
         logger.debug('JUNIT Checker run')
         environ = {}
 
@@ -142,10 +156,10 @@ class JUnitChecker(ProFormAChecker):
 
         if self.junit_version == 'junit5':
             # JUNIT5
-            [cmd, use_run_listener] = self.get_run_command_junit5()
+            [cmd, use_run_listener] = self.get_run_command_junit5(java_builder.libs()[1])
         else:
             # JUNIT4
-            [cmd, use_run_listener] = self.get_run_command_junit4()
+            [cmd, use_run_listener] = self.get_run_command_junit4(java_builder.libs()[1])
 
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
