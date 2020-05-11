@@ -174,11 +174,9 @@ class Task_2_00:
     # read all files from task and put them into a dictionary
     def __collect_files(self, xml_obj, external_file_dict=None, ):
         namespace = self.ns
-        # Files create dict with internal file objects should also used for external files
+
         orphain_files = dict()
-        # external_file_dict = dict()
         test_files = dict()
-        modelsolution_files = dict()
 
         list_of_files = xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace)
 
@@ -199,13 +197,9 @@ class Task_2_00:
                     filename = k['attached-bin-file'].text
                     if external_file_dict is None:
                         raise Exception('no files in zip found')
-                        #orphain_files[k.attrib.get("id")] = external_file_dict[filename]
+                    orphain_files[k.attrib.get("id")] = external_file_dict[filename]
                 else:
                     raise Exception('unsupported file type in task.xml (embedded-bin-file or attached-txt-file)')
-
-        logger.debug('all_files created')
-        #from pprint import pprint
-        #pprint(all_files)
 
         # List with all files that are referenced by tests
         list_of_test_files = xml_obj.xpath("/p:task/p:tests/p:test/p:test-configuration/"
@@ -216,6 +210,9 @@ class Task_2_00:
             logger.debug('pop: ' + test_ref_id)
             test_ref_id_of_dict = {test_ref_id: orphain_files.pop(test_ref_id, "")}
             test_files.update(test_ref_id_of_dict)
+
+        if len(orphain_files)> 0:
+            logger.error('orphain files found: ' + str(orphain_files))
 
         #logger.debug('test_files: ')
         #pprint(test_files)
@@ -230,7 +227,7 @@ class Task_2_00:
         #    modelsolution_files.update(model_solution_id=model_ref_id_of_dict)
 
         # dict of test_file_ids
-        return orphain_files, test_files
+        return test_files
 
 
     def __set_test_base_parameters(self, inst, xmlTest):
@@ -423,7 +420,7 @@ class Task_2_00:
         # todo: remove because it is very expensive (bom, about 350ms)
         # logger.debug('task_xml = ' + str(task_xml))
         t = tempfile.NamedTemporaryFile(delete=True)
-        t.write(self.task_xml)  # todo: encoding
+        t.write(self.task_xml)
         t.flush()
         t.seek(0)
 
@@ -440,16 +437,13 @@ class Task_2_00:
             # self.set_default_user(user_name=SYSUSER)
 
             if self.dict_zip_files is None:
-                orphain_files, test_files = self.__collect_files(xml_obj=self.xml_obj)
+                test_files = self.__collect_files(xml_obj=self.xml_obj)
             else:
-                orphain_files, test_files = self.__collect_files(xml_obj=self.xml_obj, external_file_dict=self.dict_zip_files)
-
-            if len(orphain_files)> 0:
-                logger.error('orphain files found: ' + str(orphain_files))
+                test_files = self.__collect_files(xml_obj=self.xml_obj, external_file_dict=self.dict_zip_files)
 
             # create files not refered by a test (# todo: invalid: raise exception)
-            self.val_order = task.creatingFileCheckerNoDep(orphain_files, self.new_task.praktomatTask, self.ns,
-                                                                             self.val_order, xmlTest=None)
+            #self.val_order = task.creatingFileCheckerNoDep(orphain_files, self.new_task.praktomatTask, self.ns,
+            #                                                                 self.val_order, xmlTest=None)
             for xmlTest in self.xml_obj.tests.iterchildren():
                 testtype = xmlTest.xpath("p:test-type", namespaces=self.ns)[0].text
                 if testtype == "java-compilation":  # todo check compilation_xsd
@@ -473,6 +467,8 @@ class Task_2_00:
             self.new_task = None
             raise
 
+        # finally set identifier attributes (do not set in previous steps
+        # in order to avoid a broken task to be stored
         self.new_task.set_identifier_values(self.hash, task_uuid, task_title)
         #self.new_task.proformatask_hash = self.hash
         #self.new_task.proformatask_uuid = task_uuid
