@@ -155,12 +155,12 @@ def testVisibility(inst, xmlTest, namespace, public=None):
 
     return inst
 
-def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test, checker, required=None):
+def creating_file_checker(file_dict, new_task, ns, val_order, xml_test, checker, required=None):
     order_counter = 1
 
     logger.debug('create file checker for test')
     for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
-        reffile = embedded_file_dict.get(fileref.attrib.get("refid"))    
+        reffile = file_dict.get(fileref.attrib.get("refid"))
         if reffile is not None:
             logger.debug('create file checker ' + reffile.name)        
             inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=new_task,
@@ -170,8 +170,6 @@ def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test,
             inst2.file = reffile  # check if the refid is there
             if dirname(reffile.name) is not None:
                 inst2.path = dirname(reffile.name)
-            else:
-                pass
             if required is True:
                 inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=True)
             else:

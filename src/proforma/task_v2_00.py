@@ -24,14 +24,12 @@ import re
 import os
 import tempfile
 from datetime import datetime
-import json
 from operator import getitem
 
 import xmlschema
 from django.views.decorators.csrf import csrf_exempt
 
 from django.core.files import File
-from django.http import HttpResponse
 from lxml import objectify
 
 
@@ -246,6 +244,7 @@ class Task_2_00:
     def __add_files_to_subtest(self, file_dict, xml_test, firstHandler = None, inst = None):
         order_counter = 1
 
+        logger.debug('=> __add_files_to_subtest')
         count = 0
         for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=self.ns):
             refid = fileref.attrib.get("refid")
@@ -290,7 +289,7 @@ class Task_2_00:
         inst.save()
 
 
-    def __create_java_unit_checker(self, xmlTest, test_file_dict):
+    def __create_java_unit_checker(self, xmlTest, test_files):
         checker_ns = self.ns.copy()
         checker_ns['unit_new'] = 'urn:proforma:tests:unittest:v1.1'
         checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
@@ -328,9 +327,10 @@ class Task_2_00:
             # todo create: something like TaskException class
             raise Exception("Junit-Version is not supported: " + str(junit_version))
 
-        if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-            self.val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=self.new_task.praktomatTask, ns=checker_ns,
-                                              val_order=self.val_order, xml_test=xmlTest, checker=inst)
+        self.__add_files_to_subtest(test_files, xmlTest, None, inst)
+        #if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
+            #self.val_order = task.creating_file_checker(file_dict=test_files, new_task=self.new_task.praktomatTask, ns=checker_ns,
+            #                                            val_order=self.val_order, xml_test=xmlTest, checker=inst)
 
         inst.order = self.val_order
         inst.save()
