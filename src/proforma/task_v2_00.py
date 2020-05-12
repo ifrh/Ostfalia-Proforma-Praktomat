@@ -27,13 +27,13 @@ from datetime import datetime
 from operator import getitem
 
 import xmlschema
-from django.views.decorators.csrf import csrf_exempt
+#from django.views.decorators.csrf import csrf_exempt
 
 from django.core.files import File
-from lxml import objectify
+#from lxml import objectify
 
 
-from accounts.models import User
+#from accounts.models import User
 from checker.checker import PythonChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
     CreateFileChecker
@@ -118,6 +118,10 @@ class Praktomat_Task_2_00:
         # todo add file restrictions
         return True
 
+
+class Praktomat_Test_2_00:
+    # todo: fill with content
+    pass
 
 class Task_2_00:
     format_namespace = "urn:proforma:v2.0"
@@ -240,40 +244,43 @@ class Task_2_00:
         inst.required = False
 
 
-    # add files belonging to a subtest
-    def __add_files_to_subtest(self, file_dict, xml_test, firstHandler = None, inst = None):
-        order_counter = 1
+    # create file object in Praktomat
+    def __create_file_checker(self, reffile):
+        file_checker = CreateFileChecker.CreateFileChecker.objects.create(task=self.new_task.praktomatTask,
+                                                                   order=self.val_order,
+                                                                   path=""
+                                                                   )
+        file_checker.file = reffile  # check if the refid is there
+        if dirname(reffile.name) is not None:
+            file_checker.path = dirname(reffile.name)
+        file_checker.always = True
+        file_checker.public = False
+        file_checker.required = False
+        file_checker.save()
+        return file_checker
 
-        logger.debug('=> __add_files_to_subtest')
-        count = 0
+    # add files belonging to a subtest
+    def __add_files_to_test(self, file_dict, xml_test, firstHandler = None, inst = None):
+        logger.debug('=> __add_files_to_test')
+        #count = 0
         for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=self.ns):
             refid = fileref.attrib.get("refid")
             reffile = file_dict.get(refid)
             if reffile is None:
                 raise TaskXmlException('cannot find file with id = ' + refid)
             logger.debug('handle test file ' + reffile.name)
-            if count == 0:
-                if firstHandler is not None:
-                    logger.debug('handle first test file ' + reffile.name)
-                    firstHandler(inst, reffile)
-                count = count +1
+            if firstHandler is not None: # count == 0:
+                #if firstHandler is not None:
+                logger.debug('handle first test file ' + reffile.name)
+                firstHandler(inst, reffile)
+                firstHandler = None
+                #count = count +1
             else:
                 logger.debug('create normal test file' + reffile.name)
-                inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=self.new_task.praktomatTask,
-                                                                           order=self.val_order,
-                                                                           path=""
-                                                                           )
-                inst2.file = reffile # check if the refid is there
-                if dirname(reffile.name) is not None:
-                    inst2.path = dirname(reffile.name)
-                inst2.always = True
-                inst2.public = False
-                inst2.required = False
-                inst2.save()
-                order_counter += 1
+                file_checker = self.__create_file_checker(reffile)
                 self.val_order += 1  # to push the junit-checker behind create-file checkers
-                logger.debug('__add_files_to_subtest: increment vald_order, new value= ' + str(self.val_order))
-                inst.files.add(inst2)
+                logger.debug('__add_files_to_test: increment vald_order, new value= ' + str(self.val_order))
+                inst.files.add(file_checker)
 
 
     def __create_java_compiler_checker(self, xmlTest):
@@ -327,7 +334,7 @@ class Task_2_00:
             # todo create: something like TaskException class
             raise Exception("Junit-Version is not supported: " + str(junit_version))
 
-        self.__add_files_to_subtest(test_files, xmlTest, None, inst)
+        self.__add_files_to_test(test_files, xmlTest, None, inst)
         #if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
             #self.val_order = task.creating_file_checker(file_dict=test_files, new_task=self.new_task.praktomatTask, ns=checker_ns,
             #                                            val_order=self.val_order, xml_test=xmlTest, checker=inst)
@@ -367,7 +374,7 @@ class Task_2_00:
 
         def set_mainfile(inst, value):
             inst.configuration = value
-        self.__add_files_to_subtest(test_files, xmlTest, set_mainfile, inst)
+        self.__add_files_to_test(test_files, xmlTest, set_mainfile, inst)
         inst.order = self.val_order
         inst.save()
 
@@ -377,7 +384,7 @@ class Task_2_00:
 
         def set_mainfile(inst, value):
             inst.testFile = value
-        self.__add_files_to_subtest(test_files, xmlTest, firstHandler=set_mainfile, inst=inst)
+        self.__add_files_to_test(test_files, xmlTest, firstHandler=set_mainfile, inst=inst)
         self.__set_test_base_parameters(inst, xmlTest)
         inst.save()
 
@@ -387,7 +394,7 @@ class Task_2_00:
         self.__set_test_base_parameters(inst, xmlTest)
         def set_mainfile(inst, value):
             inst.doctest = value
-        self.__add_files_to_subtest(test_files, xmlTest, firstHandler=set_mainfile, inst=inst)
+        self.__add_files_to_test(test_files, xmlTest, firstHandler=set_mainfile, inst=inst)
         inst.save()
 
 
