@@ -181,6 +181,14 @@ def grade_api_v2(request,):
         response.write(get_http_error_page('Could not get submission files', str(inst), callstack))
         response.status_code = 404 # file not found
         return response
+    except task.TaskXmlException as inst:
+        logger.exception(inst)
+        callstack = traceback.format_exc()
+        print("TaskXmlException caught Stack Trace: " + str(callstack))
+        response = HttpResponse()
+        response.write(get_http_error_page('Task error', str(inst), callstack))
+        response.status_code = 400 # bad request
+        return response
     except Exception as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()

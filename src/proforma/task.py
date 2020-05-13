@@ -64,6 +64,9 @@ from . import task_v2_00
 logger = logging.getLogger(__name__)
 
 
+class TaskXmlException(Exception):
+    pass
+
 # def checker_struct(actual_task):
 #     checker_classes = filter(lambda x: issubclass(x, Checker), models.get_models())
 #     unsorted_checker = sum(map(lambda x: list(x.objects.filter(task=actual_task)), checker_classes), [])

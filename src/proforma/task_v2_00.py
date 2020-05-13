@@ -52,9 +52,13 @@ PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 XSD_V_2_PATH = "xsd/proforma_v2.0.xsd"
 SYSUSER = "sys_prod"
 
+CACHE_TASKS = False
+if not CACHE_TASKS:
+    print('*********************************************\n')
+    print('*** Attention! Tasks are not cached ! ***\n')
+    print('*********************************************\n')
 
-class TaskXmlException(Exception):
-    pass
+
 
 
 # wrapper for task object in Praktomat model
@@ -137,7 +141,13 @@ class Praktomat_File:
         self.__file_checker.always = True
         self.__file_checker.public = False
         self.__file_checker.required = False
+        # save original filename in order to handle name clashes
+        self.__file_checker.filename = os.path.basename(reffile.name)
         self.__file_checker.save()
+
+        #logger.debug('Praktomat_File: file ' + str(self.__file_checker.file))
+        #logger.debug('Praktomat_File: filename ' + str(self.__file_checker.filename))
+        #logger.debug('Praktomat_File: path ' + str(self.__file_checker.path))
 
     def __getObject(self):
         return self.__file_checker
@@ -186,24 +196,24 @@ class Task_2_00:
 
     def __get_required_xml_element_text(self, xmlTest, xpath, namespaces, msg):
         if xmlTest.xpath(xpath, namespaces=namespaces) is None:
-            raise TaskXmlException(msg + ' is missing')
+            raise task.TaskXmlException(msg + ' is missing')
 
         text = xmlTest.xpath(xpath, namespaces=namespaces)[0].text
 
         if text is None or len(text) == 0:
-            raise TaskXmlException(msg + ' must not be empty')
+            raise task.TaskXmlException(msg + ' must not be empty')
         return text
 
     # read all files from task and put them into a dictionary
-    def __collect_files(self, xml_obj, external_file_dict=None, ):
+    def __create_praktomat_files(self, xml_obj, external_file_dict=None, ):
         namespace = self.ns
 
         orphain_files = dict()
-        list_of_files = xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace)
 
-        for k in list_of_files:
+        # read all files with 'used-by-grader' = true
+        for k in xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace):
             # todo add: embedded-bin-file
-            # todo add: attached-txt-file
+            # todo??: attached-txt-file can lead to problems with encoding (avoid attached-txt-file!)
             used_by_grader = k.attrib.get('used-by-grader')
             if used_by_grader == "true":
                 if k.xpath("p:embedded-txt-file", namespaces=namespace):
@@ -212,12 +222,13 @@ class Task_2_00:
                     t.flush()
                     my_temp = File(t)
                     my_temp.name = k['embedded-txt-file'].attrib.get("filename")
-                    logger.debug('add file to dictionary: ' + k.attrib.get("id") + ' => ' + my_temp.name)
+                    logger.debug('embedded task file: ' + k.attrib.get("id") + ' => ' + my_temp.name)
                     orphain_files[k.attrib.get("id")] = my_temp
                 elif k.xpath("p:attached-bin-file", namespaces=namespace):
                     filename = k['attached-bin-file'].text
                     if external_file_dict is None:
                         raise Exception('no files in zip found')
+                    logger.debug('attached task file: ' + k.attrib.get("id") + ' => ' + filename)
                     orphain_files[k.attrib.get("id")] = external_file_dict[filename]
                 else:
                     raise Exception('unsupported file type in task.xml (embedded-bin-file or attached-txt-file)')
@@ -230,8 +241,9 @@ class Task_2_00:
         # Create dictionary with Praktomat Checker files
         self.checker_files = dict()
         for test_ref_id in list_of_test_files:
+            if not test_ref_id in orphain_files:
+                raise task.TaskXmlException('file ' + str(test_ref_id) + ' is not in task files or used_by_grader = false')
             file = orphain_files.pop(test_ref_id, "")
-            logger.debug("order: " + str(self.val_order))
             self.checker_files[test_ref_id] = Praktomat_File(file, self.__praktomat_task.object)
 
         if len(orphain_files)> 0:
@@ -251,11 +263,10 @@ class Task_2_00:
 
     # add files belonging to a subtest
     def __add_files_to_test(self, xml_test, firstHandler = None, inst = None):
-        logger.debug('=> __add_files_to_test')
         for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=self.ns):
             refid = fileref.attrib.get("refid")
             if not refid in self.checker_files:
-                raise TaskXmlException('cannot find file with id = ' + refid)
+                raise task.TaskXmlException('cannot find file with id = ' + refid)
             praktomat_file = self.checker_files[refid]
             logger.debug('handle test file ' + str(refid))
             if firstHandler is not None:
@@ -321,13 +332,9 @@ class Task_2_00:
             raise Exception("Junit-Version is not supported: " + str(junit_version))
 
         self.__add_files_to_test(xmlTest, None, inst)
-        #if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-            #self.val_order = task.creating_file_checker(file_dict=test_files, task=self.__praktomat_task.object, ns=checker_ns,
-            #                                            val_order=self.val_order, xml_test=xmlTest, checker=inst)
 
         inst.order = self.val_order
         inst.save()
-
 
     def __create_java_checkstyle_test(self, xmlTest):
         checker_ns = self.ns.copy()
@@ -401,9 +408,10 @@ class Task_2_00:
         logger.debug('title is "' + task_title + '"')
 
         # check if task is already in database
-        old_task = task.get_task(self.hash, task_uuid, task_title)
-        if old_task != None:
-            return old_task
+        if CACHE_TASKS:
+            old_task = task.get_task(self.hash, task_uuid, task_title)
+            if old_task != None:
+                return old_task
 
         # no need to actually validate xml against xsd
         # (it is only time consuming)
@@ -428,25 +436,25 @@ class Task_2_00:
             # self.set_default_user(user_name=SYSUSER)
 
             # read files
-            self.__collect_files(xml_obj=self.xml_obj, external_file_dict=self.dict_zip_files)
+            self.__create_praktomat_files(xml_obj=self.xml_obj, external_file_dict=self.dict_zip_files)
             # create test objects
             for xmlTest in self.xml_obj.tests.iterchildren():
                 testtype = xmlTest.xpath("p:test-type", namespaces=self.ns)[0].text
                 if testtype == "java-compilation":  # todo check compilation_xsd
-                    logger.debug('** __create_java_compilertest')
+                    logger.debug('** create_java_compilertest')
                     self.__create_java_compilertest(xmlTest)
                 elif testtype == "unittest":
-                    logger.debug('** __create_java_unit_test')
+                    logger.debug('** create_java_unit_test')
                     self.__create_java_unit_test(xmlTest)
                 elif testtype == "java-checkstyle":
                     self.__create_java_checkstyle_test(xmlTest)
                 elif testtype == "setlx": # and xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
                     self.__create_setlx_test(xmlTest)
                 elif testtype == "python-doctest":
-                    logger.debug('** __create_python_test')
+                    logger.debug('** create_python_test')
                     self.__create_python_test(xmlTest)
                 self.val_order += 1
-                logger.debug('import_task/llop: increment vald_order, new value= ' + str(self.val_order))
+                logger.debug('increment vald_order, new value= ' + str(self.val_order))
 
         except Exception:
             self.__praktomat_task.delete()
