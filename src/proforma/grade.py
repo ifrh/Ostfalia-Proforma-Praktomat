@@ -25,8 +25,6 @@ from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files import File
 
-#from accounts.templatetags.in_group import in_group
-#from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
 from VERSION import version
@@ -182,10 +180,6 @@ def save_file(data, solution_file, filename):
         fd = open('%s' % (full_filename), 'w')
         fd.write(data)
         fd.close()
-#    elif isinstance(data, unicode): # data.__class__.__name__ == 'unicode':
-#        fd = open('%s' % (full_filename), 'w')
-#        fd.write(data.encode("utf-8"))
-#        fd.close()
     elif isinstance(data, bytes): # data.__class__.__name__ == 'bytes':
         fd = open('%s' % (full_filename), 'wb')
         fd.write(data)
@@ -197,11 +191,6 @@ def save_file(data, solution_file, filename):
         shutil.move(data.path, full_filename)
     else:
         raise Exception('unknown tpye: ' + data.__class__.__name__)
-        # string
-        #fd = open('%s' % (full_filename), 'w')
-        #fd.write(data)
-        #fd.close()
-
 
     # if full_filename.lower().endswith('.java'):
     #     # check if filename contains a package

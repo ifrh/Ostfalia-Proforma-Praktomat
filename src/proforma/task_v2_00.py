@@ -60,6 +60,35 @@ if not CACHE_TASKS:
 
 
 
+# helper functions
+def get_optional_xml_attribute_text(xmlTest, xpath, attrib, namespaces):
+    if xmlTest.xpath(xpath, namespaces=namespaces) is None:
+        return ""
+    try:
+        return xmlTest.xpath(xpath, namespaces=namespaces)[0].attrib.get(attrib)
+    except:
+        return ""
+
+
+def get_optional_xml_element_text(xmlTest, xpath, namespaces):
+    try:
+        if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
+            return xmlTest.xpath(xpath, namespaces=namespaces)[0].text
+    except:
+        return ""
+
+
+def get_required_xml_element_text(xmlTest, xpath, namespaces, msg):
+    if xmlTest.xpath(xpath, namespaces=namespaces) is None:
+        raise task.TaskXmlException(msg + ' is missing')
+
+    text = xmlTest.xpath(xpath, namespaces=namespaces)[0].text
+
+    if text is None or len(text) == 0:
+        raise task.TaskXmlException(msg + ' must not be empty')
+    return text
+
+
 
 # wrapper for task object in Praktomat model
 class Praktomat_Task_2_00:
@@ -78,7 +107,6 @@ class Praktomat_Task_2_00:
         """Iterate nested dictionary"""
         return reduce(getitem, mapList, dataDict)
 
-
     def delete(self):
         self.__task.delete()
         self.__task = None
@@ -91,7 +119,11 @@ class Praktomat_Task_2_00:
         self.__task.proformatask_uuid = task_uuid
         self.__task.proformatask_title = task_title
 
-    def read_basic_attributes(self, xml_dict):
+    def read(self, xml_dict):
+        self.__read_basic_attributes(xml_dict)
+        self.__read_submission_restriction(xml_dict)
+
+    def __read_basic_attributes(self, xml_dict):
         xml_description = xml_dict.get("description")
         if xml_description is None:
             self.__task.description = "No description"
@@ -105,7 +137,7 @@ class Praktomat_Task_2_00:
             self.__task.title = xml_title
 
 
-    def read_submission_restriction(self, xml_dict):
+    def __read_submission_restriction(self, xml_dict):
         # todo add file restrictions
 
         path = ['submission-restrictions']
@@ -129,25 +161,21 @@ class Praktomat_Task_2_00:
 #        #return sys_user
 
 
-# wrapper for CreateFileChecker object
+# wrapper for CreateFileChecker object (= file object in Praktomat model)
 class Praktomat_File:
-    def __init__(self, reffile, praktomatTask):
+    def __init__(self, file, praktomatTask):
         self.__file_checker = CreateFileChecker.CreateFileChecker.objects.create(task=praktomatTask,
                                                                    order=1,
                                                                    path="")
-        self.__file_checker.file = reffile  # check if the refid is there
-        if dirname(reffile.name) is not None:
-            self.__file_checker.path = dirname(reffile.name)
+        self.__file_checker.file = file  # check if the refid is there
+        if dirname(file.name) is not None:
+            self.__file_checker.path = dirname(file.name)
         self.__file_checker.always = True
         self.__file_checker.public = False
         self.__file_checker.required = False
         # save original filename in order to handle name clashes
-        self.__file_checker.filename = os.path.basename(reffile.name)
+        self.__file_checker.filename = os.path.basename(file.name)
         self.__file_checker.save()
-
-        #logger.debug('Praktomat_File: file ' + str(self.__file_checker.file))
-        #logger.debug('Praktomat_File: filename ' + str(self.__file_checker.filename))
-        #logger.debug('Praktomat_File: path ' + str(self.__file_checker.path))
 
     def __getObject(self):
         return self.__file_checker
@@ -157,10 +185,49 @@ class Praktomat_File:
         return self.__file_checker.file
     file = property(__getFile)
 
-## ??? should we use this?
+
+# wrapper for checker object (= test object in Praktomat model)
 class Praktomat_Test_2_00:
-    # todo: fill with content
-    pass
+    def __init__(self, inst, namespaces):
+        self.__checker = inst
+        self.ns = namespaces
+
+    def set_test_base_parameters(self, xmlTest):
+        if xmlTest.xpath("p:title", namespaces=self.ns) is not None:
+            self.__checker.name = xmlTest.xpath("p:title", namespaces=self.ns)[0].text
+        #if (xmlTest.xpath("p:title", namespaces=ns) and xmlTest.xpath("p:title", namespaces=ns)[0].text):
+        #    inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
+            self.__checker.test_description = get_optional_xml_element_text(xmlTest, "p:description", self.ns)
+        self.__checker.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
+        self.__checker.always = True
+        self.__checker.public = True
+        self.__checker.required = False
+
+    # add files belonging to a subtest
+    def add_files_to_test(self, xml_test, praktomat_files, val_order, firstHandler = None):
+        for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=self.ns):
+            refid = fileref.attrib.get("refid")
+            if not refid in praktomat_files:
+                raise task.TaskXmlException('cannot find file with id = ' + refid)
+            praktomat_file = praktomat_files[refid]
+            logger.debug('handle test file ' + str(refid))
+            if firstHandler is not None:
+                logger.debug('handle first test file')
+                firstHandler(self.__checker, praktomat_file.file)
+                firstHandler = None
+            else:
+                logger.debug('create normal test file')
+                val_order += 1  # to push the junit-checker behind create-file checkers
+                logger.debug('add_files_to_test: increment vald_order, new value= ' + str(val_order))
+                self.__checker.files.add(praktomat_file.object)
+
+        self.__checker.order = val_order
+        return val_order
+
+    def save(self):
+        self.__checker.save()
+
+
 
 class Task_2_00:
     format_namespace = "urn:proforma:v2.0"
@@ -176,33 +243,6 @@ class Task_2_00:
         self.xml_dict = None
         self.val_order = 1
 
-    # (static) helper functions
-    @staticmethod
-    def __get_optional_xml_attribute_text(xmlTest, xpath, attrib, namespaces):
-        if xmlTest.xpath(xpath, namespaces=namespaces) is None:
-            return ""
-
-        try:
-            return xmlTest.xpath(xpath, namespaces=namespaces)[0].attrib.get(attrib)
-        except:
-            return ""
-
-    def __get_optional_xml_element_text(self, xmlTest, xpath):
-        try:
-            if xmlTest.xpath(xpath, namespaces=self.ns) is not None:
-                return xmlTest.xpath(xpath, namespaces=self.ns)[0].text
-        except:
-            return ""
-
-    def __get_required_xml_element_text(self, xmlTest, xpath, namespaces, msg):
-        if xmlTest.xpath(xpath, namespaces=namespaces) is None:
-            raise task.TaskXmlException(msg + ' is missing')
-
-        text = xmlTest.xpath(xpath, namespaces=namespaces)[0].text
-
-        if text is None or len(text) == 0:
-            raise task.TaskXmlException(msg + ' must not be empty')
-        return text
 
     # read all files from task and put them into a dictionary
     def __create_praktomat_files(self, xml_obj, external_file_dict=None, ):
@@ -239,45 +279,15 @@ class Task_2_00:
         # Remove duplicates from list (for files that are referenced by more than one test)!!
         list_of_test_files = list(dict.fromkeys(list_of_test_files))
         # Create dictionary with Praktomat Checker files
-        self.checker_files = dict()
+        self.praktomat_files = dict()
         for test_ref_id in list_of_test_files:
             if not test_ref_id in orphain_files:
                 raise task.TaskXmlException('file ' + str(test_ref_id) + ' is not in task files or used_by_grader = false')
             file = orphain_files.pop(test_ref_id, "")
-            self.checker_files[test_ref_id] = Praktomat_File(file, self.__praktomat_task.object)
+            self.praktomat_files[test_ref_id] = Praktomat_File(file, self.__praktomat_task.object)
 
         if len(orphain_files)> 0:
             logger.error('orphain files found')
-
-
-    def __set_test_base_parameters(self, inst, xmlTest):
-        if xmlTest.xpath("p:title", namespaces=self.ns) is not None:
-            inst.name = xmlTest.xpath("p:title", namespaces=self.ns)[0].text
-        #if (xmlTest.xpath("p:title", namespaces=ns) and xmlTest.xpath("p:title", namespaces=ns)[0].text):
-        #    inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
-        inst.test_description = self.__get_optional_xml_element_text(xmlTest, "p:description")
-        inst.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
-        inst.always = True
-        inst.public = True
-        inst.required = False
-
-    # add files belonging to a subtest
-    def __add_files_to_test(self, xml_test, firstHandler = None, inst = None):
-        for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=self.ns):
-            refid = fileref.attrib.get("refid")
-            if not refid in self.checker_files:
-                raise task.TaskXmlException('cannot find file with id = ' + refid)
-            praktomat_file = self.checker_files[refid]
-            logger.debug('handle test file ' + str(refid))
-            if firstHandler is not None:
-                logger.debug('handle first test file')
-                firstHandler(inst, praktomat_file.file)
-                firstHandler = None
-            else:
-                logger.debug('create normal test file')
-                self.val_order += 1  # to push the junit-checker behind create-file checkers
-                logger.debug('__add_files_to_test: increment vald_order, new value= ' + str(self.val_order))
-                inst.files.add(praktomat_file.object)
 
 
     def __create_java_compilertest(self, xmlTest):
@@ -288,9 +298,9 @@ class Task_2_00:
                                                       _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
                                                       _main_required=False
                                                       )
-
-        self.__set_test_base_parameters(inst, xmlTest)
-        inst.save()
+        x = Praktomat_Test_2_00(inst, self.ns)
+        x.set_test_base_parameters(xmlTest)
+        x.save()
 
 
     def __create_java_unit_test(self, xmlTest):
@@ -299,20 +309,19 @@ class Task_2_00:
         checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
 
         inst = JUnitChecker.JUnitChecker.objects.create(task=self.__praktomat_task.object, order=self.val_order)
-        self.__set_test_base_parameters(inst, xmlTest)
         #if xmlTest.xpath("p:title", namespaces=ns) is not None:
         #        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
         #inst.test_description = geget_required_xml_element_textt_optional_xml_element_text(xmlTest, "p:description", ns)
 
-        inst.class_name = self.__get_required_xml_element_text(xmlTest,
+        inst.class_name = get_required_xml_element_text(xmlTest,
             "p:test-configuration/unit_new:unittest/unit_new:entry-point", checker_ns, 'JUnit entrypoint')
 
         junit_version = ''
         if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']", namespaces=checker_ns):
-            junit_version = Task_2_00.__get_optional_xml_attribute_text(xmlTest,
+            junit_version = get_optional_xml_attribute_text(xmlTest,
                 "p:test-configuration/unit:unittest[@framework='JUnit']", "version", checker_ns)
         elif xmlTest.xpath("p:test-configuration/unit_new:unittest[@framework='JUnit']", namespaces=checker_ns):
-            junit_version = Task_2_00.__get_optional_xml_attribute_text(xmlTest,
+            junit_version = get_optional_xml_attribute_text(xmlTest,
                 "p:test-configuration/unit_new:unittest[@framework='JUnit']", "version", checker_ns)
 
         if len(junit_version) == 0:
@@ -331,17 +340,19 @@ class Task_2_00:
             # todo create: something like TaskException class
             raise Exception("Junit-Version is not supported: " + str(junit_version))
 
-        self.__add_files_to_test(xmlTest, None, inst)
+        x = Praktomat_Test_2_00(inst, self.ns)
+        x.set_test_base_parameters(xmlTest)
+        self.val_order = x.add_files_to_test(xmlTest, self. praktomat_files, self.val_order, None)
 
-        inst.order = self.val_order
-        inst.save()
+        #inst.order = self.val_order
+
+        x.save()
 
     def __create_java_checkstyle_test(self, xmlTest):
         checker_ns = self.ns.copy()
         checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
         inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=self.__praktomat_task.object, order=self.val_order)
-        self.__set_test_base_parameters(inst, xmlTest)
         if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
                          namespaces=checker_ns)[0].attrib.get("version"):
             checkstyle_ver = xmlTest.xpath("p:test-configuration/check:java-checkstyle", namespaces=checker_ns)[0].\
@@ -365,29 +376,33 @@ class Task_2_00:
                                                  "check:java-checkstyle/"
                                                  "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
 
+        x = Praktomat_Test_2_00(inst, self.ns)
+        x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.configuration = value
-        self.__add_files_to_test(xmlTest, set_mainfile, inst)
-        inst.order = self.val_order
-        inst.save()
+        self.val_order = x.add_files_to_test(xmlTest, self. praktomat_files, self.val_order, set_mainfile)
+        # inst.order = self.val_order
+        x.save()
 
 
     def __create_setlx_test(self, xmlTest):
         inst = SetlXChecker.SetlXChecker.objects.create(task=self.__praktomat_task.object, order=self.val_order)
-        self.__set_test_base_parameters(inst, xmlTest)
+        x = Praktomat_Test_2_00(inst, self.ns)
+        x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.testFile = value
-        self.__add_files_to_test(xmlTest, firstHandler=set_mainfile, inst=inst)
-        inst.save()
+        self.val_order = x.add_files_to_test(xmlTest, self. praktomat_files, self.val_order, firstHandler=set_mainfile)
+        x.save()
 
 
     def __create_python_test(self, xmlTest):
         inst = PythonChecker.PythonChecker.objects.create(task=self.__praktomat_task.object, order=self.val_order)
-        self.__set_test_base_parameters(inst, xmlTest)
+        x = Praktomat_Test_2_00(inst, self.ns)
+        x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.doctest = value
-        self.__add_files_to_test(xmlTest, firstHandler=set_mainfile, inst=inst)
-        inst.save()
+        self.val_order = x.add_files_to_test(xmlTest, self. praktomat_files, self.val_order, firstHandler=set_mainfile)
+        x.save()
 
 
     # todo???
@@ -431,8 +446,7 @@ class Task_2_00:
 
         self.__praktomat_task = Praktomat_Task_2_00()
         try:
-            self.__praktomat_task.read_basic_attributes(self.xml_dict)
-            self.__praktomat_task.read_submission_restriction(self.xml_dict)
+            self.__praktomat_task.read(self.xml_dict)
             # self.set_default_user(user_name=SYSUSER)
 
             # read files
@@ -457,9 +471,11 @@ class Task_2_00:
                 logger.debug('increment vald_order, new value= ' + str(self.val_order))
 
         except Exception:
+            # cleanup objects
             self.__praktomat_task.delete()
             self.__praktomat_task = None
-            ### TODO delete files (memory leak)????
+            for key, file in self.praktomat_files:
+                file.object.delete()
             raise
 
         # finally set identifier attributes (do not set in previous steps
