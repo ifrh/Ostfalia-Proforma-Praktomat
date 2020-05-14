@@ -1,18 +1,32 @@
 # workaround for debug-toolbar/sqlparse incompatibility, see http://stackoverflow.com/questions/38479063/django-debug-toolbar-breaking-on-admin-while-getting-sql-stats
-sqlparse
-Django~=2.2.0
-Markdown
-Pygments
-chardet
-django-extensions
+chardet==3.0.4
+Django==2.2.12
+django-debug-toolbar==2.2
+django-extensions==2.2.9
+# django-tinymce 3.x is not compatible
+django-tinymce==2.9.0
+dnspython==1.16.0
+docutils==0.16
+elementpath==1.4.1
+eventlet==0.25.2
+greenlet==0.4.15
+gunicorn==20.0.4
+lxml==4.5.0
+Markdown==3.2
+monotonic==1.5
+psycopg2-binary==2.8.5
+Pygments==2.6.1
+pytz==2020.1
 
 # It appears that due to the pull-request https://github.com/aljosa/django-tinymce/pull/103 merged in django-tinymce==2.4.0, jquery is loaded after our onw jquery
 # loaded in admin-sites. Using an old version of django-tinymce (2.3.x) is not possible because it uses methods removed between Django 1.8 and 1.11.
 # We might want to use the django-admin provieded jquery in our admin-site jquery snippets?!?!?
-django-tinymce==2.9.0
-django-debug-toolbar
-docutils
-psycopg2-binary
-selenium
-lxml
-xmlschema
+
+selenium==3.141.0
+setuptools==45.2.0
+six==1.14.0
+sqlparse==0.3.1
+urllib3==1.25.9
+wheel==0.29.0
+xmlschema==1.1.0
+zipp==1.2.0

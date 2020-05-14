@@ -8,7 +8,7 @@ to be used as a grading back-end in e.g. learning management systems.
 The code is currently only used as a 'docker composition'.
 So the installation manual is not up-to-date.
 
-## Programming Languages
+#### Programming Languages
 
 The following programming languages and test frameworks are provided with the ProFormA interface.
 
@@ -21,13 +21,8 @@ The following programming languages and test frameworks are provided with the Pr
 
 For running SetlX tests you need to copy the setlx-2.7.jar into the extra folder.
 
-Note: For installation of other framework versions then you need to modify 
-- src/checker/JUnitChecker.py
-- src/checker/CheckStyleChecker.py
-- URLs in Dockerfile
-- src/settings.docker.py
 
-## Submission
+#### Submission types
 
 The following types of submission are supported:
 
@@ -37,15 +32,26 @@ The following types of submission are supported:
 * URI of SVN repository to export the submission from (credentials are stored in .env file)
  
 
-## Docker
+## Configuration
+
+Create an .env file containing credentials and other private data. 
+A sample file is included as .env.example.  
+
+    cp .env.example .example 
+
+For using other framework versions then you need to modify the following files:
+- src/checker/JUnitChecker.py
+- src/checker/CheckStyleChecker.py
+- URLs in Dockerfile
+- src/settings.docker.py
+
+## Setup
 
 In order to build and start the docker composition simply run 
 
         docker-compose build
         docker-compose up
       
-
-
 
 <!--
 TODO: The Web-Interface seems to be buggy.  
@@ -124,22 +130,22 @@ You can also omit the relative path for Java source files:
 
         http-file:User.java,File.java
 
-### Administration
+### Maintenance
 
-Praktomat stores tasks and results in a database and in the filesystem. In order to
-save disk space everything should be reset from time to time (e.g. before starting a new semester).
+The Praktomat stores tasks and results in a database and in the filesystem. In order not to
+run out of disk space the whole system should be reset from time to time (e.g. before starting a new semester).
 This can easily be done by calling 
 
     docker-compose down
     docker-dompose up 
   
-There is no need to back-up anything of the container!
+There is no need to back-up anything!
 
 #### Software Update
 
 In case of a software update this is the recommended process:
 
     1. docker-compose down
-    2. <update software>
+    2. git pull (update software)
     3. docker-dompose build    
     4. docker-dompose up 
