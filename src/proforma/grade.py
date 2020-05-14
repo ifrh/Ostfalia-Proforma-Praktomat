@@ -21,11 +21,12 @@
 # functions for grading a student's submission
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files import File
 
 #from accounts.templatetags.in_group import in_group
-from tasks.models import Task
+#from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
 from VERSION import version
@@ -36,8 +37,6 @@ import os
 #import codecs
 #import re
 import logging
-#import chardet
-#import traceback
 
 
 logger = logging.getLogger(__name__)
@@ -149,64 +148,59 @@ def save_file(data, solution_file, filename):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    if (filename[-3:].upper() == 'ZIP') or (filename[-3:].upper() == 'JAR'):
+    # logger.debug('save_file ' + filename)
+    # logger.debug('File content class name is ' + data.__class__.__name__)
+    if isinstance(data, InMemoryUploadedFile):
+        with default_storage.open('%s' % (full_filename), 'w') as destination:
+            for chunk in data.chunks():
+                destination.write(chunk)
+    elif isinstance(data, File):
+        # logger.debug('File name is ' + data.name)
+        # if False: # full_filename.lower().endswith('.java'):
+        #     # special handling for java files:
+        #     # check for package and move to appropriate path
+        #     short_filename = os.path.basename(filename)
+        #     if filename == short_filename:
+        #         # filename does not contain a package yet
+        #         # => read file and search for package declaration.
+        #         data.seek(0) # set file pointer to the beginning of the file
+        #         # problem: File can be a binary (not text) file and
+        #         # we do not know the encoding!
+        #         # => convert result into string
+        #         file_content = str(data.read())
+        #         #import io
+        #         #file_content = str(io.TextIOWrapper(io.BytesIO(data.read())))
+        #         package = find_java_package_path(file_content)
+        #         if len(package) > 0:
+        #             logger.debug('prepend package path ' + package)
+        #             full_filename = os.path.join(full_directory,  package + '/' + filename)
+
+        #logger.debug('full_filename name is ' + full_filename)
+        tmp = default_storage.save(full_filename, data)
+        #logger.debug('save returned ' + tmp)
+    elif isinstance(data, str): # elif data.__class__.__name__ == 'str':
+        fd = open('%s' % (full_filename), 'w')
+        fd.write(data)
+        fd.close()
+#    elif isinstance(data, unicode): # data.__class__.__name__ == 'unicode':
+#        fd = open('%s' % (full_filename), 'w')
+#        fd.write(data.encode("utf-8"))
+#        fd.close()
+    elif isinstance(data, bytes): # data.__class__.__name__ == 'bytes':
         fd = open('%s' % (full_filename), 'wb')
         fd.write(data)
         fd.close()
+    elif data.__class__.__name__ == 'PhysicalFile':
+        # file already exists => move to correct location
+        # logger.debug('PhysicalFile =>  ' + full_filename)
+        import shutil
+        shutil.move(data.path, full_filename)
     else:
-        # logger.debug('File content class name is ' + data.__class__.__name__)
-        if data.__class__.__name__ == 'InMemoryUploadedFile':
-            with default_storage.open('%s' % (full_filename), 'w') as destination:
-                for chunk in data.chunks():
-                    destination.write(chunk)
-        elif data.__class__.__name__ == 'File':
-            logger.debug('File name is ' + data.name)
-            # if False: # full_filename.lower().endswith('.java'):
-            #     # special handling for java files:
-            #     # check for package and move to appropriate path
-            #     short_filename = os.path.basename(filename)
-            #     if filename == short_filename:
-            #         # filename does not contain a package yet
-            #         # => read file and search for package declaration.
-            #         data.seek(0) # set file pointer to the beginning of the file
-            #         # problem: File can be a binary (not text) file and
-            #         # we do not know the encoding!
-            #         # => convert result into string
-            #         file_content = str(data.read())
-            #         #import io
-            #         #file_content = str(io.TextIOWrapper(io.BytesIO(data.read())))
-            #         package = find_java_package_path(file_content)
-            #         if len(package) > 0:
-            #             logger.debug('prepend package path ' + package)
-            #             full_filename = os.path.join(full_directory,  package + '/' + filename)
-
-            logger.debug('full_filename name is ' + full_filename)
-            tmp = default_storage.save(full_filename, data)
-            logger.debug('save returned ' + tmp)
-
-
-        elif data.__class__.__name__ == 'str':
-            fd = open('%s' % (full_filename), 'w')
-            fd.write(data)
-            fd.close()
-        elif data.__class__.__name__ == 'unicode':
-            fd = open('%s' % (full_filename), 'w')
-            fd.write(data.encode("utf-8"))
-            fd.close()
-        elif data.__class__.__name__ == 'bytes':
-            fd = open('%s' % (full_filename), 'wb')
-            fd.write(data)
-            fd.close()
-        elif data.__class__.__name__ == 'PhysicalFile':
-            # file already exists => move to correct location
-            # logger.debug('PhysicalFile =>  ' + full_filename)
-            import shutil
-            shutil.move(data.path, full_filename)
-        else:
-            # string
-            fd = open('%s' % (full_filename), 'w')
-            fd.write(data)
-            fd.close()
+        raise Exception('unknown tpye: ' + data.__class__.__name__)
+        # string
+        #fd = open('%s' % (full_filename), 'w')
+        #fd.write(data)
+        #fd.close()
 
 
     # if full_filename.lower().endswith('.java'):
