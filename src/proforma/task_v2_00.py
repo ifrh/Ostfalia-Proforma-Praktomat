@@ -42,11 +42,12 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+# BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 XSD_V_2_PATH = "proforma/xsd/proforma_v2.0.xsd"
 XSD_V_2_01_PATH = "proforma/xsd/proforma_2.0.1_rc.xsd"
-SYSUSER = "sys_prod"
+# SYSUSER = "sys_prod"
 
 CACHE_TASKS = True
 if not CACHE_TASKS:
@@ -57,15 +58,6 @@ if not CACHE_TASKS:
 
 
 # helper functions
-def get_optional_xml_attribute_text(xmlTest, xpath, attrib, namespaces):
-    if xmlTest.xpath(xpath, namespaces=namespaces) is None:
-        return ""
-    try:
-        return xmlTest.xpath(xpath, namespaces=namespaces)[0].attrib.get(attrib)
-    except:
-        return ""
-
-
 def get_optional_xml_element_text(xmlTest, xpath, namespaces):
     try:
         if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
@@ -84,6 +76,21 @@ def get_required_xml_element_text(xmlTest, xpath, namespaces, msg):
         raise task.TaskXmlException(msg + ' must not be empty')
     return text
 
+def _get_required_xml_element(xmlTest, xpath, namespaces, message):
+    element = xmlTest.xpath(xpath, namespaces=namespaces)
+    if len(element) == 0:
+        raise task.TaskXmlException('missing ' + message)
+    if len(element) > 1:
+        raise task.TaskXmlException('more than one ' + message + ' found')
+    return element[0]
+
+def _get_optional_xml_element(xmlTest, xpath, namespaces, message):
+    element = xmlTest.xpath(xpath, namespaces=namespaces)
+    if len(element) == 0:
+        return None
+    if len(element) > 1:
+        raise task.TaskXmlException('more than one ' + message + ' found')
+    return element[0]
 
 
 # wrapper for task object in Praktomat model
@@ -179,7 +186,7 @@ class Praktomat_File:
 
 
 # wrapper for checker object (= test object in Praktomat model)
-class Praktomat_Test_2_00:
+class Praktomat_Test_2_0:
     def __init__(self, inst, namespaces):
         self._checker = inst
         self._ns = namespaces
@@ -187,8 +194,6 @@ class Praktomat_Test_2_00:
     def set_test_base_parameters(self, xmlTest):
         if xmlTest.xpath("p:title", namespaces=self._ns) is not None:
             self._checker.name = xmlTest.xpath("p:title", namespaces=self._ns)[0].text
-        #if (xmlTest.xpath("p:title", namespaces=ns) and xmlTest.xpath("p:title", namespaces=ns)[0].text):
-        #    inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
             self._checker.test_description = get_optional_xml_element_text(xmlTest, "p:description", self._ns)
         self._checker.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
         self._checker.always = True
@@ -290,34 +295,37 @@ class Task_2_00:
                                                       _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
                                                       _main_required=False
                                                       )
-        x = Praktomat_Test_2_00(inst, self._ns)
+        x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         x.save()
 
 
+
+
     def _create_java_unit_test(self, xmlTest):
-        checker_ns = self._ns.copy()
-        checker_ns['unit_new'] = 'urn:proforma:tests:unittest:v1.1'
-        checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
+        # create list with valid namespaces for unit test
+        checker_ns = self._ns.copy() # base: default namespace
+        checker_ns['unit_1.1'] = 'urn:proforma:tests:unittest:v1.1' # append unittest 1.1 namespace
+        # checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
 
         inst = JUnitChecker.JUnitChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
-        #if xmlTest.xpath("p:title", namespaces=ns) is not None:
-        #        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-        #inst.test_description = geget_required_xml_element_textt_optional_xml_element_text(xmlTest, "p:description", ns)
 
-        inst.class_name = get_required_xml_element_text(xmlTest,
-            "p:test-configuration/unit_new:unittest/unit_new:entry-point", checker_ns, 'JUnit entrypoint')
+        # get unittest element
+        unittest = _get_required_xml_element(xmlTest, "p:test-configuration/unit_1.1:unittest",
+                                             checker_ns, 'unittest element for testconfiguration = \'unittest\'')
 
+        # get junit version
         junit_version = ''
-        if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']", namespaces=checker_ns):
-            junit_version = get_optional_xml_attribute_text(xmlTest,
-                "p:test-configuration/unit:unittest[@framework='JUnit']", "version", checker_ns)
-        elif xmlTest.xpath("p:test-configuration/unit_new:unittest[@framework='JUnit']", namespaces=checker_ns):
-            junit_version = get_optional_xml_attribute_text(xmlTest,
-                "p:test-configuration/unit_new:unittest[@framework='JUnit']", "version", checker_ns)
+        framework = unittest.attrib.get("framework")
+        if framework == None:
+            raise task.TaskXmlException('unittest framework missing (is it JUnit?)')
+        framework = framework.lower()
+        if framework != 'junit':
+            raise task.TaskXmlException('unknown test framework (only junit is supported)')
+        junit_version = unittest.attrib.get("version")
 
-        if len(junit_version) == 0:
-            raise Exception('Task XML error: Junit Version is missing')
+        if junit_version == None or len(junit_version) == 0:
+            raise task.TaskXmlException('Junit Version is missing')
 
         version = re.split('\.', junit_version)
 
@@ -328,11 +336,23 @@ class Task_2_00:
             # check if version is supported
             settings.JAVA_LIBS[inst.junit_version]
         except Exception as e:
-            inst.delete()
-            # todo create: something like TaskException class
-            raise Exception("Junit-Version is not supported: " + str(junit_version))
+            # try and guess version :-(
+            logger.error("JUNIT-version is " + inst.junit_version)
+            logger.error("Junit-Version not found: \'" + str(junit_version) + "\', try other")
+            try:
+                junit_version = re.split(' ', junit_version)
+                inst.junit_version = "junit" + junit_version[0]
+                settings.JAVA_LIBS[inst.junit_version]
+            except Exception as e:
+                inst.delete()
+                # todo create: something like TaskException class
+                raise Exception("Junit-Version is not supported: \'" + str(junit_version) + "\'")
+            logger.error("JUNIT-version is now: \'" + junit_version[0] + "\'")
 
-        x = Praktomat_Test_2_00(inst, self._ns)
+        # get entrypoint
+        inst.class_name = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'JUnit entrypoint')
+
+        x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, None)
         x.save()
@@ -341,22 +361,33 @@ class Task_2_00:
         checker_ns = self._ns.copy()
         checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
-        inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
-        if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
-                         namespaces=checker_ns)[0].attrib.get("version"):
-            checkstyle_ver = xmlTest.xpath("p:test-configuration/check:java-checkstyle", namespaces=checker_ns)[0].\
-                attrib.get("version")
+        # checkstyle = xmlTest.xpath("p:test-configuration/check:java-checkstyle", namespaces=checker_ns)
+        checkstyle = _get_optional_xml_element(xmlTest, "p:test-configuration/check:java-checkstyle",
+                                             checker_ns, 'checkstyle element for testconfiguration = \'checkstyle\'')
 
-            # check if checkstlye version is configured
+
+        inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
+        checkstyle_ver = None
+        if checkstyle != None:
+            checkstyle_ver = checkstyle.attrib.get("version")
+
+        if checkstyle_ver == None:
+            logger.debug('keys: ' + str(list(settings.CHECKSTYLE_VER.keys())))
+            inst.check_version = list(settings.CHECKSTYLE_VER.keys())[-1]
+            logger.error("No Checkstyle version defined, pick : \'" + inst.check_version + "\'")
+            checkstyle_ver = inst.check_version
+        else:
             inst.check_version = 'check-' + checkstyle_ver.strip()
-            logger.debug('checkstyle version: ' + inst.check_version)
-            try:
-                # check if version is supported
-                bin = settings.CHECKSTYLE_VER[inst.check_version]
-            except Exception as e:
-                inst.delete()
-                # todo create: something like TaskException class
-                raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_ver))
+
+        # check if checkstlye version is configured
+        logger.debug('checkstyle version: ' + inst.check_version)
+        try:
+            # check if version is supported
+            bin = settings.CHECKSTYLE_VER[inst.check_version]
+        except Exception as e:
+            inst.delete()
+            # todo create: something like TaskException class
+            raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_ver))
 
 
         if xmlTest.xpath("p:test-configuration/check:java-checkstyle/"
@@ -365,7 +396,7 @@ class Task_2_00:
                                                  "check:java-checkstyle/"
                                                  "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
 
-        x = Praktomat_Test_2_00(inst, self._ns)
+        x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.configuration = value
@@ -376,7 +407,7 @@ class Task_2_00:
 
     def _create_setlx_test(self, xmlTest):
         inst = SetlXChecker.SetlXChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
-        x = Praktomat_Test_2_00(inst, self._ns)
+        x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.testFile = value
@@ -386,14 +417,14 @@ class Task_2_00:
 
     def _create_python_test(self, xmlTest):
         inst = PythonChecker.PythonChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
-        x = Praktomat_Test_2_00(inst, self._ns)
+        x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.doctest = value
         self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, firstHandler=set_mainfile)
         x.save()
 
-    def get_xsd_path(self):
+    def _get_xsd_path(self):
         if self._format_namespace == 'urn:proforma:v2.0':
             return XSD_V_2_PATH
         if self._format_namespace == 'urn:proforma:v2.0.1':
@@ -416,7 +447,7 @@ class Task_2_00:
 
         # no need to actually validate xml against xsd
         # (it is only time consuming)
-        schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, self.get_xsd_path()))
+        schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, self._get_xsd_path()))
         # todo: remove because it is very expensive (bom, about 350ms)
         # logger.debug('task_xml = ' + str(task_xml))
         t = tempfile.NamedTemporaryFile(delete=True)

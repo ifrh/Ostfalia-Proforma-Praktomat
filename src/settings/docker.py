@@ -7,6 +7,7 @@
 
 from os.path import join, dirname, basename
 import os
+from collections import OrderedDict
 
 PRAKTOMAT_PATH = dirname(dirname(dirname(__file__)))
 
@@ -111,13 +112,18 @@ JAVA_LIBS = {
      'junit4.12': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
      'junit4.12-gruendel': '/praktomat/lib/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/lib/hamcrest-core-1.3.jar'}
 
-# map old checkstlye version to 8.23
-CHECKSTYLE_VER = {'check-6.2': '/praktomat/lib/checkstyle-8.23-all.jar',
-                  'check-7.6': '/praktomat/lib/checkstyle-8.23-all.jar',
-#                  'check-5.4': '/praktomat/lib/checkstyle-8.23-all.jar',
-                  'check-8.23': '/praktomat/lib/checkstyle-8.23-all.jar',
-                  'check-8.29': '/praktomat/lib/checkstyle-8.29-all.jar'
-                  }
+
+# The checkstyle versions must be sorted in order to find the latest version =>
+# therefore an OrderedDict must be used because in Python 3.5 the order is not defined!
+# We currently use Python 3.5.
+# list(settings.CHECKSTYLE_VER.keys())[-1] must return the last value!
+CHECKSTYLE_VER = OrderedDict()
+CHECKSTYLE_VER['check-6.2']  = '/praktomat/lib/checkstyle-8.23-all.jar'
+CHECKSTYLE_VER['check-7.6']  = '/praktomat/lib/checkstyle-8.23-all.jar'
+CHECKSTYLE_VER['check-8.23'] = '/praktomat/lib/checkstyle-8.23-all.jar'
+CHECKSTYLE_VER['check-8.29'] = '/praktomat/lib/checkstyle-8.29-all.jar'
+
+
 JCFDUMP = 'jcf-dump'
 SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 
