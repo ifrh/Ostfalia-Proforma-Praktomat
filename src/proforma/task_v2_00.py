@@ -24,16 +24,11 @@ import re
 import os
 import tempfile
 from datetime import datetime
-from operator import getitem
 
 import xmlschema
-#from django.views.decorators.csrf import csrf_exempt
 
 from django.core.files import File
-#from lxml import objectify
 
-
-#from accounts.models import User
 from checker.checker import PythonChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
     CreateFileChecker
@@ -44,12 +39,13 @@ from tasks.models import Task
 from django.conf import settings
 
 import logging
-from functools import reduce
+
 
 logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-XSD_V_2_PATH = "xsd/proforma_v2.0.xsd"
+XSD_V_2_PATH = "proforma/xsd/proforma_v2.0.xsd"
+XSD_V_2_01_PATH = "proforma/xsd/proforma_2.0.1_rc.xsd"
 SYSUSER = "sys_prod"
 
 CACHE_TASKS = True
@@ -103,10 +99,6 @@ class Praktomat_Task_2_00:
         return self._task
     object = property(_getTask)
 
-    def _getitem_from_dict(self, dataDict, mapList):
-        """Iterate nested dictionary"""
-        return reduce(getitem, mapList, dataDict)
-
     def delete(self):
         self._task.delete()
         self._task = None
@@ -140,13 +132,13 @@ class Praktomat_Task_2_00:
     def _read_submission_restriction(self, xml_dict):
         # todo add file restrictions
 
-        path = ['submission-restrictions']
         max_size = None
-        restriction = self._getitem_from_dict(xml_dict, path)
+        restriction = xml_dict.get('p:submission-restrictions')
 
         try:
             max_size = restriction.get("@max-size")
         except AttributeError:
+            logger.error('could not find max-size, set to default')
             # no max size given => use default (1MB)
             max_size = 1000000
 
@@ -230,11 +222,8 @@ class Praktomat_Test_2_00:
 
 
 class Task_2_00:
-    _format_namespace = "urn:proforma:v2.0"
-    _ns = {"p": _format_namespace}
-
     # constructor
-    def __init__(self, task_xml, xml_obj, hash, dict_zip_files=None):
+    def __init__(self, task_xml, xml_obj, hash, dict_zip_files, format_namespace):
         self._task_xml = task_xml
         self._xml_obj = xml_obj
         self._hash = hash
@@ -242,10 +231,12 @@ class Task_2_00:
         self._praktomat_task = None
         self._val_order = 1
         self._praktomat_files = None
+        self._format_namespace = format_namespace
+        self._ns = {"p": self._format_namespace}
 
     # read all files from task and put them into a dictionary
     def _create_praktomat_files(self, xml_obj, external_file_dict=None, ):
-        namespace = Task_2_00._ns
+        namespace = self._ns
 
         orphain_files = dict()
 
@@ -265,12 +256,14 @@ class Task_2_00:
                     orphain_files[k.attrib.get("id")] = my_temp
                 elif k.xpath("p:attached-bin-file", namespaces=namespace):
                     filename = k['attached-bin-file'].text
-                    if external_file_dict is None:
-                        raise Exception('no files in zip found')
+                    logger.debug('attached task file: ' + k.attrib.get("id") + ' => ' + filename)
+                    orphain_files[k.attrib.get("id")] = external_file_dict[filename]
+                elif k.xpath("p:attached-txt-file", namespaces=namespace):
+                    filename = k['attached-txt-file'].text
                     logger.debug('attached task file: ' + k.attrib.get("id") + ' => ' + filename)
                     orphain_files[k.attrib.get("id")] = external_file_dict[filename]
                 else:
-                    raise Exception('unsupported file type in task.xml (embedded-bin-file or attached-txt-file)')
+                    raise task.TaskXmlException('embedded-bin-file is not supported')
 
         # List with all files that are referenced by tests
         list_of_test_files = xml_obj.xpath("/p:task/p:tests/p:test/p:test-configuration/"
@@ -297,13 +290,13 @@ class Task_2_00:
                                                       _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
                                                       _main_required=False
                                                       )
-        x = Praktomat_Test_2_00(inst, Task_2_00._ns)
+        x = Praktomat_Test_2_00(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         x.save()
 
 
     def _create_java_unit_test(self, xmlTest):
-        checker_ns = Task_2_00._ns.copy()
+        checker_ns = self._ns.copy()
         checker_ns['unit_new'] = 'urn:proforma:tests:unittest:v1.1'
         checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
 
@@ -339,13 +332,13 @@ class Task_2_00:
             # todo create: something like TaskException class
             raise Exception("Junit-Version is not supported: " + str(junit_version))
 
-        x = Praktomat_Test_2_00(inst, Task_2_00._ns)
+        x = Praktomat_Test_2_00(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, None)
         x.save()
 
     def _create_java_checkstyle_test(self, xmlTest):
-        checker_ns = Task_2_00._ns.copy()
+        checker_ns = self._ns.copy()
         checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
         inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
@@ -372,7 +365,7 @@ class Task_2_00:
                                                  "check:java-checkstyle/"
                                                  "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
 
-        x = Praktomat_Test_2_00(inst, Task_2_00._ns)
+        x = Praktomat_Test_2_00(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.configuration = value
@@ -383,7 +376,7 @@ class Task_2_00:
 
     def _create_setlx_test(self, xmlTest):
         inst = SetlXChecker.SetlXChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
-        x = Praktomat_Test_2_00(inst, Task_2_00._ns)
+        x = Praktomat_Test_2_00(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.testFile = value
@@ -393,20 +386,26 @@ class Task_2_00:
 
     def _create_python_test(self, xmlTest):
         inst = PythonChecker.PythonChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
-        x = Praktomat_Test_2_00(inst, Task_2_00._ns)
+        x = Praktomat_Test_2_00(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.doctest = value
         self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, firstHandler=set_mainfile)
         x.save()
 
+    def get_xsd_path(self):
+        if self._format_namespace == 'urn:proforma:v2.0':
+            return XSD_V_2_PATH
+        if self._format_namespace == 'urn:proforma:v2.0.1':
+            return XSD_V_2_01_PATH
+        raise Exception('ProForma XSD not found for namespace ' + self._format_namespace)
 
     def import_task(self):
 
-        task_in_xml = self._xml_obj.xpath("/p:task", namespaces=Task_2_00._ns)
+        task_in_xml = self._xml_obj.xpath("/p:task", namespaces=self._ns)
         task_uuid = task_in_xml[0].attrib.get("uuid")
         logger.debug('uuid is ' + task_uuid)
-        task_title = self._xml_obj.xpath("/p:task/p:title", namespaces=Task_2_00._ns)[0]
+        task_title = self._xml_obj.xpath("/p:task/p:title", namespaces=self._ns)[0]
         logger.debug('title is "' + task_title + '"')
 
         # check if task is already in database
@@ -417,7 +416,7 @@ class Task_2_00:
 
         # no need to actually validate xml against xsd
         # (it is only time consuming)
-        schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
+        schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, self.get_xsd_path()))
         # todo: remove because it is very expensive (bom, about 350ms)
         # logger.debug('task_xml = ' + str(task_xml))
         t = tempfile.NamedTemporaryFile(delete=True)
@@ -426,6 +425,8 @@ class Task_2_00:
         t.seek(0)
 
         xml_dict = schema.to_dict(t)
+        if xml_dict == None:
+            raise Exception('cannot create dictionary from task')
 
         # xml_dict = validate_xml(xml=task_xml)
 
@@ -440,7 +441,7 @@ class Task_2_00:
             self._create_praktomat_files(xml_obj=self._xml_obj, external_file_dict=self._dict_zip_files)
             # create test objects
             for xmlTest in self._xml_obj.tests.iterchildren():
-                testtype = xmlTest.xpath("p:test-type", namespaces=Task_2_00._ns)[0].text
+                testtype = xmlTest.xpath("p:test-type", namespaces=self._ns)[0].text
                 if testtype == "java-compilation":  # todo check compilation_xsd
                     logger.debug('** create_java_compilertest')
                     self._create_java_compilertest(xmlTest)

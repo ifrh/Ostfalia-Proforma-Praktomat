@@ -24,7 +24,6 @@
 # TASK VERSION 1.0.1 IS NO LONGER SUPPORTED
 
 
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.core.files import File
 
@@ -33,14 +32,12 @@ from lxml import objectify
 import re
 import tempfile
 import logging
-from os.path import dirname
 
 from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
 from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
     PythonChecker, SetlXChecker
-#from checker.checker import TextNotChecker, TextChecker, DejaGnu
 from checker.compiler import JavaBuilder, CBuilder
 
 

@@ -32,8 +32,6 @@ from VERSION import version
 from django.template.loader import render_to_string
 
 import os
-#import codecs
-#import re
 import logging
 
 

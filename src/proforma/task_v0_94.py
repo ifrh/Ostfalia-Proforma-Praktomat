@@ -21,10 +21,8 @@
 # functions for importing ProFormA tasks version 0.9.4 into Praktomat database.
 # Version 0.9.4 is depricated, do not use anymore!!
 
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.core.files import File
-from django.views.decorators.csrf import csrf_exempt
 
 from datetime import datetime
 from lxml import objectify
@@ -38,7 +36,7 @@ from accounts.models import User
 from solutions.models import Solution, SolutionFile
 from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
     DejaGnu, TextNotChecker, PythonChecker, RemoteSQLChecker, TextChecker, SetlXChecker
-from checker.builder import JavaBuilder
+from checker.compiler import JavaBuilder
 
 from . import task
 

@@ -35,10 +35,7 @@ from django.core.files import File
 
 import os
 import re
-#import shutil
 import logging
-#import xmlschema
-#from requests.exceptions import InvalidSchema
 from . import task
 from . import grade
 import zipfile

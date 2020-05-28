@@ -27,22 +27,13 @@ import traceback
 
 
 from os.path import dirname
-from xml.dom import minidom
-from xml.dom.minidom import Node
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-#from django.core.servers.basehttp import FileWrapper
-from django.db import models
 
-#from django.shortcuts import redirect
-#from django.template import TemplateSyntaxError
-#from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files import File
 from django.http import HttpResponse
-from lxml import etree
 from lxml import objectify
 import logging
 import zipfile
@@ -51,12 +42,7 @@ from os.path import basename
 import hashlib
 from tasks.models import Task
 
-#from attestation.models import Rating
 from checker.checker import CreateFileChecker
-#from checker.models import Checker
-#from solutions.models import Solution, SolutionFile
-#from tasks.models import Task, MediaFile
-#from . import task_v0_94
 from . import task_v1_01
 from . import task_v2_00
 
@@ -344,6 +330,7 @@ def import_task_internal(filename, task_file):
     format_namespace_v0_9_4 = "urn:proforma:task:v0.9.4"
     format_namespace_v1_0_1 = "urn:proforma:task:v1.0.1"
     format_namespace_v2_0 = "urn:proforma:v2.0"
+    format_namespace_v2_0_1 = "urn:proforma:v2.0.1"
 
     # rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
 
@@ -386,7 +373,11 @@ def import_task_internal(filename, task_file):
         response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
     elif format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
-        task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files)
+        task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0)
+        response_data = task_2.import_task()
+    elif format_namespace_v2_0_1 in list(xml_object.nsmap.values()):
+        logger.debug('handle 2.0.1 task')
+        task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0_1)
         response_data = task_2.import_task()
     else:
         raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
