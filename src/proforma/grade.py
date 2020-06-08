@@ -37,7 +37,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-keep_sandbox = False
+keep_sandbox = True
 if keep_sandbox:
     print('*********************************************\n')
     print('*** Attention! Sandboxes are not deleted! ***\n')
@@ -268,12 +268,15 @@ def get_solution_xml(result, solution, file_name, response_format):
                             "fileName": file_name,
                             "grader": grader,
                             "required_hidden": false_required_hidden_test})
-    else:
-        response_xml = render_to_string('proforma/message.xml',
+    elif response_format == "lon_capa":
+        response_xml = render_to_string('proforma/response_loncapa.xml',
                            {"solution": solution,
                             "testResultList": result,
                             "fileName": file_name,
                             "required_hidden": false_required_hidden_test})
+    else:
+        raise Exception('unsupported response format: ' + response_format)
+
     return response_xml
 
 

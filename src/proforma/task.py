@@ -222,7 +222,14 @@ def extract_zip_with_xml_and_zip_dict(uploaded_file):
     # ZIP import
     task_xml = None
     ignored_file_names_re = re.compile(regex)
-    zip_file = zipfile.ZipFile(uploaded_file, 'r')
+
+    if type(uploaded_file) == bytes:
+        import io
+        zip_file = zipfile.ZipFile(io.BytesIO(uploaded_file), "r")
+    else:
+        zip_file = zipfile.ZipFile(uploaded_file, 'r')
+
+
     #zip_file = zipfile.ZipFile(uploaded_file[0], 'r')
     dict_zip_files = dict()
     for zipFileName in zip_file.namelist():
@@ -339,10 +346,12 @@ def import_task_internal(filename, task_file):
         if type(task_file) == InMemoryUploadedFile:
             logger.debug('compute MD5 for zip file')
             md5 = hashlib.md5(task_file.read()).hexdigest()
+        elif type(task_file) == bytes:
+            md5 = hashlib.md5(task_file).hexdigest()
         else:
-            # todo
-            raise Exception('cannot compute MD5')
-        # md5 = hashlib.md5(task_file).hexdigest()
+            logger.debug('class is : ' + task_file.__class__.__name__)
+            raise Exception('cannot compute MD5 because of unsupported class')
+
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
         if type(task_file) == InMemoryUploadedFile:

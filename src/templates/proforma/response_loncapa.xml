@@ -1,0 +1,20 @@
+<loncapagrade>
+    <awarddetail>{% if solution.accepted  %}EXACT_ANS{% else %}INCORRECT{% endif %}</awarddetail>
+<message>
+    <taskresult grade="{% if solution.accepted  %}passed{% else %}failed{% endif %}">
+    <tasktitle>{{ solution.task.title }}</tasktitle>
+    {% for testResult in testResultList %}
+        {% if testResult.checker.public %}
+        <testresult grade="{% if testResult.passed  %}passed{% else %}failed{% endif %}">
+             <testname>{{ testResult.checker.title }}</testname>
+            <testlog>{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</testlog>
+        </testresult>
+        {% endif %}
+    {% endfor %}
+    {% for name in fileName %}
+    <filename>{{ name }}</filename>
+    {% endfor %}
+    </taskresult>
+</message>
+    <awarded></awarded>
+</loncapagrade>

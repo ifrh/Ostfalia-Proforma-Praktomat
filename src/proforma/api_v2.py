@@ -38,9 +38,10 @@ import re
 import logging
 from . import task
 from . import grade
+from . import misc
 import zipfile
 import tempfile
-import VERSION
+
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -67,20 +68,6 @@ class VersionControlSystem:
         self.revision = revision
         self.uri = uri
 
-# string format for exception return message in HTTP
-def get_http_error_page(title, message, callstack):
-    return """%s
-
-    %s
-
-Praktomat: %s
-
-Callstack:
-    %s""" % (title, message, VERSION.version, callstack)
-
-
-
-
 def grade_api_v2(request,):
     """
     grade_api_v2
@@ -94,8 +81,8 @@ def grade_api_v2(request,):
 
     # create task and get Id
     try:
-        # check request
-        xml = get_submission_xml(request)
+        # get request XML from LMS (called 'submission.xml' in ProFormA)
+        xml = get_request_xml(request)
         logger.debug("type(xml): " + str(type(xml)))
         #logger.debug("got xml: " + xml)
 
@@ -175,7 +162,7 @@ def grade_api_v2(request,):
         callstack = traceback.format_exc()
         print("ExternalSubmissionException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(get_http_error_page('Could not get submission files', str(inst), callstack))
+        response.write(misc.get_http_error_page('Could not get submission files', str(inst), callstack))
         response.status_code = 404 # file not found
         return response
     except task.TaskXmlException as inst:
@@ -183,7 +170,7 @@ def grade_api_v2(request,):
         callstack = traceback.format_exc()
         print("TaskXmlException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(get_http_error_page('Task error', str(inst), callstack))
+        response.write(misc.get_http_error_page('Task error', str(inst), callstack))
         response.status_code = 400 # bad request
         return response
     except Exception as inst:
@@ -191,7 +178,7 @@ def grade_api_v2(request,):
         callstack = traceback.format_exc()
         print("Exception caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(get_http_error_page('Error in grading process', str(inst), callstack))
+        response.write(misc.get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
         return response
 
@@ -218,9 +205,7 @@ def get_external_task(request, task_uri):
     raise Exception("could not find task with URI " + task_uri)
 
 
-
-
-def get_submission_xml(request):
+def get_request_xml(request):
     """
     check the POST-Object
     1. could be just a submission.xml

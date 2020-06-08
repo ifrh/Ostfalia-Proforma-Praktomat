@@ -24,7 +24,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
 from . import api_v2
-#from . import api_non_proforma
+from . import api_lon_capa
 import VERSION
 
 
@@ -40,9 +40,9 @@ def grade_api_v2(request):
     return api_v2.grade_api_v2(request)
 
 
-#@csrf_exempt  # disable csrf-cookie
-#def grade_api_v1(request):
-#    return api_non_proforma.grade_api_lon_capa(request)
+@csrf_exempt  # disable csrf-cookie
+def grade_api_lon_capa(request):
+    return api_lon_capa.grade_api_lon_capa(request)
 
 
 @csrf_exempt

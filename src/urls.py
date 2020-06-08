@@ -58,9 +58,11 @@ urlpatterns = [
 
 # Proforma add-on [start]
 # Proforma 2.0
-
+    # official Proforma request
     url(r'^api/v2/submissions$', proforma.views.grade_api_v2, name="grade_api_v2"),
-    
+    # special solution for LON-CAPA (only task is ProFormA compatible)
+    url(r'^api/v2/loncapasubmission$', proforma.views.grade_api_lon_capa, name="grade_api_lon_capa"),
+
     # external_grade common url: server / lms / function / domain / user / task
     # todo: username sollte @ enthalten
     # file grader: function / user_name / task_id
