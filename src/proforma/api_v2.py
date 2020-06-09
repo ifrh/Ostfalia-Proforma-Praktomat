@@ -38,7 +38,7 @@ import re
 import logging
 from . import task
 from . import grade
-from . import misc
+import VERSION
 import zipfile
 import tempfile
 
@@ -49,6 +49,18 @@ PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 logger = logging.getLogger(__name__)
 
 NAMESPACES = {'dns': 'urn:proforma:v2.0'}
+
+# string format for exception return message in HTTP
+def get_http_error_page(title, message, callstack):
+    return """%s
+
+    %s
+
+Praktomat: %s
+
+Callstack:
+    %s""" % (title, message, VERSION.version, callstack)
+
 
 # exception class for handling situations where
 # the submission cannot be found from external resource
@@ -162,7 +174,7 @@ def grade_api_v2(request,):
         callstack = traceback.format_exc()
         print("ExternalSubmissionException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(misc.get_http_error_page('Could not get submission files', str(inst), callstack))
+        response.write(get_http_error_page('Could not get submission files', str(inst), callstack))
         response.status_code = 404 # file not found
         return response
     except task.TaskXmlException as inst:
@@ -170,7 +182,7 @@ def grade_api_v2(request,):
         callstack = traceback.format_exc()
         print("TaskXmlException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(misc.get_http_error_page('Task error', str(inst), callstack))
+        response.write(get_http_error_page('Task error', str(inst), callstack))
         response.status_code = 400 # bad request
         return response
     except Exception as inst:
@@ -178,7 +190,7 @@ def grade_api_v2(request,):
         callstack = traceback.format_exc()
         print("Exception caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(misc.get_http_error_page('Error in grading process', str(inst), callstack))
+        response.write(get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
         return response
 

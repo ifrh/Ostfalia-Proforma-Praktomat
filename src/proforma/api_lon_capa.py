@@ -25,12 +25,29 @@ from django.http import HttpResponse
 import logging
 from . import task
 from . import grade
-from . import misc
+import VERSION
 
 import base64
 
 
 logger = logging.getLogger(__name__)
+
+
+# string format for exception return message in HTTP
+def get_http_error_page(title, message, callstack):
+    return """<loncapagrade>
+    <awarddetail>ERROR</awarddetail>
+<message>%s
+
+%s
+</message>
+    <awarded></awarded>
+</loncapagrade>
+""" % (title)
+
+#""" % (title, message, VERSION.version, callstack)
+
+
 
 def grade_api_lon_capa(request,):
     logger.debug("new grading request")
@@ -75,7 +92,7 @@ def grade_api_lon_capa(request,):
         callstack = traceback.format_exc()
         print("TaskXmlException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(misc.get_http_error_page('Task error', str(inst), callstack))
+        response.write(get_http_error_page('Task error', str(inst), callstack))
         response.status_code = 400 # bad request
         return response
     except Exception as inst:
@@ -83,6 +100,6 @@ def grade_api_lon_capa(request,):
         callstack = traceback.format_exc()
         print("Exception caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(misc.get_http_error_page('Error in grading process', str(inst), callstack))
+        response.write(get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
         return response
