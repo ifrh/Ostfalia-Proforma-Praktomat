@@ -71,10 +71,18 @@ def grade_api_lon_capa(request,):
         # save solution in database
         submission_files = dict()
         submission_files.update({submission_filename: submission})
-        solution = grade.save_solution(proformatask, submission_files)
+        #solution = grade.save_solution(proformatask, submission_files)
 
         # run tests
-        grade_result = grade.grade(solution, "lon_capa")
+        #grade_result = grade.grade(solution, )
+
+        # run tests
+        grader = grade.Grader(proformatask)
+        grader.grade(submission_files)
+        # get result
+        grade_result = grader.get_result("lon_capa")
+
+
 
         # return result
         logger.debug("grading finished")

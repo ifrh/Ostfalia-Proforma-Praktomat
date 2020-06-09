@@ -152,13 +152,11 @@ def grade_api_v2(request,):
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
 
-        # save solution in database
-        solution = grade.save_solution(proformatask, submission_files)
-        if version_control != None:
-            solution.versioncontrol = version_control
-
         # run tests
-        grade_result = grade.grade(solution, answer_format)
+        grader = grade.Grader(proformatask)
+        grader.grade(submission_files, version_control)
+        # get result
+        grade_result = grader.get_result(answer_format)
 
         # return result
         logger.debug("grading finished")

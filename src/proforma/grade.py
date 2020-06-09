@@ -44,51 +44,63 @@ if keep_sandbox:
     print('*********************************************\n')
 
 
-def save_solution(task, fileDict):
-    # solution object for submission
-    logger.debug("save solution")
-
-    DEFINED_USER = "sys_prod"
-    solution = Solution(task=task, author=User.objects.get(username=DEFINED_USER))
-    # save the solution model in the database
-    solution.save()
-
-    for index in range(len(fileDict)):
-        # create solution_file
-        solution_file = SolutionFile(solution=solution)
-
-        #save solution in enviroment and get the path
-        filename = list(fileDict.keys())[index]
-        #logger.debug('save file ' + filename)
-        #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
-        data = list(fileDict.values())[index]
-        saved_solution = _save_file(data, solution_file, filename)
-        #remove the upload path
-        shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
-        #remove the beginnning slash -> relative path
-        super_short_solution = shorter_saved_solution[1:]
-        #save solution file
-        solution_file.file = super_short_solution
-        solution_file.save()
-
-    return solution
+class Grader:
+    def __init__(self, proformatask):
+        self._proformatask = proformatask
+        self.result = None
+        self.solution = None
 
 
-def grade(solution, response_format):
+    def _save_solution(self, fileDict, version_control = None):
+        # solution object for submission
+        logger.debug("save solution")
 
-    logger.debug("grade solution")
-    #start the checking process
-    solution.check_solution(True, keep_sandbox)
-    logger.debug('get results...')
-    result = solution.allCheckerResults()
+        DEFINED_USER = "sys_prod"
+        solution = Solution(task=self._proformatask, author=User.objects.get(username=DEFINED_USER))
+        # save the solution model in the database
+        solution.save()
 
-    fileNameList = []
-    fileNameList.append("submission.zip")
-    lcxml = get_solution_xml(result, solution, fileNameList, response_format)
+        for index in range(len(fileDict)):
+            # create solution_file
+            solution_file = SolutionFile(solution=solution)
 
-    logger.debug("file_grader_post finished")
+            #save solution in enviroment and get the path
+            filename = list(fileDict.keys())[index]
+            #logger.debug('save file ' + filename)
+            #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
+            data = list(fileDict.values())[index]
+            saved_solution = _save_file(data, solution_file, filename)
+            #remove the upload path
+            shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
+            #remove the beginnning slash -> relative path
+            super_short_solution = shorter_saved_solution[1:]
+            #save solution file
+            solution_file.file = super_short_solution
+            solution_file.save()
 
-    return lcxml
+        if version_control != None:
+            solution.versioncontrol = version_control
+
+        self.solution = solution
+
+
+    def grade(self, fileDict, version_control = None):
+        self._save_solution(fileDict, version_control)
+        logger.debug("grade solution")
+        #start the checking process
+        self.solution.check_solution(True, keep_sandbox)
+        logger.debug('get results...')
+        self.result = self.solution.allCheckerResults()
+
+
+    def get_result(self, response_format):
+        fileNameList = []
+        fileNameList.append("submission.zip")
+        lcxml = get_solution_xml(self.result, self.solution, fileNameList, response_format)
+
+        logger.debug("file_grader_post finished")
+
+        return lcxml
 
 
 def _save_file(data, solution_file, filename):
