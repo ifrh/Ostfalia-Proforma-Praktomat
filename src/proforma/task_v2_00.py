@@ -198,7 +198,7 @@ class Praktomat_Test_2_0:
         self._checker.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
         self._checker.always = True
         self._checker.public = True
-        self._checker.required = False
+        self._checker.required = True
 
     # add files belonging to a subtest
     def add_files_to_test(self, xml_test, praktomat_files, val_order, firstHandler = None):

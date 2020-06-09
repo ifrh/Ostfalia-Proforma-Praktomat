@@ -37,10 +37,10 @@ logger = logging.getLogger(__name__)
 def get_http_error_page(title, message, callstack):
     return """<loncapagrade>
 <awarddetail>ERROR</awarddetail>
-<message>%s
+<message><![CDATA[%s
 
 %s
-</message>
+%s]]></message>
 </loncapagrade>
 """ % (title, message)
 
