@@ -43,7 +43,7 @@ def get_http_error_page(title, message, callstack):
 </message>
     <awarded></awarded>
 </loncapagrade>
-""" % (title)
+""" % (title, message)
 
 #""" % (title, message, VERSION.version, callstack)
 
