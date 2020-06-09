@@ -54,35 +54,30 @@ def grade_api_lon_capa(request,):
         if not request.POST:
             raise Exception("No POST-Request attached")
 
+        # get data from reuest
         submission = request.POST.get("LONCAPA_student_response")
-        logger.debug('submission:  ' + submission)
+        #logger.debug('submission:  ' + submission)
         submission_filename = request.POST.get("submission_filename")
-        logger.debug('submission_filename:  ' + submission_filename)
+        #logger.debug('submission_filename:  ' + submission_filename)
         task_filename = request.POST.get("task_filename")
-        logger.debug('task_filename:  ' + task_filename)
+        #logger.debug('task_filename:  ' + task_filename)
         task_file = request.POST.get("task")
         task_file = base64.b64decode(task_file)
 
         logger.info("grading request for task " + task_filename)
 
+        # create task object in database
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
 
-        # save solution in database
-        submission_files = dict()
-        submission_files.update({submission_filename: submission})
-        #solution = grade.save_solution(proformatask, submission_files)
-
-        # run tests
-        #grade_result = grade.grade(solution, )
-
         # run tests
         grader = grade.Grader(proformatask)
+
+        submission_files = dict()
+        submission_files.update({submission_filename: submission})
         grader.grade(submission_files)
         # get result
-        grade_result = grader.get_result("lon_capa")
-
-
+        grade_result = grader.get_result('proforma/response_loncapa.xml', False)
 
         # return result
         logger.debug("grading finished")

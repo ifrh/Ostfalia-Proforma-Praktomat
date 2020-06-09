@@ -93,14 +93,66 @@ class Grader:
         self.result = self.solution.allCheckerResults()
 
 
-    def get_result(self, response_format):
+    def get_result(self, response_template, remove_CopyFileChecker = True):
         fileNameList = []
         fileNameList.append("submission.zip")
-        lcxml = get_solution_xml(self.result, self.solution, fileNameList, response_format)
+        lcxml = self._get_solution_xml(fileNameList, response_template, remove_CopyFileChecker)
 
         logger.debug("file_grader_post finished")
 
         return lcxml
+
+    def _get_solution_xml(self, file_name, response_template, remove_CopyFileChecker):
+        result = self.result
+        solution = self.solution
+        # have to set it manually because it will only check visible tests
+        false_required_hidden_test = False
+        solution.seperate = True
+        from datetime import datetime
+        solution.timestamp = datetime.now().isoformat()
+
+        # solution.versioncontrol = True
+        grader = dict()
+        grader.update({"name": "praktomat"})
+        grader.update({"version": version})
+
+
+        for index in range(len(result)):
+            if result[index].checker.required and not result[index].checker.public:
+                if not result[index].passed:
+                    solution.accepted = False
+                    false_required_hidden_test = True
+            logger.debug("Checker " + str(result[index].checker.order) + ": " + str(result[index].checker))
+
+        # remove 'None' tests from proforma2
+        res_arr = list(result)
+        max = len(res_arr) - 1
+        for index in range(len(res_arr)):
+            indexReverse = max - index
+            if not hasattr(res_arr[indexReverse].checker, 'proforma_id') and remove_CopyFileChecker:
+                # CopyFile checker has no attribute passed!
+                if not res_arr[indexReverse].passed:
+                #    # todo if fail add Error-Message
+                    logger.error('Checker None FAILED!')
+                else:
+                    logger.debug("remove Checker: " + str(res_arr[indexReverse].checker))
+                    res_arr.remove(res_arr[indexReverse])
+
+
+        logger.debug("Remaining Checkers: ")
+        for index in range(len(res_arr)):
+            logger.debug("Checker: " + str(res_arr[index].checker))
+
+        response_xml = render_to_string(response_template,
+                           {"solution": solution,
+                            "testResultList": res_arr if remove_CopyFileChecker else result,
+                            "fileName": file_name,
+                            "grader": grader,
+                            "required_hidden": false_required_hidden_test})
+
+        return response_xml
+
+
 
 
 def _save_file(data, solution_file, filename):
@@ -200,62 +252,6 @@ def _get_mimetype(txt):
 
 
 
-def get_solution_xml(result, solution, file_name, response_format):
-    # have to set it manually because it will only check visible tests
-    false_required_hidden_test = False
-    solution.seperate = True
-    from datetime import datetime
-    solution.timestamp = datetime.now().isoformat()
-
-    # solution.versioncontrol = True
-    grader = dict()
-    grader.update({"name": "praktomat"})
-    grader.update({"version": version})
-
-
-    for index in range(len(result)):
-        if result[index].checker.required and not result[index].checker.public:
-            if not result[index].passed:
-                solution.accepted = False
-                false_required_hidden_test = True
-        logger.debug("Checker " + str(result[index].checker.order) + ": " + str(result[index].checker))
-
-    # remove 'None' tests from proforma2
-    res_arr = list(result)
-    max = len(res_arr) - 1
-    for index in range(len(res_arr)):
-        indexReverse = max - index
-        if not hasattr(res_arr[indexReverse].checker, 'proforma_id') and response_format == "proformav2":
-            # CopyFile checker has no attribute passed!
-            if not res_arr[indexReverse].passed:
-            #    # todo if fail add Error-Message
-                logger.error('Checker None FAILED!')
-            else:
-                logger.debug("remove Checker: " + str(res_arr[indexReverse].checker))
-                res_arr.remove(res_arr[indexReverse])
-
-
-    logger.debug("Remaining Checkers: ")
-    for index in range(len(res_arr)):
-        logger.debug("Checker: " + str(res_arr[index].checker))
-
-    if response_format == "proformav2":
-        response_xml = render_to_string('proforma/response_v2.xml',
-                           {"solution": solution,
-                            "testResultList": res_arr,
-                            "fileName": file_name,
-                            "grader": grader,
-                            "required_hidden": false_required_hidden_test})
-    elif response_format == "lon_capa":
-        response_xml = render_to_string('proforma/response_loncapa.xml',
-                           {"solution": solution,
-                            "testResultList": result,
-                            "fileName": file_name,
-                            "required_hidden": false_required_hidden_test})
-    else:
-        raise Exception('unsupported response format: ' + response_format)
-
-    return response_xml
 
 
 

@@ -156,7 +156,7 @@ def grade_api_v2(request,):
         grader = grade.Grader(proformatask)
         grader.grade(submission_files, version_control)
         # get result
-        grade_result = grader.get_result(answer_format)
+        grade_result = grader.get_result('proforma/response_v2.xml')
 
         # return result
         logger.debug("grading finished")
