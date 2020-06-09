@@ -44,40 +44,6 @@ if keep_sandbox:
     print('*********************************************\n')
 
 
-def get_http_error_page(title, message, callstack):
-    return """%s
-
-    %s
-
-Callstack:
-    %s""" % (title, message, callstack)
-
-
-
-# OBSOLETE, creating class file in correct path cn be done with '-d .' compiler options
-# try and guess the correct JAVA path name derived from the package that
-# is declared in the source code
-# def find_java_package_path(file_content):
-#     # logger.debug('file_content' + file_content)
-#     # remove comment with /* */
-#     file_content = re.sub(r'\/\*[\s\S]*?\*\/', '', file_content, re.MULTILINE)
-#     file_content = re.sub(r'\/\/.*', '', file_content, re.MULTILINE)
-#
-#     pattern = re.compile('package([\s\S]*?);')
-#     m = pattern.search(file_content)
-#     try:
-#         package = m.group(2).strip()
-#     except:
-#         try:
-#             package = m.group(1).strip()
-#         except:
-#             logger.debug("no package found")
-#             return ''
-#
-#     package = re.sub('\.', '/', package)
-#     logger.debug("package path: " + package)
-#     return package
-
 def save_solution(task, fileDict):
     # solution object for submission
     logger.debug("save solution")
@@ -96,7 +62,7 @@ def save_solution(task, fileDict):
         #logger.debug('save file ' + filename)
         #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
         data = list(fileDict.values())[index]
-        saved_solution = save_file(data, solution_file, filename)
+        saved_solution = _save_file(data, solution_file, filename)
         #remove the upload path
         shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
         #remove the beginnning slash -> relative path
@@ -125,7 +91,7 @@ def grade(solution, response_format):
     return lcxml
 
 
-def save_file(data, solution_file, filename):
+def _save_file(data, solution_file, filename):
     """
 
     :param data:
@@ -133,7 +99,7 @@ def save_file(data, solution_file, filename):
     :param filename:
     """
 
-    solution_file.mime_type = get_mimetype(
+    solution_file.mime_type = _get_mimetype(
         filename)  # just define it it will be tested later todo: method wo es passiert
     solution = solution_file.solution
     full_directory = settings.UPLOAD_ROOT + '/SolutionArchive/Task_' + str(
@@ -144,7 +110,7 @@ def save_file(data, solution_file, filename):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    # logger.debug('save_file ' + filename)
+    # logger.debug('_save_file ' + filename)
     # logger.debug('File content class name is ' + data.__class__.__name__)
     if isinstance(data, InMemoryUploadedFile):
         with default_storage.open('%s' % (full_filename), 'w') as destination:
@@ -211,7 +177,7 @@ def save_file(data, solution_file, filename):
 
 
 
-def get_mimetype(txt):
+def _get_mimetype(txt):
     """
     :param txt:
     :return:

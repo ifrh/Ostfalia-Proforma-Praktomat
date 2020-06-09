@@ -39,7 +39,6 @@ def get_http_error_page(title, message, callstack):
 <awarddetail>ERROR</awarddetail>
 <message><![CDATA[%s
 
-%s
 %s]]></message>
 </loncapagrade>
 """ % (title, message)
@@ -68,8 +67,6 @@ def grade_api_lon_capa(request,):
 
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
-        if proformatask == None:
-            raise Exception("could not create task")
 
         # save solution in database
         submission_files = dict()

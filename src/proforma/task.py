@@ -394,6 +394,9 @@ def import_task_internal(filename, task_file):
                        # format_namespace_v1_0_1 + "\r\n" +
                        format_namespace_v2_0)
 
+    if response_data == None:
+        raise Exception("could not create task")
+
     return response_data
 
 

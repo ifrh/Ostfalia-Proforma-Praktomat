@@ -151,8 +151,6 @@ def grade_api_v2(request,):
         submission_files, version_control = get_submission_files(root, request) # returns a dictionary (filename -> contant)
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
-        if proformatask == None:
-            raise Exception("could not create task")
 
         # save solution in database
         solution = grade.save_solution(proformatask, submission_files)
