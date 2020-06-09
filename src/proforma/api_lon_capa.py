@@ -92,7 +92,7 @@ def grade_api_lon_capa(request,):
         print("TaskXmlException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
         response.write(get_http_error_page('Task error', str(inst), callstack))
-        response.status_code = 400 # bad request
+        response.status_code = 200 # bad request
         return response
     except Exception as inst:
         logger.exception(inst)
@@ -100,5 +100,5 @@ def grade_api_lon_capa(request,):
         print("Exception caught Stack Trace: " + str(callstack))
         response = HttpResponse()
         response.write(get_http_error_page('Error in grading process', str(inst), callstack))
-        response.status_code = 500 # internal error
+        response.status_code = 200 # internal error
         return response
