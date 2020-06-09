@@ -25,7 +25,7 @@ from django.http import HttpResponse
 import logging
 from . import task
 from . import grade
-import VERSION
+
 
 import base64
 
@@ -36,12 +36,11 @@ logger = logging.getLogger(__name__)
 # string format for exception return message in HTTP
 def get_http_error_page(title, message, callstack):
     return """<loncapagrade>
-    <awarddetail>ERROR</awarddetail>
+<awarddetail>ERROR</awarddetail>
 <message>%s
 
 %s
 </message>
-    <awarded></awarded>
 </loncapagrade>
 """ % (title, message)
 
