@@ -346,7 +346,7 @@ class Task_2_00:
             except Exception as e:
                 inst.delete()
                 # todo create: something like TaskException class
-                raise Exception("Junit-Version is not supported: \'" + str(junit_version) + "\'")
+                raise task.TaskXmlException("Junit-Version is not supported: \'" + str(junit_version) + "\'")
             logger.error("JUNIT-version is now: \'" + junit_version[0] + "\'")
 
         # get entrypoint
@@ -387,7 +387,7 @@ class Task_2_00:
         except Exception as e:
             inst.delete()
             # todo create: something like TaskException class
-            raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_ver))
+            raise task.TaskXmlException("Checkstyle-Version is not supported: " + str(checkstyle_ver))
 
 
         if xmlTest.xpath("p:test-configuration/check:java-checkstyle/"
@@ -429,7 +429,7 @@ class Task_2_00:
             return XSD_V_2_PATH
         if self._format_namespace == 'urn:proforma:v2.0.1':
             return XSD_V_2_01_PATH
-        raise Exception('ProForma XSD not found for namespace ' + self._format_namespace)
+        raise task.TaskXmlException('ProForma XSD not found for namespace ' + self._format_namespace)
 
     def import_task(self):
 
