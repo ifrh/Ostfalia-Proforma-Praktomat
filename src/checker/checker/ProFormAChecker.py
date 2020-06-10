@@ -17,6 +17,10 @@ class ProFormAChecker(Checker):
 
     files = models.ManyToManyField(CreateFileChecker, help_text=_("Files needed to run the test"))
 
+    # class variable indicating if the tests shall get as much information about
+    # subtests as possible (e.g. use RunListener for JUnit)
+    retrieve_subtest_results = True
+
     def copy_files(self, env):
         logger.debug('copy test files')
         for file in self.files.all():

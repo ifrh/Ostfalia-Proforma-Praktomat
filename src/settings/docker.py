@@ -104,7 +104,8 @@ JPLAGJAR = '/srv/praktomat/contrib/jplag.jar'
 
 
 JAVA_LIBS = {
-    'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar:/praktomat/extra/Junit5RunListener.jar',
+    'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar',
+    # 'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar:/praktomat/extra/Junit5RunListener.jar',
     'junit3': '/praktomat/extra/junit-3.8.jar', # is not included
      # map junit4 and junit 4.10 to 4.12
      'junit4': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
@@ -112,6 +113,14 @@ JAVA_LIBS = {
      'junit4.12': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
      'junit4.12-gruendel': '/praktomat/lib/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/lib/hamcrest-core-1.3.jar'}
 
+
+
+DETAILED_UNITTEST_OUTPUT = True
+
+JUNIT4_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit4ProFormAListener'
+JUNIT4_RUN_LISTENER_LIB = '/praktomat/extra/Junit4RunListener.jar'
+JUNIT5_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit5ProFormAListener'
+JUNIT5_RUN_LISTENER_LIB = '/praktomat/extra/Junit5RunListener.jar'
 
 # The checkstyle versions must be sorted in order to find the latest version =>
 # therefore an OrderedDict must be used because in Python 3.5 the order is not defined!
@@ -130,11 +139,7 @@ SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 #JAVA_BINARY = 'javac-sun-1.7'
 #JVM = 'java-sun-1.7'
 
-DETAILED_UNITTEST_OUTPUT = True
 
-JUNIT4_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit4ProFormAListener'
-JUNIT4_RUN_LISTENER_LIB = '/praktomat/extra/Junit4RunListener.jar'
-JUNIT5_RUN_LISTENER = 'de.ostfalia.zell.praktomat.Junit5ProFormAListener'
 
 
 # Our VM has 4 cores, so lets try to use them

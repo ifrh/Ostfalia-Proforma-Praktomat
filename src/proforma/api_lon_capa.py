@@ -43,16 +43,20 @@ def get_http_error_page(title, message):
 </loncapagrade>
 """ % (title, message)
 
-#""" % (title, message, VERSION.version, callstack)
 
-def return_error_message(inst, title):
+
+def _return_error_message(inst, title):
     logger.exception(inst)
     callstack = traceback.format_exc()
     print("Exception caught Stack Trace: " + str(callstack))
-    response = HttpResponse()
-    response.write(get_http_error_page(title, str(inst)))
-    response.status_code = 200  # OK
-    return response
+    return HttpResponse(get_http_error_page(title, str(inst)), status=200)
+
+def _get_and_check_form_field(request, name):
+    field = request.POST.get(name)
+    if field == None:
+        raise Exception("missing Form Field in POST Request: " + name)
+    # logger.debug('submission:  ' + submission)
+    return field
 
 
 def grade_api_lon_capa(request,):
@@ -62,30 +66,16 @@ def grade_api_lon_capa(request,):
         if not request.POST:
             raise Exception("No POST-Request attached")
 
-        # get data from reuest
-        submission = request.POST.get("LONCAPA_student_response")
-        if submission == None:
-            raise Exception("LONCAPA_student_response is missing")
-        # logger.debug('submission:  ' + submission)
-
-        submission_filename = request.POST.get("submission_filename")
-        if submission_filename == None:
-            raise Exception("submission_filename is missing")
-        # logger.debug('submission_filename:  ' + submission_filename)
-
-        task_filename = request.POST.get("task_filename")
-        if task_filename == None:
-            raise Exception("task_filename is missing")
-        # logger.debug('task_filename:  ' + task_filename)
-
-        task_file = request.POST.get("task")
-        if task_file == None:
-            raise Exception("task is missing")
+        # get data from request
+        submission = _get_and_check_form_field(request, "LONCAPA_student_response")
+        submission_filename = _get_and_check_form_field(request, "submission_filename")
+        task_filename = _get_and_check_form_field(request, "task_filename")
+        task_file = _get_and_check_form_field(request, "task")
         task_file = base64.b64decode(task_file)
 
         logger.info("grading request for task " + task_filename)
     except Exception as inst:
-        return return_error_message(inst, 'Bad Request (400):')
+        return _return_error_message(inst, 'Bad Request (400):')
 
     try:
         # create task object in database
@@ -97,18 +87,15 @@ def grade_api_lon_capa(request,):
 
         submission_files = dict()
         submission_files.update({submission_filename: submission})
-        grader.grade(submission_files)
+        grader.grade(submission_files, None, False)
         # get result
         grade_result = grader.get_result('proforma/response_loncapa.xml', False)
 
         # return result
         logger.debug("grading finished")
-        response = HttpResponse()
-        response.write(grade_result)
-        response.status_code = 200
-        return response
+        return HttpResponse(grade_result, status = 200)
 
     except task.TaskXmlException as inst:
-        return return_error_message(inst, 'Invalid Task:')
+        return _return_error_message(inst, 'Bad Request/Invalid Task (400):')
     except Exception as inst:
-        return return_error_message(inst, 'Exception Occured:')
+        return _return_error_message(inst, 'Internal Server Error (500):')

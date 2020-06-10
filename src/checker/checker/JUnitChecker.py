@@ -89,31 +89,33 @@ class JUnitChecker(ProFormAChecker):
         return (RXFAIL.search(output) == None)
 
     def get_run_command_junit5(self, classpath):
-        use_run_listener = False
-        if settings.DETAILED_UNITTEST_OUTPUT:
-            use_run_listener = True
+        use_run_listener = ProFormAChecker.retrieve_subtest_results
+        logger.debug('JUNIT 5 RunListener: ' + str(use_run_listener))
+        #if settings.DETAILED_UNITTEST_OUTPUT:
+        #    use_run_listener = True
 
         if not use_run_listener:
             # java -jar junit-platform-console-standalone-<version>.jar <Options>
             # does not work!!
             # jar = settings.JAVA_LIBS[self.junit_version]
             cmd = [settings.JVM_SECURE, "-jar", self.runner(), "-cp", classpath,
-              "--include-classname", ".*", "--disable-ansi-colors",
-               "--disable-banner",
+               "--include-classname", self.class_name, # "\".*\"",
+                   "--disable-ansi-colors",
+               "--disable-banner", "--fail-if-no-tests",
                "--select-class", self.class_name]
         else:
             # java -cp.:/praktomat/extra/junit-platform-console-standalone-<version>.jar:/praktomat/extra/Junit5RunListener.jar
             # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
             cmd = [# "sh", "-x",
-               settings.JVM_SECURE, "-cp", classpath, 
+               settings.JVM_SECURE, "-cp", classpath + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
                settings.JUNIT5_RUN_LISTENER, self.class_name]
-        return cmd, True
+        return cmd, use_run_listener
 
 
     def get_run_command_junit4(self, classpath):
-        use_run_listener = False
-        if settings.DETAILED_UNITTEST_OUTPUT:
-            use_run_listener = True
+        use_run_listener = ProFormAChecker.retrieve_subtest_results
+        #if settings.DETAILED_UNITTEST_OUTPUT:
+        #    use_run_listener = True
 
         if not use_run_listener:
             runner = self.runner()

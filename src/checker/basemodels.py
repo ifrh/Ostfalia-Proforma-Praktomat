@@ -445,7 +445,7 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
 
             finally:
                 # Delete temporary directory
-                if not(debug_keep_tmp and settings.DEBUG):
+                if not(debug_keep_tmp): #  and settings.DEBUG):
                     try:
                         logger.debug('delete sandbox '+ env.tmpdir())
                         shutil.rmtree(env.tmpdir())

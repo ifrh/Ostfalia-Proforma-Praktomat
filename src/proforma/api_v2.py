@@ -148,13 +148,13 @@ def grade_api_v2(request,):
 
         logger.info("grading request for task " + task_filename)
 
-        submission_files, version_control = get_submission_files(root, request) # returns a dictionary (filename -> contant)
+        submission_files, version_control = get_submission_files(root, request) # returns a dictionary (filename -> content)
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
 
         # run tests
         grader = grade.Grader(proformatask)
-        grader.grade(submission_files, version_control)
+        grader.grade(submission_files, version_control, True)
         # get result
         grade_result = grader.get_result('proforma/response_v2.xml')
 

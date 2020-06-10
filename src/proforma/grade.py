@@ -30,6 +30,7 @@ from solutions.models import Solution, SolutionFile
 from VERSION import version
 
 from django.template.loader import render_to_string
+from checker.checker.ProFormAChecker import ProFormAChecker
 
 import os
 import logging
@@ -84,19 +85,24 @@ class Grader:
         self.solution = solution
 
 
-    def grade(self, fileDict, version_control = None):
+    def grade(self, fileDict, version_control, subtest_results):
+        self.solution_files = fileDict
         self._save_solution(fileDict, version_control)
         logger.debug("grade solution")
         #start the checking process
+        if settings.DETAILED_UNITTEST_OUTPUT:
+            ProFormAChecker.retrieve_subtest_results = subtest_results
+        else:
+            ProFormAChecker.retrieve_subtest_results = False
         self.solution.check_solution(True, keep_sandbox)
         logger.debug('get results...')
         self.result = self.solution.allCheckerResults()
 
 
     def get_result(self, response_template, remove_CopyFileChecker = True):
-        fileNameList = []
-        fileNameList.append("submission.zip")
-        lcxml = self._get_solution_xml(fileNameList, response_template, remove_CopyFileChecker)
+        #fileNameList = []
+        #fileNameList.append("submission.zip")
+        lcxml = self._get_solution_xml(self.solution_files, response_template, remove_CopyFileChecker)
 
         logger.debug("file_grader_post finished")
 
