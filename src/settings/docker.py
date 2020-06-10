@@ -60,7 +60,7 @@ else:
 
 DEFAULT_FROM_EMAIL = "praktomat@ipd.info.uni-karlsruhe.de"
 
-DEBUG = MIRROR
+DEBUG = False # MIRROR
 
 DATABASES = {
     # Running the Docker image

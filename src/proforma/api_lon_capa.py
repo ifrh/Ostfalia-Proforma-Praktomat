@@ -34,38 +34,60 @@ logger = logging.getLogger(__name__)
 
 
 # string format for exception return message in HTTP
-def get_http_error_page(title, message, callstack):
+def get_http_error_page(title, message):
     return """<loncapagrade>
 <awarddetail>ERROR</awarddetail>
-<message><![CDATA[%s
-
+<message><![CDATA[INTERNAL ERROR:
+%s
 %s]]></message>
 </loncapagrade>
 """ % (title, message)
 
 #""" % (title, message, VERSION.version, callstack)
 
+def return_error_message(inst, title):
+    logger.exception(inst)
+    callstack = traceback.format_exc()
+    print("Exception caught Stack Trace: " + str(callstack))
+    response = HttpResponse()
+    response.write(get_http_error_page(title, str(inst)))
+    response.status_code = 200  # OK
+    return response
 
 
 def grade_api_lon_capa(request,):
-    logger.debug("new grading request")
-
     try:
+        logger.debug("new grading request")
+        # more tests in order to get a proper error messgae for the sender
         if not request.POST:
             raise Exception("No POST-Request attached")
 
         # get data from reuest
         submission = request.POST.get("LONCAPA_student_response")
-        #logger.debug('submission:  ' + submission)
+        if submission == None:
+            raise Exception("LONCAPA_student_response is missing")
+        # logger.debug('submission:  ' + submission)
+
         submission_filename = request.POST.get("submission_filename")
-        #logger.debug('submission_filename:  ' + submission_filename)
+        if submission_filename == None:
+            raise Exception("submission_filename is missing")
+        # logger.debug('submission_filename:  ' + submission_filename)
+
         task_filename = request.POST.get("task_filename")
-        #logger.debug('task_filename:  ' + task_filename)
+        if task_filename == None:
+            raise Exception("task_filename is missing")
+        # logger.debug('task_filename:  ' + task_filename)
+
         task_file = request.POST.get("task")
+        if task_file == None:
+            raise Exception("task is missing")
         task_file = base64.b64decode(task_file)
 
         logger.info("grading request for task " + task_filename)
+    except Exception as inst:
+        return return_error_message(inst, 'Bad Request (400):')
 
+    try:
         # create task object in database
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
@@ -87,18 +109,6 @@ def grade_api_lon_capa(request,):
         return response
 
     except task.TaskXmlException as inst:
-        logger.exception(inst)
-        callstack = traceback.format_exc()
-        print("TaskXmlException caught Stack Trace: " + str(callstack))
-        response = HttpResponse()
-        response.write(get_http_error_page('Task error', str(inst), callstack))
-        response.status_code = 200 # bad request
-        return response
+        return return_error_message(inst, 'Invalid Task:')
     except Exception as inst:
-        logger.exception(inst)
-        callstack = traceback.format_exc()
-        print("Exception caught Stack Trace: " + str(callstack))
-        response = HttpResponse()
-        response.write(get_http_error_page('Error in grading process', str(inst), callstack))
-        response.status_code = 200 # internal error
-        return response
+        return return_error_message(inst, 'Exception Occured:')
