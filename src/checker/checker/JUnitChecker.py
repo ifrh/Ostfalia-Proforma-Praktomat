@@ -99,8 +99,8 @@ class JUnitChecker(ProFormAChecker):
             # does not work!!
             # jar = settings.JAVA_LIBS[self.junit_version]
             cmd = [settings.JVM_SECURE, "-jar", self.runner(), "-cp", classpath,
-               "--include-classname", self.class_name, # "\".*\"",
-                   "--disable-ansi-colors",
+               "--include-classname", self.class_name,
+               "--details=none",
                "--disable-banner", "--fail-if-no-tests",
                "--select-class", self.class_name]
         else:

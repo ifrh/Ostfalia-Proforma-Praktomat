@@ -145,7 +145,7 @@ class Praktomat_Task_2_00:
         try:
             max_size = restriction.get("@max-size")
         except AttributeError:
-            logger.error('could not find max-size, set to default')
+            logger.debug('could not find max-size, set to default')
             # no max size given => use default (1MB)
             max_size = 1000000
 

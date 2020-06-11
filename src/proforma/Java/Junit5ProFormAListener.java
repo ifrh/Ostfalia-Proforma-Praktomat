@@ -335,7 +335,8 @@ public class Junit5ProFormAListener implements TestExecutionListener {
         this.createFeedback("Stack Trace:", stackTraceString, !showStackTraceToStudent);		
     }
 	
-	
+    
+
     private StackTraceElement[]  stripStackTrace(StackTraceElement[] elements) { 
     	Class<?> testclass;
     	boolean found = false;
@@ -362,12 +363,31 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			//writer.append("***CANNOT STRIP STACK TRACE\n");
+			//writer.append("Testclass: " + this.testClassname + "\n");
+			//writer.append("Exception: " + e.getMessage() + "\n");				
+			//writer.append("Exception: " + e.toString() + "\n");				
+			//e.fillInStackTrace().printStackTrace(writer);				
 			//e.printStackTrace();
+			
+			// this version needs accessClassInPackage.sun.reflect
+		    // when using policy manager			
+			try {
+				// in case of an error simply deliver first 10 elements of stack trace				
+				final int max = 10;
+		    	StackTraceElement[] newStacktrace = new StackTraceElement[max];
+		    	System.arraycopy( elements, 0, newStacktrace, 0, max);
+		    	return newStacktrace;	 										
+			} catch (Exception f) {
+				return elements;    	
+			}
+			
 		}
     	
 		return elements;    	
-    }	
-	
+    }
+
+    
+    
     private void createFeedback(String title, String content, boolean teacher) {
     	Element xmlFeedback = null;
     	if (teacher)
