@@ -104,8 +104,7 @@ JPLAGJAR = '/srv/praktomat/contrib/jplag.jar'
 
 
 JAVA_LIBS = {
-    'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar',
-    # 'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar:/praktomat/extra/Junit5RunListener.jar',
+    'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.1.jar',
     'junit3': '/praktomat/extra/junit-3.8.jar', # is not included
      # map junit4 and junit 4.10 to 4.12
      'junit4': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',

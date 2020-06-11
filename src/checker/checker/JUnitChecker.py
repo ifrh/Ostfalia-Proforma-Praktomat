@@ -70,7 +70,7 @@ class JUnitChecker(ProFormAChecker):
 
     def runner(self):
         return {
-            'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.0.jar',
+            'junit5': '/praktomat/lib/junit-platform-console-standalone-1.6.1.jar',
             'junit4' : 'org.junit.runner.JUnitCore',
             'junit4.10' : 'org.junit.runner.JUnitCore',
             'junit4.12' : 'org.junit.runner.JUnitCore',
