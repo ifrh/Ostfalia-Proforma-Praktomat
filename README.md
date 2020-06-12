@@ -3,10 +3,14 @@ grading backend for different programming languages.
 
 The code is a fork (2019) from the KIT Praktomat (https://github.com/KITPraktomatTeam/Praktomat).
 It adds the ProFormA interface (https://github.com/ProFormA/proformaxml) which enables Praktomat
-to be used as a grading back-end in e.g. learning management systems.
+to be used as a grading backend in learning management systems.
+
+The ProFormA format for tasks is 2.0 and 2.0.1 with some limitations.
+The ProFormA format for HTTP requests is 2.0. 
 
 The code is currently only used as a 'docker composition'.
-So the installation manual is not up-to-date.
+So the installation manual for a plain Linux server is not up-to-date, 
+but you can follow the Dockerfile. 
 
 #### Programming Languages
 
@@ -16,8 +20,8 @@ The following programming languages and test frameworks are provided with the Pr
 | Language      | Test Frameworks |
 | :---:        |    :----:   |         
 | Java 8     | Compiler ,  JUnit 4.12 / JUnit 5, Checkstyle 8.23 / 8.29   |
+| Python 3.5   | Doctest        |
 | SetlX   | Test, Syntax Check        |
-| Python 3   | Doctest        |
 
 For running SetlX tests you need to copy the setlx-2.7.jar into the extra folder.
 
@@ -32,26 +36,45 @@ The following types of submission are supported:
 * URI of SVN repository to export the submission from (credentials are stored in .env file)
  
 
-## Configuration
+
+## Setup
+
+
+##### Mandatory: Credentials
 
 Create an .env file containing credentials and other private data. 
 A sample file is included as .env.example.  
 
     cp .env.example .example 
 
-For using other framework versions then you need to modify the following files:
+##### Optional: HTTPS
+For enabling HTTPS (port 443) you must 
+
+* put your certificate files into /data/certs (or adjust folder name in docker-compose.yml)
+* comment in 443 configuration in nginx/nginx.conf
+* set servername and adjust certificate file names in nginx/nginx.conf  
+
+##### Optional: Different Test Framework Versions
+
+For using other test framework versions then you need to modify the following files:
+- URLs in Dockerfile
 - src/checker/JUnitChecker.py
 - src/checker/CheckStyleChecker.py
-- URLs in Dockerfile
 - src/settings.docker.py
 
-## Setup
+
+#### Create Docker Containers
 
 In order to build and start the docker composition simply run 
 
-        docker-compose build
-        docker-compose up
+    docker-compose build
+    docker-compose up
       
+
+
+        
+
+## ProFormA API (CURL)
 
 <!--
 TODO: The Web-Interface seems to be buggy.  
@@ -64,7 +87,7 @@ For login see the credentials in your docker-compose.yml file (SUPERUSER and PAS
 
 -->
 
-The REST API is available on port 80  
+The grading service is available on port 80  
 
         http://localhost/api/v2/submissions
 
@@ -72,15 +95,6 @@ and port 8010 (circumventing the web server)
 
         http://localhost:8010/api/v2/submissions
         
-For enabling https (port 443) you must 
-
-* put your certificate files into /data/certs (or adjust folder name in docker-compose.yml)
-* comment in 443 configuration in nginx/nginx.conf
-* set servername and adjust certificate file names in nginx/nginx.conf  
-
-## ProFormA API (CURL)
-
-The supported ProFormA format version is 2.0.
 
 A typical grading HTTP request in CURL is
 
@@ -104,17 +118,17 @@ with the following 'submission.xml'
         </result-spec>
     </submission>"
 
-'submission.xml' can be transferred as a separate file or simply as data.
-Files are sent as normal 'file upload'. The task file can be a zipped file or a simple xml file. 
+`submission.xml` can be transferred as a separate file or simply as data.
+Files are sent as multipart/form-data. The task file can be a zipped file or a simple xml file. 
 
-Note that embedding the submission file(s) into submission.xml as embedded-txt-file is also supported.
+Note that embedding the submission file(s) into submission.xml as embedded-txt-file is also possible.
 
 A sample for a timestamp is:
 
         2019-04-03T01:01:01+01:00
 
 
-### Submission with more than one file
+#### Submission with more than one file
 
 For submitting more than one file you have the following options:
 
@@ -130,7 +144,23 @@ You can also omit the relative path for Java source files:
 
         http-file:User.java,File.java
 
-### Maintenance
+## LON-CAPA API
+
+Since 4.5.0 an HTTP interface for the legacy learning management system LON-CAPA is provided. 
+
+The URI is
+    
+    /api/v2/loncapasubmission
+
+The following form fields are expected:
+* `submission_filename`: Submission filename
+* `task`: base64 coded ProFormA task 
+* `task_filename`: Filename of ProFormA task
+
+The student submission is automatically put by LON-CAPA into `LONCAPA_student_response`.
+
+
+## Maintenance
 
 The Praktomat stores tasks and results in a database and in the filesystem. In order not to
 run out of disk space the whole system should be reset from time to time (e.g. before starting a new semester).
@@ -141,11 +171,11 @@ This can easily be done by calling
   
 There is no need to back-up anything!
 
-#### Software Update
+### Software Update
 
 In case of a software update this is the recommended process:
 
-    1. docker-compose down
-    2. git pull (update software)
-    3. docker-dompose build    
-    4. docker-dompose up 
+1. `docker-compose down`
+2. update software (e.g. `git pull`)
+3. `docker-dompose build`    
+4. `docker-dompose up` 
