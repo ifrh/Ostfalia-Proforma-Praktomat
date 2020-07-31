@@ -130,10 +130,6 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         # if (type(e) == subprocess.TimeoutExpired):
             logger.debug("TIMEOUT")
             timed_out = True
-        #logger.debug("kill")
-        #process.kill()
-        #logger.debug("communicate")
-        #stdout, stderr = process.communicate()
 
         logger.debug("try and kill process group") # os.killpg()
         term_cmd = ["pkill", "-TERM", "-s", str(process.pid)]
@@ -141,14 +137,15 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         if not unsafe and settings.USEPRAKTOMATTESTER:
             term_cmd = sudo_prefix + ["-n"] + term_cmd
             kill_cmd = sudo_prefix + ["-n"] + kill_cmd
-        logger.debug("call " + str(term_cmd))
+        logger.debug("call terminate: " + str(term_cmd))
         subprocess.call(term_cmd)
-        time.sleep(5)
-        logger.debug("call " + str(kill_cmd))
-        subprocess.call(kill_cmd)
+        if process.poll() == None:
+            time.sleep(5)
+            logger.debug("call kill: " + str(kill_cmd))
+            subprocess.call(kill_cmd)
 
+        logger.debug("communicate")
         [output, error] = process.communicate()
-        # killpg(process.pid, signal.SIGKILL)
         if not timed_out:
             raise # no timeout
 
