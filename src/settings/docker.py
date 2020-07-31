@@ -28,7 +28,8 @@ ALLOWED_HOSTS = [ '*', ]
 # URL to use when referring to static files.
 STATIC_URL = BASE_PATH + 'static/'
 
-STATIC_ROOT = join(dirname(PRAKTOMAT_PATH), "static")
+STATIC_ROOT = "/praktomat/static"
+#STATIC_ROOT = join(dirname(PRAKTOMAT_PATH), "static")
 
 TEST_MAXLOGSIZE=64
 
@@ -170,18 +171,18 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(PRAKTOMAT_PATH, 'debug.log'),
-            'formatter': 'verbose'
-        },
-        'error-file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(PRAKTOMAT_PATH, 'error.log'),
-            'formatter': 'verbose'
-        },
+#        'file': {
+#            'level': 'INFO',
+#            'class': 'logging.FileHandler',
+#            'filename': os.path.join(PRAKTOMAT_PATH, 'debug.log'),
+#            'formatter': 'verbose'
+#        },
+#        'error-file': {
+#            'level': 'ERROR',
+#            'class': 'logging.FileHandler',
+#            'filename': os.path.join(PRAKTOMAT_PATH, 'error.log'),
+#            'formatter': 'verbose'
+#        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -190,31 +191,31 @@ LOGGING = {
     },
     'loggers': {
         'proforma': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+            'handlers': ['console'],
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
-            'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+            'handlers': ['console'],
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'tasks': {
-            'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+            'handlers': ['console'],
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'utilities': {
-            'handlers': ['console', 'error-file'],
-            'level': 'INFO',  # change debug level as appropiate
-#           'level': 'DEBUG',  # change debug level as appropiate
+            'handlers': ['console'],
+#            'level': 'INFO',  # change debug level as appropiate
+           'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
@@ -226,7 +227,7 @@ LOGGING = {
 #            'backupCount': 10,  # keep 10 historical versions
 #        },
         'django.request': {
-            'handlers': ['console', 'error-file', 'file'],
+            'handlers': ['console'],
             'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*4,  # 15MB

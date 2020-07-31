@@ -417,9 +417,10 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
                     else:
                         try:
                             result = checker.run(env)
-                        except:
+                        except Exception as inst:
+                            logger.exception(inst)
                             result = checker.create_result(env)
-                            result.set_log("The Checker caused an unexpected internal error.")
+                            result.set_log("The Checker caused an unexpected internal error: " + str(inst))
                             result.set_passed(False)
                             #TODO: Email Admins
                 else:

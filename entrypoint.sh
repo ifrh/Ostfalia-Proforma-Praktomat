@@ -1,6 +1,7 @@
 #!/bin/sh
 
 echo "Docker entrypoint"
+#set -x
 
 
 if [ "$DATABASE" = "postgres" ]
@@ -12,7 +13,7 @@ fi
 
 
 echo start cron
-cron -f &
+sudo -n /usr/sbin/cron -f &
 
 #python manage.py flush --no-input
 #python manage.py migrate

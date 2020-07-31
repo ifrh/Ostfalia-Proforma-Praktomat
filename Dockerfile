@@ -8,6 +8,7 @@ FROM ubuntu:xenial
 MAINTAINER Ostfalia
 
 ENV PYTHONUNBUFFERED 1
+ENV PASSWORD=123
 
 # for praktomat itself
 RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
@@ -42,14 +43,32 @@ RUN apt-get update && apt-get install -y default-jdk openjfx
 # SVN (delete if you do not want to access submissions from SVN repository)
 RUN apt-get update && apt-get install -y subversion
 
+# ADD UNIX USERS
+################
+
+# install sudo
+RUN apt-get update && apt-get -y install sudo
+
+# create group praktomat
+RUN groupadd -g 999 praktomat
+
+# add user praktomat (uid=999)
+RUN useradd -g 999 -u 999 praktomat -s /bin/sh --no-create-home -c "Praktomat Demon" && \
+   usermod -aG sudo praktomat && \
+   echo "praktomat:$PASSWORD" | sudo chpasswd
+
+# add user tester (uid=1000)
+RUN useradd -g 999 -u 1000 tester -s /bin/false --no-create-home -c "Test Exceution User"
+
+# allow user praktomat to execute 'sudo -u tester ...'
+# allow user praktomat to start cron
+RUN echo "praktomat ALL=NOPASSWD: /usr/sbin/cron" >> /etc/sudoers && \
+echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
-
-
- 
-RUN mkdir /praktomat
+RUN mkdir /praktomat && chown 999:999 /praktomat
 WORKDIR /praktomat
-ADD requirements.txt /praktomat/
+ADD --chown=999:999 requirements.txt /praktomat/
 RUN pip3 install --upgrade pip
 RUN pip3 --version
 RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
@@ -74,10 +93,11 @@ RUN mkdir -p /praktomat/upload
 ###### RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
 # && apt-get autoremove -y
 
-# create cron job for deleting temporary files
+# create cron job for deleting temporary files (no dots in new filename)
 COPY cron.conf /etc/cron.d/praktomat-cron
+#COPY --chown=999:999 cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron
-RUN crontab /etc/cron.d/praktomat-cron
+#RUN crontab /etc/cron.d/praktomat-cron
 
 # add JAVA test specific libraries
 # Checkstyle
@@ -91,7 +111,14 @@ ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-sta
 
 RUN pip3 list
 
-# run entrypoint.sh
+# set permissions
+RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
+
+# install debugging tools
+# RUN apt-get -y install strace less nano
+
+# run entrypoint.sh as user praktomat
+USER praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
 
 

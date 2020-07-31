@@ -64,7 +64,7 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
     if unsafe:
         command = []
     elif settings.USEPRAKTOMATTESTER:
-        command = sudo_prefix
+        command = sudo_prefix.copy()
     elif settings.USESAFEDOCKER:
         command = ["sudo", "safe-docker"]
         # for safe-docker, we cannot kill it ourselves, due to sudo, so
@@ -93,6 +93,7 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
     logger.debug('execute command in ' + working_directory + ':')
     logger.debug('command :' + str(command))
 
+    logger.debug('this process id is ' + str(os.getpid()))
     # TODO: Dont even read in output longer than fileseeklimit. This might be most conveniently done by supplying a file like object instead of PIPE
 
     def prepare_subprocess():
@@ -111,7 +112,9 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         stderr=subprocess.STDOUT if error_to_output else subprocess.PIPE,
         cwd=working_directory,
         env=environment,
-        preexec_fn=prepare_subprocess)
+        #start_new_session=True, # call of os.setsid()
+        preexec_fn=prepare_subprocess
+    )
 
     timed_out = False
     oom_ed = False
@@ -127,15 +130,23 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         # if (type(e) == subprocess.TimeoutExpired):
             logger.debug("TIMEOUT")
             timed_out = True
-        logger.debug("try and kill subprocess")
+        #logger.debug("kill")
+        #process.kill()
+        #logger.debug("communicate")
+        #stdout, stderr = process.communicate()
+
+        logger.debug("try and kill process group") # os.killpg()
         term_cmd = ["pkill", "-TERM", "-s", str(process.pid)]
         kill_cmd = ["pkill", "-KILL", "-s", str(process.pid)]
         if not unsafe and settings.USEPRAKTOMATTESTER:
-            term_cmd = sudo_prefix + term_cmd
-            kill_cmd = sudo_prefix + kill_cmd
+            term_cmd = sudo_prefix + ["-n"] + term_cmd
+            kill_cmd = sudo_prefix + ["-n"] + kill_cmd
+        logger.debug("call " + str(term_cmd))
         subprocess.call(term_cmd)
         time.sleep(5)
+        logger.debug("call " + str(kill_cmd))
         subprocess.call(kill_cmd)
+
         [output, error] = process.communicate()
         # killpg(process.pid, signal.SIGKILL)
         if not timed_out:

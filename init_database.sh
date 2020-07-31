@@ -3,7 +3,7 @@ DATABASE_INITIALISED=0
 
 echo "create database"
 
-if [ -e "$HOME/.DATABASE_INITIALISED" ];  then
+if [ -e "/praktomat/.DATABASE_INITIALISED" ];  then
     echo "Database is already created"
     exit 0
 #else
@@ -41,7 +41,7 @@ echo "from django.contrib.auth.models import User; User.objects.create_user('sys
 echo "collect static files for webserver"
 python3 ./src/manage-docker.py collectstatic -i tiny_mce -i django_tinymce  -i django_extensions  --noinput || exit
 #save it output the file
-echo $DATABASE_INITIALISED > "$HOME/.DATABASE_INITIALISED"
+echo $DATABASE_INITIALISED > "/praktomat/.DATABASE_INITIALISED"
 echo "Database has been initialised successfully"  
 
 
