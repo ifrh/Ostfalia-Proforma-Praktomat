@@ -72,13 +72,12 @@ ADD --chown=999:999 requirements.txt /praktomat/
 RUN pip3 install --upgrade pip
 RUN pip3 --version
 RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
-#RUN pip3 install --upgrade chardet 
-#RUN pip3 install gunicorn[eventlet]
-#######RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir && pip install --upgrade chardet && pip install gunicorn[eventlet]
-# gunicorn is used for async processing
 
 
 ADD . /praktomat
+
+# delete python cache files
+RUN py3clean .
 
 RUN mkdir -p /praktomat/upload
 
