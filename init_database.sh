@@ -1,7 +1,10 @@
 #!/bin/bash
+set -x
+
 DATABASE_INITIALISED=0
 
 echo "create database"
+echo "Database is $DATABASE: $DB_NAME"
 
 if [ -e "/praktomat/.DATABASE_INITIALISED" ];  then
     echo "Database is already created"
@@ -27,9 +30,9 @@ find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 # update tables in case of a modified or added checker
 echo "make migrations"
 # do not use exit here!
-python3 ./src/manage-docker.py makemigrations tasks 
-python3 ./src/manage-docker.py makemigrations checker
-python3 ./src/manage-docker.py makemigrations
+sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations tasks
+sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations checker
+sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations
 
 echo "migrate"
 python3 ./src/manage-docker.py migrate || exit

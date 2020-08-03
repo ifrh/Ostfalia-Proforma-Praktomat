@@ -62,7 +62,7 @@ RUN useradd -g 999 -u 1000 tester -s /bin/false --no-create-home -c "Test Exceut
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
-RUN echo "praktomat ALL=NOPASSWD: /usr/sbin/cron,/usr/bin/py3clean" >> /etc/sudoers && \
+RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/bin/python3" >> /etc/sudoers && \
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
