@@ -66,20 +66,11 @@ class CheckStyleChecker(ProFormAChecker):
         result = self.create_result(env)
         (output, truncated) = truncated_log(output)
 
-        logger.debug('Exitcode is ' + str(exitcode))
+        # logger.debug('Exitcode is ' + str(exitcode))
         if ProFormAChecker.retrieve_subtest_results:
-            # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
-            if exitcode >= 0 and exitcode != 254: # 254 => -1
-                # Checkstyle seems to return the number of errors which is not an actual
-                # indicator that something went wrong.
-                # normal detailed results
-                result.set_log(output, timed_out=timed_out, truncated=False, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
-            else:
-                result.set_internal_error(True)
-                result.set_log(
-                    # "Runtime Error: " + str(exitcode) + "\n " +
-                    output, timed_out=timed_out,
-                               truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
+            # simply use plaintext
+            result.set_log(output, timed_out=timed_out, truncated=False, oom_ed=oom_ed,
+                           log_format=CheckerResult.TEXT_LOG)
         else:
             # old handling (e.g. for LON-CAPA)
             log = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
