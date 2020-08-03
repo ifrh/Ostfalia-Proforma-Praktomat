@@ -25,12 +25,20 @@
                         {% if testResult.checker.public %}
                         <student-feedback level="info">
                             <title>{{testResult.checker.title}}</title>
+                            {% if testResult.is_plaintext_format  %}
+                            <content format="plaintext">{{ testResult.log }}</content>
+                            {% else %}
                             <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                            {% endif %}
                         </student-feedback>
                         {% else %}
                             <teacher-feedback level="info">
                                 <title>{{testResult.checker.title}}</title>
+                                {% if testResult.is_plaintext_format  %}
+                                <content format="plaintext">{{ testResult.log }}</content>
+                                {% else %}
                                 <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                                {% endif %}
                             </teacher-feedback>
                         {% endif %}
                     </feedback-list>

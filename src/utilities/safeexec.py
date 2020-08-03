@@ -51,7 +51,6 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
     """ Wrapper to execute Commands with the praktomat testuser. Excpects Command as list of arguments, the first being the execeutable to run. """
     assert isinstance(args, list)
 
-
     command = args[:]
 
     environment = os.environ
@@ -122,10 +121,9 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         [output, error] = process.communicate(timeout=timeout)
     # except subprocess.TimeoutExpired:
     # Ostfalia: this specific exception is raised but is not caught that way (I do not know why!).
-    # So I catch every exception and check for type (very strange)
+    # So we catch every exception and check for type name
     except Exception as e:
         logger.error("exception occured:" + str(type(e)))
-        #logger.error("expected:" + str(subprocess.TimeoutExpired))
         if str(type(e) == str(subprocess.TimeoutExpired)):
         # if (type(e) == subprocess.TimeoutExpired):
             logger.debug("TIMEOUT")
@@ -137,14 +135,12 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
         if not unsafe and settings.USEPRAKTOMATTESTER:
             term_cmd = sudo_prefix + ["-n"] + term_cmd
             kill_cmd = sudo_prefix + ["-n"] + kill_cmd
-        logger.debug("call terminate: " + str(term_cmd))
         subprocess.call(term_cmd)
         if process.poll() == None:
             time.sleep(5)
             logger.debug("call kill: " + str(kill_cmd))
             subprocess.call(kill_cmd)
 
-        logger.debug("communicate")
         [output, error] = process.communicate()
         if not timed_out:
             raise # no timeout

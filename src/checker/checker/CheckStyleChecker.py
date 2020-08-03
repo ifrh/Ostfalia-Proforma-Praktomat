@@ -6,10 +6,13 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
-from checker.basemodels import Checker, CheckerFileField, truncated_log
+from checker.basemodels import Checker, CheckerFileField, CheckerResult, truncated_log
 from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
+
+import logging
+logger = logging.getLogger(__name__)
 
 class CheckStyleChecker(ProFormAChecker):
 
@@ -63,14 +66,30 @@ class CheckStyleChecker(ProFormAChecker):
         result = self.create_result(env)
         (output, truncated) = truncated_log(output)
 
-        #log = '<pre>' + escape(output) + '</pre>'
-        log = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+        logger.debug('Exitcode is ' + str(exitcode))
+        if ProFormAChecker.retrieve_subtest_results:
+            # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
+            if exitcode >= 0 and exitcode != 254: # 254 => -1
+                # Checkstyle seems to return the number of errors which is not an actual
+                # indicator that something went wrong.
+                # normal detailed results
+                result.set_log(output, timed_out=timed_out, truncated=False, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
+            else:
+                result.set_internal_error(True)
+                result.set_log(
+                    # "Runtime Error: " + str(exitcode) + "\n " +
+                    output, timed_out=timed_out,
+                               truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
+        else:
+            # old handling (e.g. for LON-CAPA)
+            log = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
-        if timed_out:
-            log = log + '<div class="error">Timeout occured!</div>'
-        if oom_ed:
-            log = log + '<div class="error">Out of memory!</div>'
-        result.set_log(log)
+            # log = '<pre>' + escape(output) + '</pre>'
+            if timed_out:
+                log = log + '<div class="error">Timeout occured!</div>'
+            if oom_ed:
+                log = log + '<div class="error">Out of memory!</div>'
+            result.set_log(log)
 
         result.set_passed(not timed_out and not oom_ed and not exitcode and
                           warnings <= self.allowedWarnings and

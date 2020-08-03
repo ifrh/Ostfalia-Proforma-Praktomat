@@ -208,11 +208,15 @@ class CheckerResult(models.Model):
 
 
     # new for handling subtest results in Prforma
-    NORMAL_LOG = '0'
+    NORMAL_LOG = '0' # Original (old) log
     PROFORMA_SUBTESTS = '1'
+    HTML_LOG = '2' # HTML
+    TEXT_LOG = '3' # Plain text
     LOG_FORMAT_CHOICES = (
         (NORMAL_LOG, 'Checker_Log'),
         (PROFORMA_SUBTESTS, 'Proforma_Subtests'),
+        (HTML_LOG, 'Html_Log'),
+        (TEXT_LOG, 'Text_Log'),
     )
     log_format = models.CharField(
         max_length=2,
@@ -242,23 +246,26 @@ class CheckerResult(models.Model):
 
     def set_log(self, log,timed_out=False,truncated=False,oom_ed=False, log_format=NORMAL_LOG):
         """ Sets the log of the Checker run. timed_out and truncated indicated if appropriate error messages shall be appended  """
-        if log_format != self.NORMAL_LOG:
+        if log_format == self.PROFORMA_SUBTESTS:
             # no truncation allowed for special logs
             assert not truncated
 
         if timed_out:
+            # force text log
+            self.log_format = self.TEXT_LOG
             self.set_internal_error(True)
-            log = '<div class="error">Timeout occured!</div>' + log
+            log = 'Timeout occured!\n' + log
+        elif oom_ed:
+            # force text log
+            self.log_format = self.TEXT_LOG
+            self.set_internal_error(True)
+            log = 'Memory limit exceeded, execution cancelled.' + log
         else:
-            if oom_ed:
-                self.set_internal_error(True)
-                log = '<div class="error">Memory limit exceeded, execution cancelled.</div>' + log
-            else:
-                # set new log format only in case of
-                self.log_format = log_format
+            # set new log format only in case of
+            self.log_format = log_format
 
         if truncated:
-            log = '<div class="error">Output too long, truncated</div>' + log
+            log = 'Output too long, truncated\n' + log
 
         self.log = log
 
@@ -280,7 +287,11 @@ class CheckerResult(models.Model):
     def is_proforma_subtests_format(self):
         """ Template needs a boolean in order to do conditional handling :-( """
         return self.log_format == self.PROFORMA_SUBTESTS
-    
+
+    def is_plaintext_format(self):
+        """ Template needs a boolean in order to do conditional handling :-( """
+        return self.log_format == self.TEXT_LOG
+
 
 def get_checkerresultartefact_upload_path(instance, filename):
     result = instance.result
