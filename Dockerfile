@@ -62,7 +62,7 @@ RUN useradd -g 999 -u 1000 tester -s /bin/false --no-create-home -c "Test Exceut
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
-RUN echo "praktomat ALL=NOPASSWD: /usr/sbin/cron" >> /etc/sudoers && \
+RUN echo "praktomat ALL=NOPASSWD: /usr/sbin/cron,/usr/bin/py3clean" >> /etc/sudoers && \
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
@@ -75,9 +75,6 @@ RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgr
 
 
 ADD . /praktomat
-
-# delete python cache files
-RUN py3clean .
 
 RUN mkdir -p /praktomat/upload
 
@@ -96,7 +93,6 @@ RUN mkdir -p /praktomat/upload
 COPY cron.conf /etc/cron.d/praktomat-cron
 #COPY --chown=999:999 cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron
-#RUN crontab /etc/cron.d/praktomat-cron
 
 # add JAVA test specific libraries
 # Checkstyle
