@@ -1,5 +1,5 @@
 {% if filenames %}
-{{ filenames|length }} Java user-submitted file(s) found for compilation: {% for javafile in filenames%} {{ javafile }} &nbsp; {% endfor %}
+{{ filenames|length }} Java user-submitted file(s) found for compilation: {% for javafile in filenames%}{{ javafile }}{% endfor %}
 
 {% if output %}Compilation failed:
 {{output|safe}}{% else %}Compilation finished successfully.{% endif %}

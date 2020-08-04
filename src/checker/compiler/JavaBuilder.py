@@ -65,6 +65,14 @@ class JavaBuilder(ClassFileGeneratingBuilder):
         """ Accept unicode characters. """
         return (self._flags.split(" ") if self._flags else []) + ["-encoding", "utf-8"]
 
+    # override
+    def enhance_output(self, env, output):
+        """ Add more info to build output OUTPUT.  To be overloaded in subclasses. """
+        if ProFormAChecker.retrieve_subtest_results:
+            # do not enhance in case of Proforma format
+            return output
+        return Builder.enhance_output(self, env, output)
+
     def build_log(self, output, args, filenames):
         result = dict()
         if ProFormAChecker.retrieve_subtest_results:
