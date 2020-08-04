@@ -210,12 +210,12 @@ class CheckerResult(models.Model):
     # new for handling subtest results in Prforma
     NORMAL_LOG = '0' # Original (old) log
     PROFORMA_SUBTESTS = '1'
-    HTML_LOG = '2' # HTML
+    FEEDBACK_LIST_LOG = '2' # List Log
     TEXT_LOG = '3' # Plain text
     LOG_FORMAT_CHOICES = (
         (NORMAL_LOG, 'Checker_Log'),
         (PROFORMA_SUBTESTS, 'Proforma_Subtests'),
-        (HTML_LOG, 'Html_Log'),
+        (FEEDBACK_LIST_LOG, 'Feedback_List_Log'),
         (TEXT_LOG, 'Text_Log'),
     )
     log_format = models.CharField(

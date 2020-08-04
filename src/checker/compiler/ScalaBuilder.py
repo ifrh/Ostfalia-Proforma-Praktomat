@@ -22,8 +22,10 @@ class ScalaBuilder(ClassFileGeneratingBuilder):
 # _rx_warnings            = r"^([^ :]*:[^:].*)$"
 
     def build_log(self, output, args, filenames):
+        result = dict()
         t = get_template('checker/compiler/scala_builder_report.html')
-        return t.render({'filenames' : filenames, 'output' : output, 'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
+        result["log"] = t.render({'filenames' : filenames, 'output' : output, 'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
+        return result
 
 from checker.admin import CheckerInline, AlwaysChangedModelForm
 

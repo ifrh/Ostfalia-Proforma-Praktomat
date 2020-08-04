@@ -10,7 +10,7 @@ from django.utils.html import escape
 from django.template.loader import get_template
 
 
-from checker.basemodels import Checker
+from checker.basemodels import Checker, CheckerResult
 from utilities.safeexec import execute_arglist
 from functools import reduce
 from checker.checker.ProFormAChecker import ProFormAChecker
@@ -129,24 +129,29 @@ class Builder(ProFormAChecker):
         # We mustn't have any warnings.
         passed = not self.has_warnings(output)
         log  = self.build_log(output, args, set(filenames).intersection([solutionfile.path() for solutionfile in env.solution().solutionfile_set.all()]))
+        if not "format" in log:
+            log["format"] = CheckerResult.NORMAL_LOG
 
         # Now that submission was successfully built, try to find the main modules name again
         if self._main_required and passed:
             try:
                 env.set_program(self.main_module(env))
             except self.NotFoundError as e:
-                log += "<pre>" + str(e) + "</pre>"
+                log["log"] += "<pre>" + str(e) + "</pre>"
+                log["format"] = CheckerResult.NORMAL_LOG
                 passed = False
 
         result.set_passed(passed)
-        result.set_log(log)
+        result.set_log(log["log"], log_format=log["format"])
         return result
 
     def build_log(self, output, args, filenames):
+        result = dict()
         t = get_template('checker/compiler/builder_report.html')
-        return t.render({
+        result["log"] = t.render({
             'filenames' : filenames,
             'output' : output,
             'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], ''),
             'regexp' : self.rxarg()
         })
+        return result

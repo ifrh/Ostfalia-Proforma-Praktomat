@@ -6,7 +6,7 @@ import re
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
-from checker.basemodels import Checker, CheckerResult, CheckerFileField, truncated_log
+from checker.basemodels import Checker, CheckerResult, truncated_log
 from checker.admin import    CheckerInline, AlwaysChangedModelForm
 from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.safeexec import execute_arglist
@@ -144,7 +144,9 @@ class JUnitChecker(ProFormAChecker):
             logger.info('could not compile JUNIT test')
             result = self.create_result(env)
             result.set_passed(False)
-            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
+            result.set_log(build_result.log,
+                           log_format=(CheckerResult.TEXT_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
+#            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
             return result
 
         # run test
@@ -203,7 +205,8 @@ class JUnitChecker(ProFormAChecker):
                 result.set_internal_error(True)
                 # no XML output => truncate
                 (output, truncated) = truncated_log(output)
-                result.set_log("RunListener Error: " + output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed)
+                result.set_log("RunListener Error: " + output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed,
+                               log_format=CheckerResult.TEXT_LOG)
         else:
             # show standard log output
             (output, truncated) = truncated_log(output)

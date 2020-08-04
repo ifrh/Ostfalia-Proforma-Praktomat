@@ -9,11 +9,14 @@ import string
 from checker.compiler.Builder import Builder
 from django.conf import settings
 from django.template.loader import get_template
-from checker.basemodels import Checker
+from checker.basemodels import Checker, CheckerResult
+from checker.checker.ProFormAChecker import ProFormAChecker
 
 from utilities.safeexec import execute_arglist
 from functools import reduce
 
+import logging
+logger = logging.getLogger(__name__)
 
 class ClassFileGeneratingBuilder(Builder):
     """ A base class for Builders that generate .class files """
@@ -63,8 +66,18 @@ class JavaBuilder(ClassFileGeneratingBuilder):
         return (self._flags.split(" ") if self._flags else []) + ["-encoding", "utf-8"]
 
     def build_log(self, output, args, filenames):
-        t = get_template('checker/compiler/java_builder_report.html')
-        return t.render({'filenames' : filenames, 'output' : output, 'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
+        result = dict()
+        if ProFormAChecker.retrieve_subtest_results:
+            t = get_template('checker/compiler/java_builder_report.txt')
+            result["format"] = CheckerResult.TEXT_LOG
+            result["log"] = t.render({
+                'filenames' : filenames,
+                'output' : output,
+                'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
+        else:
+            t = get_template('checker/compiler/java_builder_report.html')
+            result["log"] = t.render({'filenames' : filenames, 'output' : output, 'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
+        return result
 
 from checker.admin import CheckerInline, AlwaysChangedModelForm
 
