@@ -267,6 +267,8 @@ class CheckerResult(models.Model):
         if truncated:
             log = 'Output too long, truncated\n' + log
 
+        #logger.debug('logformat: ' + log_format)
+        #logger.debug('log: ' + log)
         self.log = log
 
     def set_passed(self, passed):
@@ -285,12 +287,16 @@ class CheckerResult(models.Model):
         self.internal_error = internal_error
 
     def is_proforma_subtests_format(self):
-        """ Template needs a boolean in order to do conditional handling :-( """
+        """ format for ProFormA subtests """
         return self.log_format == self.PROFORMA_SUBTESTS
 
     def is_plaintext_format(self):
-        """ Template needs a boolean in order to do conditional handling :-( """
+        """ plaintext format """
         return self.log_format == self.TEXT_LOG
+
+    def is_feedback_list(self):
+        """ feedback list format """
+        return self.log_format == self.FEEDBACK_LIST_LOG
 
 
 def get_checkerresultartefact_upload_path(instance, filename):

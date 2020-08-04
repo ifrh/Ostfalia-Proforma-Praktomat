@@ -18,11 +18,16 @@
                 {% else %}
                 {# default version with simple log output and passed/failed converted to score #}
                 <test-result>                
-                    <result {% if testResult.internal_error  %}is-internal-error="true"{% endif %}>
+                    <result> {% if testResult.internal_error  %}is-internal-error="true"{% endif %}>
                         <score>{% if testResult.passed  %}1{% else %}0{% endif %}</score>
                     </result>
                     <feedback-list>
+                        {% if testResult.is_feedback_list  %}
+                            {% autoescape off %} {{testResult.log}} {% endautoescape %}
+                        {% else %}
+
                         {% if testResult.checker.public %}
+
                         <student-feedback level="info">
                             <title>{{testResult.checker.title}}</title>
                             {% if testResult.is_plaintext_format  %}
@@ -31,7 +36,9 @@
                             <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
                             {% endif %}
                         </student-feedback>
+
                         {% else %}
+
                             <teacher-feedback level="info">
                                 <title>{{testResult.checker.title}}</title>
                                 {% if testResult.is_plaintext_format  %}
@@ -40,6 +47,8 @@
                                 <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
                                 {% endif %}
                             </teacher-feedback>
+
+                        {% endif %}
                         {% endif %}
                     </feedback-list>
                 </test-result>

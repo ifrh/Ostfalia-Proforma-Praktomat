@@ -142,10 +142,11 @@ class JUnitChecker(ProFormAChecker):
 
         if not build_result.passed:
             logger.info('could not compile JUNIT test')
+            # logger.debug("log: " + build_result.log)
             result = self.create_result(env)
             result.set_passed(False)
             result.set_log(build_result.log,
-                           log_format=(CheckerResult.TEXT_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
+                           log_format=(CheckerResult.FEEDBACK_LIST_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
 #            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
             return result
 

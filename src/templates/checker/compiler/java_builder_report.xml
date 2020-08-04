@@ -1,0 +1,21 @@
+{% if filenames %}
+    <student-feedback level="info">
+        <title>{{ filenames|length }} Java user-submitted file(s) found for compilation</title>
+        <content format="plaintext">{% for javafile in filenames%}{{ javafile }}{% endfor %}</content>
+    </student-feedback>
+{% else %}
+    <student-feedback level="info">
+        <title>{{ filenames|length }} No Java input files found.</title>
+    </student-feedback>
+{% endif %}
+
+{% if output %}
+    <student-feedback level="error">
+        <title>Compilation failed</title>
+        <content format="plaintext">{{output|safe}}</content>
+    </student-feedback>
+{% else %}
+    <student-feedback level="info">
+        <title>Compilation finished successfully.</title>
+    </student-feedback>
+{% endif %}
