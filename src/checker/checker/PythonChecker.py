@@ -102,8 +102,6 @@ class PythonChecker(ProFormAChecker):
 
         if self.remove:
             output = re.sub(self.remove, "", output)
-        if not self.returns_html:
-            output = '<pre>' + output + '</pre>'
 
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
@@ -111,6 +109,8 @@ class PythonChecker(ProFormAChecker):
             # plain text output
             result.set_log(output, timed_out=timed_out, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
         else:
+            if not self.returns_html:
+                output = '<pre>' + output + '</pre>'
             output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
             result.set_log(output, timed_out=timed_out, truncated=truncated)

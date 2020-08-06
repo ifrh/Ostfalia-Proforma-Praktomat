@@ -1,7 +1,7 @@
 {% if filenames %}
     <student-feedback level="info">
         <title>{{ filenames|length }} Java user-submitted file(s) found for compilation</title>
-        <content format="plaintext">{% for javafile in filenames%}{{ javafile }}{% endfor %}</content>
+        <content format="plaintext">{% for javafile in filenames%}{{ javafile }} {% endfor %}</content>
     </student-feedback>
 {% else %}
     <student-feedback level="info">
