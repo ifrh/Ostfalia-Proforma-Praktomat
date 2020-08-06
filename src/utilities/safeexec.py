@@ -92,7 +92,6 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
     logger.debug('execute command in ' + working_directory + ':')
     logger.debug('command :' + str(command))
 
-    logger.debug('this process id is ' + str(os.getpid()))
     # TODO: Dont even read in output longer than fileseeklimit. This might be most conveniently done by supplying a file like object instead of PIPE
 
     def prepare_subprocess():

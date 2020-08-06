@@ -150,6 +150,14 @@ class JUnitChecker(ProFormAChecker):
 #            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
             return result
 
+        # delete all java files in the sandbox in order to avoid the student getting the test source code :-)
+        [output, error, exitcode, timed_out, oom_ed] = \
+            execute_arglist(['find', '.' , '-name', '*.java', '-delete'], env.tmpdir(), unsafe=True)
+        if exitcode != 0:
+            logger.error('exitcode for java files deletion :' + str(exitcode))
+            logger.error(output)
+            logger.error(error)
+
         # run test
         logger.debug('JUNIT Checker run')
         environ = {}

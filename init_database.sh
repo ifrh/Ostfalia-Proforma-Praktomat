@@ -1,10 +1,10 @@
 #!/bin/bash
-set -x
+#set -x
 
 DATABASE_INITIALISED=0
 
 echo "create database"
-echo "Database is $DATABASE: $DB_NAME"
+#echo "Database is $DATABASE: $DB_NAME"
 
 if [ -e "/praktomat/.DATABASE_INITIALISED" ];  then
     echo "Database is already created"
