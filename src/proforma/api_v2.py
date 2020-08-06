@@ -438,7 +438,7 @@ def get_submission_files_from_svn(submission_uri):
     # logger.debug(cmd)
     [output, error, exitcode, timed_out, oom_ed] = \
         execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
-                        fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[])
+                        fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[], unsafe=True)
     if exitcode != 0:
         message = ''
         if error != None:
