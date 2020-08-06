@@ -10,7 +10,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
-from checker.basemodels import Checker, CheckerResult, CheckerFileField, truncated_log
+from checker.basemodels import CheckerResult, CheckerFileField, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
@@ -115,10 +115,15 @@ class SetlXChecker(ProFormAChecker):
         # output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
         output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
 
-        # TODO use plaintext instead of html
-        output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+        if ProFormAChecker.retrieve_subtest_results:
+            # plain text output
+            if len(output.strip()) == 0:
+                output = "OK"
+            result.set_log(output, timed_out=timed_out, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
+        else:
+            output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
-        result.set_log(output, timed_out=timed_out, truncated=truncated)
+            result.set_log(output, timed_out=timed_out, truncated=truncated)
         result.set_passed(not exitcode and not timed_out and (RXFAIL.search(output) is None) and not truncated)
 
         return result

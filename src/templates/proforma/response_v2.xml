@@ -18,7 +18,7 @@
                 {% else %}
                 {# default version with simple log output and passed/failed converted to score #}
                 <test-result>                
-                    <result> {% if testResult.internal_error  %}is-internal-error="true"{% endif %}>
+                    <result {% if testResult.internal_error  %}is-internal-error="true"{% endif %}>
                         <score>{% if testResult.passed  %}1{% else %}0{% endif %}</score>
                     </result>
                     <feedback-list>
