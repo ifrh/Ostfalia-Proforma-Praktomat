@@ -1,4 +1,4 @@
-*Version 4.6.0 (work in progress) may not be fully compatible with Moodle Plugin 2.2.0.*
+*Version 4.6.0 (work in progress) may not be fully compatible with Moodle Plugin 2.2.0 (feedback for Compilation). Not sure if it is a problem. *
 
 This is the source distribution of Ostfalia-Praktomat, a programming course manager which can also be used as a simple
 grading backend for different programming languages.
