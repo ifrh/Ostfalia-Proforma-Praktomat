@@ -9,14 +9,13 @@ MAINTAINER Ostfalia
 
 ENV PYTHONUNBUFFERED 1
 ENV PASSWORD=123
-
-# for praktomat itself
-RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
+# set locale to German (UTF-8)
+ARG LOCALE=de_DE.UTF-8
 
 # change locale to something UTF-8
-# RUN apt-get install -y locales && locale-gen de_DE.UTF-8 
-ENV LANG de_DE.UTF-8
-ENV LC_ALL de_DE.UTF-8
+RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE}
+ENV LANG ${LOCALE}
+ENV LC_ALL ${LOCALE}
 
 
 # do not use Python 3.7 because of incompatibility with eventlet

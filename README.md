@@ -1,4 +1,6 @@
-*Version 4.6.0 (work in progress) may not be fully compatible with Moodle Plugin 2.2.0 (feedback for Compilation). Not sure if it is a problem.*
+????*Version 4.6.0 (work in progress) may not be fully compatible with Moodle Plugin 2.2.0 (feedback for Compilation). Not sure if it is a problem.*
+
+
 
 This is the source distribution of Ostfalia-Praktomat, a programming course manager which can also be used as a simple
 grading backend for different programming languages.
@@ -48,6 +50,18 @@ Create an .env file containing credentials and other private data.
 A sample file is included as .env.example.  
 
     cp .env.example .example 
+
+##### Optional: Change Locale
+
+By default Praktomat uses German locale which results in German Checkstyle messages.
+In order to adjust the locale settings, you can override the build argument LOCALE in the
+docker-compose.yml file. E.g. for American English set LOCALE to en_US.UTF-8: 
+
+    build:
+        ...
+        args:
+            LOCALE: en_US.UTF-8
+
 
 ##### Optional: HTTPS
 For enabling HTTPS (port 443) you must 
