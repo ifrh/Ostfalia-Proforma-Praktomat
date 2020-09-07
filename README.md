@@ -37,15 +37,23 @@ The following types of submission are supported:
  
 
 
-## Setup
+## Installation
 
+ProFormA Praktomat requires
+ 
+* docker (https://docs.docker.com/engine/install/) and 
+* docker-compose (https://docs.docker.com/compose/install/). 
+
+#### Configuration
 
 ##### Mandatory: Credentials
 
 Create an .env file containing credentials and other private data. 
 A sample file is included as .env.example.  
 
-    cp .env.example .example 
+    cp .env.example .env 
+
+Modify credentials!
 
 ##### Optional: Change Locale
 
@@ -74,6 +82,11 @@ For using other test framework versions then you need to modify the following fi
 - src/checker/CheckStyleChecker.py
 - src/settings.docker.py
 
+##### Optional: SetlX
+
+The SetlX library is not installed automatically.
+It can be downloaded from https://randoom.org/Software/SetlX/. 
+The jar file must be copied into the `extra` subfolder and renamed to `setlX-2.7.jar`. 
 
 #### Create Docker Containers
 
@@ -82,8 +95,6 @@ In order to build and start the docker composition simply run
     docker-compose build
     docker-compose up
       
-
-
         
 
 ## ProFormA API (CURL)
