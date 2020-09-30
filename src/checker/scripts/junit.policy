@@ -16,6 +16,8 @@ grant {
 	permission java.io.FilePermission "spielDieZombie.txt", "write";
 	permission java.io.FilePermission "spielDieZombie2.txt", "write";
 
+
+
     // JUnit5 with RunListener
 	permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
 	// Junit5 without RunListener
@@ -36,6 +38,19 @@ grant {
 	permission java.lang.RuntimePermission "closeClassLoader";
 
 };
+
+// Junit4-RunListener
+grant codeBase "file:/praktomat/extra/Junit4RunListener.jar" {
+	// for stripping the stacktrace
+	permission java.lang.RuntimePermission "accessClassInPackage.sun.nio.fs";
+
+};
+
+grant codeBase "file:/praktomat/lib/junit-4.12.jar" {
+	// for stripping the stacktrace
+	permission java.lang.RuntimePermission "accessClassInPackage.sun.nio.fs";
+};
+
 
 // JUnit5-RunListener
 grant codeBase "file:/praktomat/extra/Junit5RunListener.jar" {

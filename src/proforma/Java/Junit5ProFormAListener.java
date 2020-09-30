@@ -53,6 +53,9 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     private Element feedbackList;
     private Element studentFeedback;    
     
+	final int maxStdoutLen = 12000;  
+	private int stdoutLeft = maxStdoutLen;    
+    
     private Exception exception = null;
     
     private boolean failureOutsideTest = false;
@@ -153,7 +156,17 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     	
     	String consoleOutput = baos.toString();
     	consoleOutput = consoleOutput.trim();
-    	if (consoleOutput.length() > 0) {       
+    	if (consoleOutput.length() > 0) {
+    		// avoid having a lot of extra text due to redirecting stdout/stderr
+    		if (consoleOutput.length() > this.stdoutLeft) {
+    			consoleOutput = consoleOutput.substring(0, this.stdoutLeft) + "... [truncated]";
+    		}
+			this.stdoutLeft -=  consoleOutput.length();
+			if (this.stdoutLeft < 0) {
+				this.stdoutLeft = 0;				
+			}
+
+			
             Element feedback = doc.createElement("student-feedback");        
             feedbackList.appendChild(feedback);
             Element content = doc.createElement("content");
@@ -340,6 +353,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     private StackTraceElement[]  stripStackTrace(StackTraceElement[] elements) { 
     	Class<?> testclass;
     	boolean found = false;
+    	final int maxTraceElments = 10;
 		try {
 			testclass = Class.forName(this.testClassname);
 	    	int i = 0;
@@ -347,7 +361,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 				Class<?> clazz;
 				clazz = Class.forName(element.getClassName());
 				i++;
-				if (testclass == clazz) {
+				if (testclass == clazz || i == maxTraceElments) {
 					found = true; 
 				} else {
 		        	if (found) {
@@ -373,7 +387,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 		    // when using policy manager			
 			try {
 				// in case of an error simply deliver first 10 elements of stack trace				
-				final int max = 10;
+				final int max = maxTraceElments;
 		    	StackTraceElement[] newStacktrace = new StackTraceElement[max];
 		    	System.arraycopy( elements, 0, newStacktrace, 0, max);
 		    	return newStacktrace;	 										

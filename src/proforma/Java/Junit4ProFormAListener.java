@@ -55,6 +55,9 @@ public class Junit4ProFormAListener extends RunListener {
     
     private ByteArrayOutputStream baos = null; 
     
+    // allow 12 char of text from stdout/stderr redirection
+	final int maxStdoutLen = 12000;  
+	private int stdoutLeft = maxStdoutLen;
     
     // parameters of current test
     private boolean passed = true;
@@ -93,7 +96,8 @@ public class Junit4ProFormAListener extends RunListener {
         //doc.appendChild(testResponse);      
         subtestsResponse = doc.createElement("subtests-response");
         doc.appendChild(subtestsResponse);          
-        //testResponse.appendChild(subtestsResponse);          
+        //testResponse.appendChild(subtestsResponse);    
+    	this.stdoutLeft = maxStdoutLen;
     }
     
 /*    
@@ -259,13 +263,28 @@ public class Junit4ProFormAListener extends RunListener {
     	return text.replaceAll(xml10pattern, "[?]");
     }
     
+    
+    private String multiByteSubstr(String original, int length)  {
+    	// return original.substring(0, original.offsetByCodePoints(0, length));
+    	return original.substring(0, length);
+    }
+    
     @Override
     public void testFinished(Description description) {
         // todo: bei failed noch den Fehlertext
+    	// trim text that is written to stdout/err during test run.
     	
     	String consoleOutput = baos.toString();
     	consoleOutput = consoleOutput.trim();
     	if (consoleOutput.length() > 0) {
+    		// avoid having a lot of extra text because of redirecting stdout/stderr
+    		if (consoleOutput.length() > this.stdoutLeft) {
+				consoleOutput = this.multiByteSubstr(consoleOutput, this.stdoutLeft) + "... [truncated]";
+    		}
+			this.stdoutLeft -=  consoleOutput.length();
+			if (this.stdoutLeft < 0) {
+				this.stdoutLeft = 0;				
+			}
   		
             Element feedback = doc.createElement("student-feedback");        
             feedbackList.appendChild(feedback);
@@ -288,6 +307,7 @@ public class Junit4ProFormAListener extends RunListener {
     
     private StackTraceElement[]  stripStackTrace(StackTraceElement[] elements) { 
     	Class<?> testclass;
+    	final int maxTraceElments = 10;
 		try {
 			testclass = Class.forName(this.testClassname);
 	    	int i = 0;
@@ -295,7 +315,7 @@ public class Junit4ProFormAListener extends RunListener {
 				Class<?> clazz;
 				clazz = Class.forName(element.getClassName());
 				i++;
-				if (testclass == clazz) {
+				if (testclass == clazz || i == maxTraceElments) {
 					// found => remove tail
 			    	StackTraceElement[] newStacktrace = new StackTraceElement[i];
 			    	System.arraycopy( elements, 0, newStacktrace, 0, i);
@@ -304,7 +324,24 @@ public class Junit4ProFormAListener extends RunListener {
 	        }			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			//writer.append("***CANNOT STRIP STACK TRACE\n");
+			//writer.append("Testclass: " + this.testClassname + "\n");
+			//writer.append("Exception: " + e.getMessage() + "\n");				
+			//writer.append("Exception: " + e.toString() + "\n");				
+			//e.fillInStackTrace().printStackTrace(writer);				
+			// e.printStackTrace();
+			
+			// this version needs accessClassInPackage.sun.nio.fs
+		    // when using policy manager			
+			try {
+				// in case of an error simply deliver first 10 elements of stack trace				
+				final int max = maxTraceElments;
+		    	StackTraceElement[] newStacktrace = new StackTraceElement[max];
+		    	System.arraycopy( elements, 0, newStacktrace, 0, max);
+		    	return newStacktrace;	 										
+			} catch (Exception f) {
+				return elements;    	
+			}
 		}
     	
 		return elements;    	
