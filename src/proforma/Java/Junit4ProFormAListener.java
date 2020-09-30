@@ -55,8 +55,8 @@ public class Junit4ProFormAListener extends RunListener {
     
     private ByteArrayOutputStream baos = null; 
     
-    // allow 12 char of text from stdout/stderr redirection
-	final int maxStdoutLen = 12000;  
+    // allow 30kB char of text from stdout/stderr redirection
+	final int maxStdoutLen = 30720;  
 	private int stdoutLeft = maxStdoutLen;
     
     // parameters of current test

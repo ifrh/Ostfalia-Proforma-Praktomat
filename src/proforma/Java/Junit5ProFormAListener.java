@@ -53,7 +53,8 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     private Element feedbackList;
     private Element studentFeedback;    
     
-	final int maxStdoutLen = 12000;  
+    // allow 30kB char of text from stdout/stderr redirection
+	final int maxStdoutLen = 30720;  
 	private int stdoutLeft = maxStdoutLen;    
     
     private Exception exception = null;
