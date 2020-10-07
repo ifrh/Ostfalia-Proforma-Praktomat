@@ -37,7 +37,8 @@ class Task(models.Model):
     jplag_up_to_date = models.BooleanField(default=False, help_text = _("No new solution uploads since the last jPlag run"))
 
     # UUIDField used instead of BinaryField for performance reasons (16 or 32 bytes??)
-    proformatask_hash = models.UUIDField(db_index=True, editable=False, null=True, help_text = _("Hash for proforma task file"))
+    # proformatask_hash = models.UUIDField(db_index=True, editable=False, null=True, help_text = _("Hash for proforma task file"))
+    proformatask_hash = models.UUIDField(db_index=True, editable=False, null=True, unique=True, help_text = _("Hash for proforma task file"))
     proformatask_uuid = models.UUIDField(editable=False, null=True, help_text = _("UUID of proforma task"))
     proformatask_title = models.TextField(editable=False, null=True, help_text = _("title of proforma task"))
 
