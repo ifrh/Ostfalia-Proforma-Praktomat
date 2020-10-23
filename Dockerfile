@@ -1,9 +1,11 @@
 # debian does not run with this dockerfile
 # FROM debian:jessie
 # FROM debian:buster
-FROM ubuntu:xenial
+# FROM ubuntu:xenial
 # ubuntu 18.04 is very slow so we stay at 16
-# FROM ubuntu:bionic
+#FROM ubuntu:bionic
+# Ubuntu 20.10
+FROM ubuntu:groovy
 
 MAINTAINER Ostfalia
 
@@ -104,6 +106,8 @@ RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.z
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar /praktomat/lib/
 
 RUN pip3 list
+RUN python3 --version
+RUN java -version
 
 # set permissions
 RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
