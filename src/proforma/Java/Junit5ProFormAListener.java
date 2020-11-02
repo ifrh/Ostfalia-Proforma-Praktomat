@@ -218,7 +218,19 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 	
 	public void testPlanExecutionFinished(TestPlan testPlan){
 		if (!testPlan.containsTests()) {
-			return;
+			// no tests found!
+            String message = "<test-result>" +                
+            "<result is-internal-error=\"true\">" +
+                "<score>0</score>" +
+            "</result>"+
+            "<feedback-list>"+
+				"<student-feedback level=\"error\">"+
+					"<title>No JUnit 5 tests found!</title>"+
+				"</student-feedback>"+
+            "</feedback-list>"+
+            "</test-result>";
+	        writer.append(message);		        
+			// return;
 		}
         // writer.append("testPlanExecutionFinished: " + testPlan + "\n");	
 
@@ -377,10 +389,10 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 	        }			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			//writer.append("***CANNOT STRIP STACK TRACE\n");
-			//writer.append("Testclass: " + this.testClassname + "\n");
-			//writer.append("Exception: " + e.getMessage() + "\n");				
-			//writer.append("Exception: " + e.toString() + "\n");				
+			writer.append("***CANNOT STRIP STACK TRACE\n");
+			writer.append("Testclass: " + this.testClassname + "\n");
+			writer.append("Exception: " + e.getMessage() + "\n");				
+			writer.append("Exception: " + e.toString() + "\n");				
 			//e.fillInStackTrace().printStackTrace(writer);				
 			//e.printStackTrace();
 			
@@ -394,8 +406,7 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 		    	return newStacktrace;	 										
 			} catch (Exception f) {
 				return elements;    	
-			}
-			
+			}			
 		}
     	
 		return elements;    	
