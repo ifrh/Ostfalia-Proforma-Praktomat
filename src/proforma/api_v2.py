@@ -160,6 +160,7 @@ def grade_api_v2(request,):
 
         # return result
         logger.debug("grading finished")
+        logger.debug("--------------------")
         response = HttpResponse()
         response.write(grade_result)
         response.status_code = 200
@@ -406,6 +407,7 @@ def get_submission_files(root, request):
 
 def get_submission_files_from_submission_xml(root):
     submission_files_dict = dict()
+    # handle embedded text files
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
     for sub_file in submission_elements:
         # logger.debug(sub_file)
@@ -413,9 +415,15 @@ def get_submission_files_from_submission_xml(root):
         # logger.debug('classname is ' + sub_file.text.__class__.__name__)
         file_content = sub_file.text  # no need to encode because it is already a Unicode object
         submission_files_dict.update({filename: file_content})
+
+    # handle embedded binary base64 encoded files
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-bin-file", NAMESPACES)
-    if len(submission_elements) > 0:
-        raise Exception("embedded-bin-file in submission is not supported")
+    for sub_file in submission_elements:
+        filename = sub_file.attrib["filename"]
+        import base64
+        file_content = base64.b64decode(sub_file.text)
+        submission_files_dict.update({filename: file_content})
+
     submission_elements = root.findall(".//dns:files/dns:file/dns:attached-bin-file", NAMESPACES)
     if len(submission_elements) > 0:
         raise Exception("attached-bin-file in submission is not supported")

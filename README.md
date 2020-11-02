@@ -19,11 +19,12 @@ The following programming languages and test frameworks are provided with the Pr
 
 | Language      | Test Frameworks |
 | :---:        |    :----:   |         
-| Java 8     | Compiler ,  JUnit 4.12 / JUnit 5, Checkstyle 8.23 / 8.29   |
-| Python 3.5   | Doctest        |
+| Java 11     | Compiler,  JUnit 4.12 and 5, Checkstyle 8.23 / 8.29   |
+| Python 3.8   | Doctest        |
 | SetlX   | Test, Syntax Check        |
 
-For running SetlX tests you need to copy the setlx-2.7.jar into the extra folder.
+For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy the `setlx-2.7.x.jar` 
+into the extra folder.
 
 
 #### Submission types
@@ -144,7 +145,8 @@ with the following 'submission.xml'
 `submission.xml` can be transferred as a separate file or simply as data.
 Files are sent as multipart/form-data. The task file can be a zipped file or a simple xml file. 
 
-Note that embedding the submission file(s) into submission.xml as embedded-txt-file is also possible.
+Note that embedding the student submission file(s) into `submission.xml` as `embedded-txt-file` or 
+`embedded-bin-file` is also possible.
 
 A sample for a timestamp is:
 
@@ -155,9 +157,10 @@ A sample for a timestamp is:
 
 For submitting more than one file you have the following options:
 
-1. create a list of embedded text files in the files section in submission.xml
-2. external-submission: set http-file as file name list (comma separated without blanks) and use standard file upload
-3. external-submission: compress all student submission files to a zip archive (with or without package paths for Java) and set http-file to appropriate filename
+1. create a list of embedded text or/and binary files in the `files` section in `submission.xml`.
+2. external-submission: set `http-file` as file name list (comma separated without blanks) and use standard file upload
+3. external-submission: compress all student submission files to a zip archive (with or without package paths for Java) 
+and set `http-file` to appropriate filename.
 
 Sample for http-file for Java submission files list:
 
