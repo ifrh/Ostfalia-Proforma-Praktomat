@@ -8,6 +8,8 @@
 from os.path import join, dirname, basename
 import os
 from collections import OrderedDict
+import logging
+import time
 
 PRAKTOMAT_PATH = dirname(dirname(dirname(__file__)))
 
@@ -156,8 +158,7 @@ defaults.load_defaults(globals())
 defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/x-stlx', '.stlx'))
 defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/plain', '.csv'))
 
-import logging
-import time
+
 
 # logging formatter for profiling function runtime
 class DurationFormatter(logging.Formatter):
@@ -180,7 +181,7 @@ LOGGING = {
         'verbose': {
             # relative time for performance measuring for profiling
             # comment the following line out in order to have normal log output!!
-            '()': 'settings.docker.formatterfactory',
+            # '()': 'settings.docker.formatterfactory',
             # absolute timestamp
             'format': '%(asctime)6s %(relativeCreated)d [%(process)d] [%(levelname)s] %(module)s %(message)s',
 }
@@ -211,16 +212,16 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console'],
-#            'level': 'INFO',  # change debug level as appropiate
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             #'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
             'handlers': ['console'],
-#            'level': 'INFO',  # change debug level as appropiate
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
@@ -233,8 +234,8 @@ LOGGING = {
         },
         'utilities': {
             'handlers': ['console'],
-#            'level': 'INFO',  # change debug level as appropiate
-           'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+#           'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
