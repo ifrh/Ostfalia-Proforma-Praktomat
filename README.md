@@ -79,9 +79,9 @@ For enabling HTTPS (port 443) you must
 
 For using other test framework versions then you need to modify the following files:
 - URLs in Dockerfile
-- src/checker/JUnitChecker.py
-- src/checker/CheckStyleChecker.py
-- src/settings.docker.py
+- src/checker/checker/JUnitChecker.py
+- src/checker/checker/CheckStyleChecker.py
+- src/settings/docker.py
 
 ##### Optional: SetlX
 

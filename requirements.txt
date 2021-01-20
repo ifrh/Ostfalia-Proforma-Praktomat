@@ -11,7 +11,7 @@ elementpath==1.4.5
 eventlet==0.29.1
 greenlet==0.4.17
 gunicorn==20.0.4
-lxml==4.5.1
+lxml==4.6.2
 Markdown==3.2.2
 monotonic==1.5
 psycopg2-binary==2.8.6
