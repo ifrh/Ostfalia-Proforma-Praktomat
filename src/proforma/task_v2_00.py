@@ -40,7 +40,6 @@ from django.conf import settings
 
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 # BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -267,8 +266,17 @@ class Task_2_00:
                     filename = k['attached-txt-file'].text
                     logger.debug('attached task file: ' + k.attrib.get("id") + ' => ' + filename)
                     orphain_files[k.attrib.get("id")] = external_file_dict[filename]
+                elif k.xpath("p:embedded-bin-file", namespaces=namespace):
+                    import base64
+                    t = tempfile.NamedTemporaryFile(delete=True)
+                    t.write(base64.b64decode(k['embedded-bin-file'].text))
+                    t.flush()
+                    my_temp = File(t)
+                    my_temp.name = k['embedded-bin-file'].attrib.get("filename")
+                    logger.debug('embedded task file: ' + k.attrib.get("id") + ' => ' + my_temp.name)
+                    orphain_files[k.attrib.get("id")] = my_temp
                 else:
-                    raise task.TaskXmlException('embedded-bin-file is not supported')
+                    raise task.TaskXmlException('no file element found')
 
         # List with all files that are referenced by tests
         list_of_test_files = xml_obj.xpath("/p:task/p:tests/p:test/p:test-configuration/"
@@ -350,11 +358,11 @@ class Task_2_00:
             logger.error("JUNIT-version is now: \'" + junit_version[0] + "\'")
 
         # get entrypoint
-        inst.class_name = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'JUnit entrypoint')
+        inst.class_name = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'JUnit entrypoint').strip()
 
         x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
-        self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, None)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
         x.save()
 
     def _create_java_checkstyle_test(self, xmlTest):
@@ -400,7 +408,7 @@ class Task_2_00:
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.configuration = value
-        self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, set_mainfile)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, set_mainfile)
         # inst.order = self._val_order
         x.save()
 
@@ -411,7 +419,7 @@ class Task_2_00:
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.testFile = value
-        self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, firstHandler=set_mainfile)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, firstHandler=set_mainfile)
         x.save()
 
 
@@ -421,7 +429,7 @@ class Task_2_00:
         x.set_test_base_parameters(xmlTest)
         def set_mainfile(inst, value):
             inst.doctest = value
-        self._val_order = x.add_files_to_test(xmlTest, self. _praktomat_files, self._val_order, firstHandler=set_mainfile)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, firstHandler=set_mainfile)
         x.save()
 
     def _get_xsd_path(self):
@@ -432,7 +440,6 @@ class Task_2_00:
         raise task.TaskXmlException('ProForma XSD not found for namespace ' + self._format_namespace)
 
     def import_task(self):
-
         task_in_xml = self._xml_obj.xpath("/p:task", namespaces=self._ns)
         task_uuid = task_in_xml[0].attrib.get("uuid")
         logger.debug('uuid is ' + task_uuid)
