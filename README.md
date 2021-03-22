@@ -71,9 +71,10 @@ docker-compose.yml file. E.g. for American English set LOCALE to en_US.UTF-8:
 ##### Optional: HTTPS
 For enabling HTTPS (port 443) you must 
 
-* put your certificate files into /data/certs (or adjust folder name in docker-compose.yml)
-* comment in 443 configuration in nginx/nginx.conf
-* set servername and adjust certificate file names in nginx/nginx.conf  
+* `docker-compose.yml`: comment in `- /data/certs:/etc/nginx/certs` under `nginx`
+* put your certificate files into `/data/certs` (or adjust folder name in `docker-compose.yml`)
+* `nginx/nginx.conf`: comment in 443 configuration
+* `nginx/nginx.conf`: set servername and adjust certificate file names  
 
 ##### Optional: Different Test Framework Versions
 

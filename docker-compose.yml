@@ -74,7 +74,7 @@ services:
    # static content to serve
     - ./media:/praktomat/media
     # ssl certificate
-    - /data/certs:/etc/nginx/certs
+    # - /data/certs:/etc/nginx/certs
    ports:
      - 80:80
      - 443:443
