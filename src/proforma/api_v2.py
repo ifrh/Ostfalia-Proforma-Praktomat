@@ -48,7 +48,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 logger = logging.getLogger(__name__)
 
-NAMESPACES = {'dns': 'urn:proforma:v2.0'}
+# NAMESPACES = {'dns': 'urn:proforma:v2.0'}
+NAMESPACES_V2_0 = 'urn:proforma:v2.0'
+NAMESPACES_V2_1 = 'urn:proforma:v2.1'
+
 
 # string format for exception return message in HTTP
 def get_http_error_page(title, message, callstack):
@@ -125,6 +128,20 @@ def grade_api_v2(request,):
 
         # note: we use lxml/etree here because it is very fast
         root = etree.fromstring(xml)
+        # print ('NAMESPACE ' + root.xpath('namespace-uri(.)'))
+        NAMESPACE = None
+        for key, value in root.nsmap.items():
+            if key == None:
+                if value == NAMESPACES_V2_0:
+                    print ('V2.0')
+                    NAMESPACE = NAMESPACES_V2_0
+                elif value == NAMESPACES_V2_1:
+                    print ('V2.1')
+                    NAMESPACE = NAMESPACES_V2_1
+                else:
+                    raise Exception("do not support namespace " + value)
+
+        NAMESPACES = {'dns': NAMESPACE}
 
         task_file = None
         task_filename = None
@@ -148,7 +165,7 @@ def grade_api_v2(request,):
 
         logger.info("grading request for task " + task_filename)
 
-        submission_files, version_control = get_submission_files(root, request) # returns a dictionary (filename -> content)
+        submission_files, version_control = get_submission_files(root, request, NAMESPACES) # returns a dictionary (filename -> content)
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
 
@@ -298,12 +315,14 @@ def get_request_xml(request):
 
 
 def get_submission_file_from_request(searched_file_name, request):
+    # remove beginning and trailing whitespaces
+    searched_file_name = searched_file_name.strip()
 
-    logger.debug("search submission file: " + searched_file_name)
+    logger.debug("search submission file: '" + searched_file_name + "'")
 
     for filename, file in list(request.FILES.items()):
         name = request.FILES[filename].name
-        logger.debug("request.FILES[" + filename + "].name = " + name)
+        logger.debug("request.FILES['" + filename + "'].name = '" + name + "'")
 
         if filename == searched_file_name:
             submission_files_dict = dict()
@@ -364,7 +383,7 @@ def get_submission_file_from_request(searched_file_name, request):
 
 
 
-def get_submission_files(root, request):
+def get_submission_files(root, request, NAMESPACES):
     ## TODO: read binary if possible and write binary without conversion
 
     # check for external submission
@@ -397,15 +416,15 @@ def get_submission_files(root, request):
             # SVN:
             # export submission from URI
             logger.debug('SVN submission')
-            return get_submission_files_from_svn(submission_uri)
+            return get_submission_files_from_svn(submission_uri, NAMESPACES)
 
 
     #embedded submission
     logger.debug('embedded submission')
-    return get_submission_files_from_submission_xml(root)
+    return get_submission_files_from_submission_xml(root, NAMESPACES)
 
 
-def get_submission_files_from_submission_xml(root):
+def get_submission_files_from_submission_xml(root, NAMESPACES):
     submission_files_dict = dict()
     # handle embedded text files
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
@@ -435,7 +454,7 @@ def get_submission_files_from_submission_xml(root):
     return submission_files_dict, None
 
 
-def get_submission_files_from_svn(submission_uri):
+def get_submission_files_from_svn(submission_uri, NAMESPACES):
     from utilities.safeexec import execute_arglist
     from django.conf import settings
 

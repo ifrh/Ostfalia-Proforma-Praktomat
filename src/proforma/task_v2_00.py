@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 XSD_V_2_PATH = "proforma/xsd/proforma_v2.0.xsd"
 XSD_V_2_01_PATH = "proforma/xsd/proforma_2.0.1_rc.xsd"
+XSD_V_2_1_PATH = "proforma/xsd/proforma_2.1.xsd"
 # SYSUSER = "sys_prod"
 
 CACHE_TASKS = True
@@ -437,6 +438,8 @@ class Task_2_00:
             return XSD_V_2_PATH
         if self._format_namespace == 'urn:proforma:v2.0.1':
             return XSD_V_2_01_PATH
+        if self._format_namespace == 'urn:proforma:v2.1':
+            return XSD_V_2_1_PATH
         raise task.TaskXmlException('ProForma XSD not found for namespace ' + self._format_namespace)
 
     def import_task(self):
