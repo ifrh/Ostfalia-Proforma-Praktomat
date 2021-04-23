@@ -46,10 +46,11 @@ if keep_sandbox:
 
 
 class Grader:
-    def __init__(self, proformatask):
+    def __init__(self, proformatask, namespace = None):
         self._proformatask = proformatask
         self.result = None
         self.solution = None
+        self.namespace = namespace
 
 
     def _save_solution(self, fileDict, version_control = None):
@@ -154,6 +155,7 @@ class Grader:
                             "testResultList": res_arr if remove_CopyFileChecker else result,
                             "fileName": file_name,
                             "grader": grader,
+                            "namespace": self.namespace,
                             "required_hidden": false_required_hidden_test})
 
         return response_xml

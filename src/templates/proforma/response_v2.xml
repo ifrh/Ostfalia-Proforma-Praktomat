@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<response xmlns="urn:proforma:v2.0" xmlns:praktomat="urn:proforma:praktomat:v2.0"
+<response xmlns="{{ namespace }}" xmlns:praktomat="urn:proforma:praktomat:v2.0"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" {% if solution.lang %}lang="{{solution.lang }} }}"{% endif %}>
     {% if solution.seperate %}<separate-test-feedback>
         <submission-feedback-list>

@@ -170,7 +170,7 @@ def grade_api_v2(request,):
         proformatask = task.import_task_internal(task_filename, task_file)
 
         # run tests
-        grader = grade.Grader(proformatask)
+        grader = grade.Grader(proformatask, NAMESPACE)
         grader.grade(submission_files, version_control, True)
         # get result
         grade_result = grader.get_result('proforma/response_v2.xml')
