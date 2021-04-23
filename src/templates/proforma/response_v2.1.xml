@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response xmlns="{{ namespace }}" xmlns:praktomat="urn:proforma:praktomat:v2.1"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" {% if solution.lang %}lang="{{solution.lang }} }}"{% endif %}>
+    {% if solution.seperate %}<separate-test-feedback>
+        <submission-feedback-list>
+        </submission-feedback-list>
+        <tests-response>
+            {% for testResult in testResultList %}
+            <test-response id="{{ testResult.checker.proforma_id }}">
+                {# Format=<{{testResult.log_format }}> #}
+                {% if testResult.is_proforma_subtests_format  %}
+
+                {# version with complete subtest result #}
+                {#<subtests-response>#}
+                {% autoescape off %}{{ testResult.log }}{% endautoescape %}
+                {#</subtests-response>#}
+
+                {% else %}
+                {# default version with simple log output and passed/failed converted to score #}
+                <test-result>                
+                    <result {% if testResult.internal_error  %}is-internal-error="true"{% endif %}>
+                        <score>{% if testResult.passed  %}1{% else %}0{% endif %}</score>
+                    </result>
+                    <feedback-list>
+                        {% if testResult.is_feedback_list  %}
+                            {% autoescape off %} {{testResult.log}} {% endautoescape %}
+                        {% else %}
+
+                        {% if testResult.checker.public %}
+
+                        <student-feedback level="info">
+                            {% if testResult.is_plaintext_format  %}
+                            <content format="plaintext">{{ testResult.log }}</content>
+                            {% else %}
+                            <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                            {% endif %}
+                        </student-feedback>
+
+                        {% else %}
+
+                            <teacher-feedback level="info">
+                                {% if testResult.is_plaintext_format  %}
+                                <content format="plaintext">{{ testResult.log }}</content>
+                                {% else %}
+                                <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                                {% endif %}
+                            </teacher-feedback>
+
+                        {% endif %}
+                        {% endif %}
+                    </feedback-list>
+                </test-result>
+
+                {% endif %}
+            </test-response>
+            {% endfor %}
+        </tests-response>
+    </separate-test-feedback>
+    {% endif %}
+    <files>
+    </files>
+    <response-meta-data>
+        <response-datetime>{{ solution.timestamp }}</response-datetime>
+        <grader-engine name="{{ grader.name }}" version="{{ grader.version }}"/>
+        <praktomat:response-meta-data>
+            <praktomat:response-datetime>{{ solution.timestamp }}</praktomat:response-datetime>
+{% if solution.versioncontrol %}            <praktomat:version-control-system name="{{solution.versioncontrol.system}}" submission-uri="{{solution.versioncontrol.uri}}" submission-revision="{{solution.versioncontrol.revision}}"/>{% endif %}
+        </praktomat:response-meta-data>
+    </response-meta-data>
+</response>
