@@ -119,6 +119,9 @@ class SetlXChecker(ProFormAChecker):
             # plain text output
             if len(output.strip()) == 0:
                 output = "OK"
+            else:
+                regexp = 'line\ (?<line>[0-9]+)(:(?<column>[0-9]+))?\s(?<text>.+)'
+                result.set_regexp(regexp)
             result.set_log(output, timed_out=timed_out, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
         else:
             output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
