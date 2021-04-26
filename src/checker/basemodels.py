@@ -207,7 +207,7 @@ class CheckerResult(models.Model):
     internal_error = models.BooleanField(default=False,  help_text=_('Indicates whether an error occured during test exceution'))
 
 
-    # new for handling subtest results in Prforma
+    # Proforma new: for handling subtest results in ProFormA
     NORMAL_LOG = '0' # Original (old) log
     PROFORMA_SUBTESTS = '1'
     FEEDBACK_LIST_LOG = '2' # List Log
@@ -223,6 +223,9 @@ class CheckerResult(models.Model):
         choices=LOG_FORMAT_CHOICES,
         default=NORMAL_LOG,
     )
+
+    # Proforma new: for sending regular expression in ProFormA response
+    regexp = models.TextField(default='', help_text=_('Regular expression for evaluating log'))
 
     def title(self):
         """ Returns the title of the Checker that did run. """
@@ -271,6 +274,11 @@ class CheckerResult(models.Model):
         #logger.debug('log: ' + log)
         self.log = log
 
+    def set_regexp(self, regexp):
+        """ Sets the regular expression for evaluating log. """
+        print('SET_REGEXP')
+        self.regexp = regexp
+
     def set_passed(self, passed):
         """ Sets the passing state of the Checker. """
         assert isinstance(passed, int)
@@ -298,6 +306,10 @@ class CheckerResult(models.Model):
         """ feedback list format """
         return self.log_format == self.FEEDBACK_LIST_LOG
 
+    def has_regexp(self):
+        """ is there a regular expression stored """
+        print('HAS_REGEXP')
+        return (len(self.regexp) > 0)
 
 def get_checkerresultartefact_upload_path(instance, filename):
     result = instance.result

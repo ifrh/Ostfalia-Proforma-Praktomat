@@ -144,7 +144,7 @@ urlpatterns = [
     #                            r'^api/v1/grading/prog-languages/(?P<fw>[a-zA-Z\_\.\d]{3,32})/(?P<fw_version>\d{1,6})/submissions$'
     #                            r'', proforma_views.grade_api_v1, name="grade_api_v1"),
 
-    url(r'^VERSION$', proforma.views.show_version, name="show_version"),
+    url(r'^version$', proforma.views.show_version, name="show_version"),
 
 # Proforma add-on [end]	
 

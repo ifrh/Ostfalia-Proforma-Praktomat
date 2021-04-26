@@ -34,6 +34,11 @@
                             {% else %}
                             <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
                             {% endif %}
+                            {% if testResult.has_regexp %}
+                            <praktomat:feedback>
+                                <praktomat:feedback-regexp>{{ testResult.regexp }}</praktomat:feedback-regexp>
+                            </praktomat:feedback>
+                            {% endif %}
                         </student-feedback>
 
                         {% else %}
@@ -43,6 +48,11 @@
                                 <content format="plaintext">{{ testResult.log }}</content>
                                 {% else %}
                                 <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                                {% endif %}
+                                {% if testResult.has_regexp %}
+                                <praktomat:feedback>
+                                    <praktomat:feedback-regexp>{{ testResult.regexp }}</praktomat:feedback-regexp>
+                                </praktomat:feedback>
                                 {% endif %}
                             </teacher-feedback>
 
@@ -63,7 +73,6 @@
         <response-datetime>{{ solution.timestamp }}</response-datetime>
         <grader-engine name="{{ grader.name }}" version="{{ grader.version }}"/>
         <praktomat:response-meta-data>
-            <praktomat:response-datetime>{{ solution.timestamp }}</praktomat:response-datetime>
 {% if solution.versioncontrol %}            <praktomat:version-control-system name="{{solution.versioncontrol.system}}" submission-uri="{{solution.versioncontrol.uri}}" submission-revision="{{solution.versioncontrol.revision}}"/>{% endif %}
         </praktomat:response-meta-data>
     </response-meta-data>

@@ -21,6 +21,11 @@ class ProFormAChecker(Checker):
     # subtests as possible (e.g. use RunListener for JUnit)
     retrieve_subtest_results = True
 
+    # class variable for storing the XML response namespace
+    NAMESPACES_V2_0 = 'urn:proforma:v2.0'
+    NAMESPACES_V2_1 = 'urn:proforma:v2.1'
+    xml_namespace = NAMESPACES_V2_1
+
     def copy_files(self, env):
         logger.debug('copy test files')
         for file in self.files.all():

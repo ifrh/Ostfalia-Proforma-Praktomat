@@ -135,9 +135,11 @@ def grade_api_v2(request,):
                 if value == NAMESPACES_V2_0:
                     print ('V2.0')
                     NAMESPACE = NAMESPACES_V2_0
+                    templatefile = 'proforma/response_v2.0.xml'
                 elif value == NAMESPACES_V2_1:
                     print ('V2.1')
                     NAMESPACE = NAMESPACES_V2_1
+                    templatefile = 'proforma/response_v2.1.xml'
                 else:
                     raise Exception("do not support namespace " + value)
 
@@ -173,7 +175,7 @@ def grade_api_v2(request,):
         grader = grade.Grader(proformatask, NAMESPACE)
         grader.grade(submission_files, version_control, True)
         # get result
-        grade_result = grader.get_result('proforma/response_v2.0.xml')
+        grade_result = grader.get_result(templatefile)
 
         # return result
         logger.debug("grading finished")

@@ -13,6 +13,11 @@
     <student-feedback level="error">
         <title>Compilation failed</title>
         <content format="plaintext">{{output|safe}}</content>
+{% if regexp %}        
+        <praktomat:feedback>
+            <praktomat:feedback-regexp>{{ regexp }} </praktomat:feedback-regexp>
+        </praktomat:feedback>        
+{% endif %}        
     </student-feedback>
 {% else %}
     <student-feedback level="info">

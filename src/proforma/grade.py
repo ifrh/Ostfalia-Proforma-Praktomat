@@ -95,6 +95,8 @@ class Grader:
             ProFormAChecker.retrieve_subtest_results = subtest_results
         else:
             ProFormAChecker.retrieve_subtest_results = False
+
+        ProFormAChecker.xml_namespace = self.namespace
         self.solution.check_solution(True, keep_sandbox)
         logger.debug('get results...')
         self.result = self.solution.allCheckerResults()
@@ -103,6 +105,7 @@ class Grader:
     def get_result(self, response_template, remove_CopyFileChecker = True):
         #fileNameList = []
         #fileNameList.append("submission.zip")
+        logger.debug("create response with " + response_template)
         lcxml = self._get_solution_xml(self.solution_files, response_template, remove_CopyFileChecker)
 
         logger.debug("file_grader_post finished")

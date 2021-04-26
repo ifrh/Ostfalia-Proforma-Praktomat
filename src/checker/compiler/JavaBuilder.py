@@ -77,11 +77,15 @@ class JavaBuilder(ClassFileGeneratingBuilder):
         result = dict()
         if ProFormAChecker.retrieve_subtest_results:
             t = get_template('checker/compiler/java_builder_report.xml')
+            print('XML-Namespace: ' + ProFormAChecker.xml_namespace)
+            regexp = '(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<msgtype>[a-z]+):\s(?<text>.+)'
             result["format"] = CheckerResult.FEEDBACK_LIST_LOG
             result["log"] = t.render({
-                'filenames' : filenames,
-                'output' : output,
-                'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
+                'filenames': filenames,
+                'output': output,
+                'cmdline': os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], ''),
+                'regexp': ('' if ProFormAChecker.xml_namespace == ProFormAChecker.NAMESPACES_V2_0 else regexp),
+            })
         else:
             t = get_template('checker/compiler/java_builder_report.html')
             result["log"] = t.render({'filenames' : filenames, 'output' : output, 'cmdline' : os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], '')})
