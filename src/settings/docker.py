@@ -35,9 +35,9 @@ STATIC_ROOT = "/praktomat/static"
 
 TEST_MAXLOGSIZE=64
 
-TEST_MAXFILESIZE=512
+TEST_MAXFILESIZE=1024
 
-TEST_TIMEOUT=15
+TEST_TIMEOUT=25
 
 
 # Absolute path to the directory that shall hold all uploaded files as well as
