@@ -129,6 +129,8 @@ def grade_api_v2(request,):
         # note: we use lxml/etree here because it is very fast
         root = etree.fromstring(xml)
         # print ('NAMESPACE ' + root.xpath('namespace-uri(.)'))
+        # print (root.nsmap[None])
+        # NAMESPACES = {'dns': root.nsmap[None]}
         NAMESPACE = None
         for key, value in root.nsmap.items():
             if key == None:
@@ -144,6 +146,8 @@ def grade_api_v2(request,):
                     raise Exception("do not support namespace " + value)
 
         NAMESPACES = {'dns': NAMESPACE}
+
+
 
         task_file = None
         task_filename = None
