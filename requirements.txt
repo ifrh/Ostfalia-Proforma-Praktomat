@@ -4,7 +4,6 @@ Django==2.2.20
 django-extensions==2.2.9
 # django-tinymce 3.x is not compatible
 django-tinymce==2.9.0
-# elementpath==1.4.5
 eventlet==0.30.0
 gunicorn==20.1.0
 lxml==4.6.3
@@ -16,13 +15,15 @@ Pygments==2.7.4
 # loaded in admin-sites. Using an old version of django-tinymce (2.3.x) is not possible because it uses methods removed between Django 1.8 and 1.11.
 # We might want to use the django-admin provieded jquery in our admin-site jquery snippets?!?!?
 
-# sqlparse==0.3.1
-# urllib3==1.25.11
-
 xmlschema==1.2.0
-# zipp==1.2.0
 
 ## disabled requirements because not needed for ProFormA interface
+
+# elementpath==1.4.5
+
+# sqlparse==0.3.1
+# urllib3==1.25.11
+# zipp==1.2.0
 
 # setuptools==47.1.1
 # wheel==0.34.2
