@@ -63,7 +63,11 @@ class JavaBuilder(ClassFileGeneratingBuilder):
 
     def flags(self, env):
         """ Accept unicode characters. """
-        return (self._flags.split(" ") if self._flags else []) + ["-encoding", "utf-8"]
+        return (self._flags.split(" ") if self._flags else []) + \
+               ["-encoding", "utf-8"] + \
+               ["--module-path", "/usr/share/openjfx/lib"] + \
+               ["--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web"]
+
 
     # override
     def enhance_output(self, env, output):

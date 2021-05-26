@@ -35,9 +35,9 @@ STATIC_ROOT = "/praktomat/static"
 
 TEST_MAXLOGSIZE=64
 
-TEST_MAXFILESIZE=512
+TEST_MAXFILESIZE=1024
 
-TEST_TIMEOUT=15
+TEST_TIMEOUT=25
 
 
 # Absolute path to the directory that shall hold all uploaded files as well as
@@ -234,8 +234,8 @@ LOGGING = {
         },
         'utilities': {
             'handlers': ['console'],
-            'level': 'INFO',  # change debug level as appropiate
-#           'level': 'DEBUG',  # change debug level as appropiate
+#           'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
