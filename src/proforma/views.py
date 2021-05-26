@@ -22,9 +22,12 @@
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.conf import settings
+import os
 
 from . import api_v2
 from . import api_lon_capa
+from utilities.safeexec import execute_arglist
 import VERSION
 
 
@@ -48,6 +51,29 @@ def grade_api_lon_capa(request):
 @csrf_exempt
 def show_version(request):
     return HttpResponse(VERSION.version)
+
+
+@csrf_exempt
+def show_info(request):
+    # read disk usage for sandbox
+    response = HttpResponse()
+    response.write("Praktomat: " + VERSION.version + "<br>\r\n")
+    sandboxdir = settings.SANDBOX_DIR
+    if not os.path.exists(sandboxdir):
+        # sandbox folder does not exist
+        response.write("Sandbox folder not found")
+        return HttpResponse(response)
+
+    command = ['du', '-s', '-h']
+    result = execute_arglist(args=command, working_directory=sandboxdir, timeout=60, unsafe=True)
+    resultout = result[0]
+    resulterr = result[1]
+    print(resultout)
+    print(resulterr)
+
+    response.write("Sandbox disk usage: " + resultout + "\r\n")
+
+    return HttpResponse(response)
 
 
 @csrf_exempt  # NOTE: f�r Marcel danach remove;)

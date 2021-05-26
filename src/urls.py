@@ -2,6 +2,8 @@ from django.conf.urls import url, include
 #from django.views.generic.base import RedirectView
 #from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.http import HttpResponse
+
 #from django.urls import reverse
 #import sys
 #import os
@@ -64,6 +66,8 @@ urlpatterns = [
     # external_grade common url: server / lms / function / domain / user / task
 
     url(r'^version$', proforma.views.show_version, name="show_version"),
+    url(r'^info$', proforma.views.show_info, name="show_info"),
+    # url(r'^favicon\.ico$', HttpResponseNotFound('icon not found'), name="icon"),
 
 # Proforma add-on [end]	
 
