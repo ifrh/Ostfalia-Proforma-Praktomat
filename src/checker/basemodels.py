@@ -276,7 +276,6 @@ class CheckerResult(models.Model):
 
     def set_regexp(self, regexp):
         """ Sets the regular expression for evaluating log. """
-        print('SET_REGEXP')
         self.regexp = regexp
 
     def set_passed(self, passed):
@@ -308,7 +307,6 @@ class CheckerResult(models.Model):
 
     def has_regexp(self):
         """ is there a regular expression stored """
-        print('HAS_REGEXP')
         return (len(self.regexp) > 0)
 
 def get_checkerresultartefact_upload_path(instance, filename):
@@ -400,6 +398,32 @@ def check_multiple(solutions, run_secret = False, debug_keep_tmp = False):
 
 
 
+def delete_sandbox(dir):
+    def handle_rmtree_Error(func, path, exc_info):
+        # Check if file access issue
+        if not os.access(path, os.W_OK):
+            # Try to change the permision of file
+            # os.chown(path, 999, 999) # no permissions for that!
+            # call the calling function again
+            # func(path)
+
+            if os.path.isdir(path):
+                result = os.system("sudo -E -u tester rmdir " + path)
+            else:
+                result = os.system("sudo -E -u tester rm " + path)
+            # exitcode = os.waitstatus_to_exitcode(result)
+            if result != 0:
+                logger.error('Cannot delete ' + path)
+                logger.debug('os.system ' + str(result))
+        else:
+            logger.error('Cannot delete ' + path)
+
+    try:
+        logger.debug('delete sandbox '+ dir)
+        shutil.rmtree(dir, onerror=handle_rmtree_Error)
+    except:
+        logger.debug('could not delete sandbox ' + dir)
+        logger.debug("Unexpected error:", sys.exc_info()[0])
 
 
 def run_checks(solution, env, run_all, debug_keep_tmp=True):
@@ -476,11 +500,8 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
             finally:
                 # Delete temporary directory
                 if not(debug_keep_tmp): #  and settings.DEBUG):
-                    try:
-                        logger.debug('delete sandbox '+ env.tmpdir())
-                        shutil.rmtree(env.tmpdir())
-                    except:
-                        pass
+                    delete_sandbox(env.tmpdir())
+
 
     solution.accepted = solution_accepted
     solution.save()
