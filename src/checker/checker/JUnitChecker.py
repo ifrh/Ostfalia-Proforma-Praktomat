@@ -98,7 +98,10 @@ class JUnitChecker(ProFormAChecker):
             # java -jar junit-platform-console-standalone-<version>.jar <Options>
             # does not work!!
             # jar = settings.JAVA_LIBS[self.junit_version]
-            cmd = [settings.JVM_SECURE, "-jar", self.runner(), "-cp", classpath,
+            cmd = [settings.JVM_SECURE, "-jar", self.runner(),
+               "-cp", classpath,
+#               "--module-path", "/usr/share/openjfx/lib", # JFX
+#               "--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web",
                "--include-classname", self.class_name,
                "--details=none",
                "--disable-banner", "--fail-if-no-tests",
@@ -107,8 +110,11 @@ class JUnitChecker(ProFormAChecker):
             # java -cp.:/praktomat/extra/junit-platform-console-standalone-<version>.jar:/praktomat/extra/Junit5RunListener.jar
             # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
             cmd = [# "sh", "-x",
-               settings.JVM_SECURE, "-cp", classpath + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
-               settings.JUNIT5_RUN_LISTENER, self.class_name]
+               settings.JVM_SECURE,
+               "-cp", classpath + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
+                "--module-path", "/usr/share/openjfx/lib", # JFX
+                "--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web",
+                settings.JUNIT5_RUN_LISTENER, self.class_name]
         return cmd, use_run_listener
 
 
@@ -122,7 +128,10 @@ class JUnitChecker(ProFormAChecker):
         else:
             classpath += ":.:" + settings.JUNIT4_RUN_LISTENER_LIB
             runner = settings.JUNIT4_RUN_LISTENER
-        cmd = [settings.JVM_SECURE, "-cp", classpath, runner, self.class_name]
+        cmd = [settings.JVM_SECURE, "-cp", classpath,
+               "--module-path", "/usr/share/openjfx/lib", # JFX
+               "--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web",
+               runner, self.class_name]
         return cmd, use_run_listener
 
     def run(self, env):
