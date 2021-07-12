@@ -25,6 +25,9 @@ from django.http import HttpResponse
 from django.conf import settings
 import os
 
+from tasks.models import Task
+from solutions.models import Solution
+
 from . import api_v2
 from . import api_lon_capa
 from utilities.safeexec import execute_arglist
@@ -61,18 +64,32 @@ def show_info(request):
     sandboxdir = settings.SANDBOX_DIR
     if not os.path.exists(sandboxdir):
         # sandbox folder does not exist
-        response.write("Sandbox folder not found")
-        return HttpResponse(response)
+        response.write("Sandbox folder not found<br>\r\n")
+    else:
+        command = ['du', '-s', '-h']
+        result = execute_arglist(args=command, working_directory=sandboxdir, timeout=60, unsafe=True)
+        resultout = result[0]
+        resulterr = result[1]
+        print(resultout)
+        print(resulterr)
 
-    command = ['du', '-s', '-h']
-    result = execute_arglist(args=command, working_directory=sandboxdir, timeout=60, unsafe=True)
-    resultout = result[0]
-    resulterr = result[1]
-    print(resultout)
-    print(resulterr)
+        response.write("Sandbox disk usage: " + resultout + "<br>\r\n")
 
-    response.write("Sandbox disk usage: " + resultout + "\r\n")
+    # get number of tasks
+    # now = django.utils.timezone.now()
+    counter = 0
+    for e in Task.objects.all():
+        counter = counter + 1
+    response.write("Tasks: " + str(counter) + "<br>\r\n")
 
+    # get number of solutions
+
+    counter = 0
+    for e in Solution.objects.all():
+        counter = counter + 1
+    response.write("Solution: " + str(counter) + "<br>\r\n")
+
+    # prefer Json?
     return HttpResponse(response)
 
 
