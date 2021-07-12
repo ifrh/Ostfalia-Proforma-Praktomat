@@ -58,13 +58,13 @@ class Grader:
         logger.debug("save solution")
 
         DEFINED_USER = "sys_prod"
-        solution = Solution(task=self._proformatask, author=User.objects.get(username=DEFINED_USER))
+        self.solution = Solution(task=self._proformatask, author=User.objects.get(username=DEFINED_USER))
         # save the solution model in the database
-        solution.save()
+        self.solution.save()
 
         for index in range(len(fileDict)):
             # create solution_file
-            solution_file = SolutionFile(solution=solution)
+            solution_file = SolutionFile(solution=self.solution)
 
             #save solution in enviroment and get the path
             filename = list(fileDict.keys())[index]
@@ -81,9 +81,7 @@ class Grader:
             solution_file.save()
 
         if version_control != None:
-            solution.versioncontrol = version_control
-
-        self.solution = solution
+            self.solution.versioncontrol = version_control
 
 
     def grade(self, fileDict, version_control, subtest_results):
@@ -111,6 +109,13 @@ class Grader:
         logger.debug("file_grader_post finished")
 
         return lcxml
+
+    def __del__(self):
+        logger.debug("delete")
+        if self.solution != None:
+            self.solution.delete()
+            self.solution = None
+
 
     def _get_solution_xml(self, file_name, response_template, remove_CopyFileChecker):
         result = self.result
