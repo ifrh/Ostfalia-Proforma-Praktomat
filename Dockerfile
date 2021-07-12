@@ -4,8 +4,8 @@
 # FROM ubuntu:xenial
 # ubuntu 18.04 is very slow so we stay at 16
 #FROM ubuntu:bionic
-# Ubuntu 20.10
-FROM ubuntu:groovy
+# Ubuntu 20.04 LTS
+FROM ubuntu:focal
 
 MAINTAINER Ostfalia
 
@@ -13,6 +13,8 @@ ENV PYTHONUNBUFFERED 1
 ENV PASSWORD=123
 # set locale to German (UTF-8)
 ARG LOCALE=de_DE.UTF-8
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 # change locale to something UTF-8
 RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE}
@@ -30,7 +32,7 @@ ENV LC_ALL ${LOCALE}
 #    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 
-RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev locales wget cron netcat
+RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
 
