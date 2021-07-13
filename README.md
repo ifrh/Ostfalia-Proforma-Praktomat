@@ -6,7 +6,7 @@ It adds the ProFormA interface (https://github.com/ProFormA/proformaxml) which e
 to be used as a grading backend in learning management systems.
 
 The ProFormA format for tasks is 2.0 and 2.0.1 with some limitations.
-The ProFormA format for HTTP requests is 2.0. 
+The ProFormA format for HTTP request and response is 2.0 and 2.1. 
 
 The code is currently only used as a 'docker composition'.
 So the installation manual for a plain Linux server is not up-to-date, 
