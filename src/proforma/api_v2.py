@@ -135,11 +135,9 @@ def grade_api_v2(request,):
         for key, value in root.nsmap.items():
             if key == None:
                 if value == NAMESPACES_V2_0:
-                    print ('V2.0')
                     NAMESPACE = NAMESPACES_V2_0
                     templatefile = 'proforma/response_v2.0.xml'
                 elif value == NAMESPACES_V2_1:
-                    print ('V2.1')
                     NAMESPACE = NAMESPACES_V2_1
                     templatefile = 'proforma/response_v2.1.xml'
                 else:

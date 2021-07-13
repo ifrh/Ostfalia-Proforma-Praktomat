@@ -81,7 +81,6 @@ class JavaBuilder(ClassFileGeneratingBuilder):
         result = dict()
         if ProFormAChecker.retrieve_subtest_results:
             t = get_template('checker/compiler/java_builder_report.xml')
-            print('XML-Namespace: ' + ProFormAChecker.xml_namespace)
             regexp = '(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<msgtype>[a-z]+):\s(?<text>.+)'
             result["format"] = CheckerResult.FEEDBACK_LIST_LOG
             result["log"] = t.render({

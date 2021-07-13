@@ -67,7 +67,7 @@ urlpatterns = [
 
     url(r'^version$', proforma.views.show_version, name="show_version"),
     url(r'^info$', proforma.views.show_info, name="show_info"),
-    # url(r'^favicon\.ico$', HttpResponseNotFound('icon not found'), name="icon"),
+    url(r'^favicon\.ico$', proforma.views.icon, name="icon"),
 
 # Proforma add-on [end]	
 

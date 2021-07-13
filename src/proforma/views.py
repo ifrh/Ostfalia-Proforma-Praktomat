@@ -21,7 +21,7 @@
 # entry points for URIs
 
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.conf import settings
 import os
 
@@ -70,8 +70,8 @@ def show_info(request):
         result = execute_arglist(args=command, working_directory=sandboxdir, timeout=60, unsafe=True)
         resultout = result[0]
         resulterr = result[1]
-        print(resultout)
-        print(resulterr)
+        # print(resultout)
+        # print(resulterr)
 
         response.write("Sandbox disk usage: " + resultout + "<br>\r\n")
 
@@ -92,6 +92,9 @@ def show_info(request):
     # prefer Json?
     return HttpResponse(response)
 
+@csrf_exempt
+def icon(request):
+    return HttpResponseNotFound('icon not found')
 
 @csrf_exempt  # NOTE: f�r Marcel danach remove;)
 def test_post(request, ):
