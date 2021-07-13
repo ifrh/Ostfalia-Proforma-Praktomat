@@ -400,6 +400,8 @@ def check_multiple(solutions, run_secret = False, debug_keep_tmp = False):
 
 def delete_sandbox(dir):
     def handle_rmtree_Error(func, path, exc_info):
+        logger.debug('failed => try deleting ' + path)
+
         # Check if file access issue
         if not os.access(path, os.W_OK):
             # Try to change the permision of file
@@ -408,15 +410,16 @@ def delete_sandbox(dir):
             # func(path)
 
             if os.path.isdir(path):
+                result1 = os.system("sudo -E -u tester rm -rf " + path)
                 result = os.system("sudo -E -u tester rmdir " + path)
             else:
                 result = os.system("sudo -E -u tester rm " + path)
             # exitcode = os.waitstatus_to_exitcode(result)
             if result != 0:
-                logger.error('Cannot delete ' + path)
+                logger.error('Cannot delete file or path ' + path)
                 logger.debug('os.system ' + str(result))
         else:
-            logger.error('Cannot delete ' + path)
+            logger.error('Cannot delete ' + path + ', no access')
 
     try:
         logger.debug('delete sandbox '+ dir)

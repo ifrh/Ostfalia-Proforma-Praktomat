@@ -233,6 +233,8 @@ def _save_file(data, solution_file, filename):
         # logger.debug('PhysicalFile =>  ' + full_filename)
         import shutil
         shutil.move(data.path, full_filename)
+        # remove folder if not empty
+        shutil.rmtree(data.path, ignore_errors = True)
     else:
         raise Exception('unknown tpye: ' + data.__class__.__name__)
 
