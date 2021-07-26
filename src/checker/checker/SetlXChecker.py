@@ -101,7 +101,8 @@ class SetlXChecker(ProFormAChecker):
                                                                            environment_variables=environ,
                                                                            timeout=settings.TEST_TIMEOUT,
                                                                            fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                                           extradirs=[script_dir])
+                                                                           extradirs=[script_dir],
+                                                                        unsafe=True)
 
         # [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
                                                            #  use_default_user_configuration=True,

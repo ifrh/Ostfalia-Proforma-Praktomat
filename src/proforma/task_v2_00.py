@@ -31,7 +31,7 @@ from django.core.files import File
 
 from checker.checker import PythonChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
-    CreateFileChecker
+    CreateFileChecker, MakeChecker
 from checker.compiler import JavaBuilder, CBuilder
 from os.path import dirname
 from . import task
@@ -366,6 +366,25 @@ class Task_2_00:
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
         x.save()
 
+    def _create_c_unit_test(self, xmlTest):
+        # create list with valid namespaces for unit test
+        checker_ns = self._ns.copy() # base: default namespace
+        checker_ns['unit_1.1'] = 'urn:proforma:tests:unittest:v1.1'
+
+        inst = MakeChecker.MakeChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
+
+        # get unittest element
+        unittest = _get_required_xml_element(xmlTest, "p:test-configuration/unit_1.1:unittest",
+                                             checker_ns, 'unittest element for testconfiguration = \'unittest\'')
+
+        # get entrypoint
+        inst.class_name = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'JUnit entrypoint').strip()
+
+        x = Praktomat_Test_2_0(inst, self._ns)
+        x.set_test_base_parameters(xmlTest)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
+        x.save()
+
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
         checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
@@ -448,6 +467,9 @@ class Task_2_00:
         logger.debug('uuid is ' + task_uuid)
         task_title = self._xml_obj.xpath("/p:task/p:title", namespaces=self._ns)[0]
         logger.debug('title is "' + task_title + '"')
+        task_proglang = self._xml_obj.xpath("/p:task/p:proglang", namespaces=self._ns)[0]
+        logger.debug('proglang is "' + task_proglang + '"')
+
 
         # check if task is already in database
         if CACHE_TASKS:
@@ -487,8 +509,14 @@ class Task_2_00:
                     logger.debug('** create_java_compilertest')
                     self._create_java_compilertest(xmlTest)
                 elif testtype == "unittest":
-                    logger.debug('** create_java_unit_test')
-                    self._create_java_unit_test(xmlTest)
+                    if task_proglang == 'java':
+                        logger.debug('** create_java_unit_test')
+                        self._create_java_unit_test(xmlTest)
+                    elif task_proglang == 'c':
+                        logger.debug('** create_c_unit_test')
+                        self._create_c_unit_test(xmlTest)
+                    else:
+                        raise task.TaskXmlException('invalid proglang, supported is java and c')
                 elif testtype == "java-checkstyle":
                     self._create_java_checkstyle_test(xmlTest)
                 elif testtype == "setlx": # and xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):

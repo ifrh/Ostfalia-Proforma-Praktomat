@@ -63,7 +63,9 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
     if unsafe:
         command = []
     elif settings.USEPRAKTOMATTESTER:
-        command = sudo_prefix.copy()
+        # run restrict binary which changes user to tester and limits resources
+        # command = sudo_prefix.copy()
+        command = ["/sbin/restrict"]
     elif settings.USESAFEDOCKER:
         command = ["sudo", "safe-docker"]
         # for safe-docker, we cannot kill it ourselves, due to sudo, so

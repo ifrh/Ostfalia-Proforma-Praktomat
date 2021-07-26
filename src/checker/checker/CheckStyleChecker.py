@@ -53,10 +53,11 @@ class CheckStyleChecker(ProFormAChecker):
         copy_file(self.configuration.path, config_path)
 
         # Run the tests
+        # tests are run unsafe because checkstyle fails when network is missing
         args = [settings.JVM, "-cp", settings.CHECKSTYLE_VER[self.check_version], "-Dbasedir=.",
                 "com.puppycrawl.tools.checkstyle.Main", "-c", "checks.xml"] + \
                [name for (name, content) in env.sources()] # + [" > ", env.tmpdir() + "/output.txt"]
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir())
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir(), unsafe=True)
 
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)

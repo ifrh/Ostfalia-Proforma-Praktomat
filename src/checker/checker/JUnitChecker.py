@@ -183,9 +183,10 @@ class JUnitChecker(ProFormAChecker):
             # JUNIT4
             [cmd, use_run_listener] = self.get_run_command_junit4(java_builder.libs()[1])
 
+        # use Java policy instead of restrict
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
-                            fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir])
+                            fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
 
         # logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))

@@ -19,8 +19,9 @@ services:
     # - "5432:5432"
      
   praktomat:
-    # cap_add:
+    cap_add:
     # - ALL
+    - SYS_ADMIN # for calling unshare in test process
     build:
         context: .
         args:

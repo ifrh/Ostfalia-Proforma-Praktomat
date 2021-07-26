@@ -32,25 +32,25 @@ ENV LC_ALL ${LOCALE}
 #    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 
-RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat
+RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
 
 # Java:
 # install OpenJDK (for Java Compiler checks)
 # install OpenJFK for GUI tests (for Java JFX tasks)
-RUN apt-get update && apt-get install -y default-jdk openjfx
+# install SVN (delete if you do not want to access submissions from SVN repository)
+# install cmake and cunit for testing with cunit
+RUN apt-get update && apt-get install -y default-jdk openjfx subversion cmake libcunit1 libcunit1-dev
 #RUN apt-get update && apt-get install -y openjdk-8-jdk openjfx
  
 
-# SVN (delete if you do not want to access submissions from SVN repository)
-RUN apt-get update && apt-get install -y subversion
 
 # ADD UNIX USERS
 ################
 
 # install sudo
-RUN apt-get update && apt-get -y install sudo
+# RUN apt-get update && apt-get -y install sudo
 
 # create group praktomat
 RUN groupadd -g 999 praktomat
@@ -117,8 +117,13 @@ RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 # install debugging tools
 # RUN apt-get -y install strace less nano
 
-# run entrypoint.sh as user praktomat
+# compile and install restrict.c
+RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
+# RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
+
+# change user
 USER praktomat
+# run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
 
 
