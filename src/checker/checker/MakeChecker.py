@@ -67,7 +67,11 @@ class MakeChecker(ProFormAChecker):
                 return self.handle_command_error(env, output, error, timed_out, oom_ed)
 
         logger.debug('make')
+        # do not output too much information
+        # call make twice in order to get only errors in student code
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
+        # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make', '--quiet'], env.tmpdir())
         if exitcode != 0:
             return self.handle_command_error(env, output, error, timed_out, oom_ed)
 
