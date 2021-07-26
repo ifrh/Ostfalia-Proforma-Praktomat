@@ -47,7 +47,7 @@ class MakeChecker(ProFormAChecker):
         if error != None and len(error) > 0:
             output = output + error
         (output, truncated) = truncated_log(output)
-        result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed)
+        result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
         return result
 
 
@@ -82,7 +82,8 @@ class MakeChecker(ProFormAChecker):
         if error != None and len(error) > 0:
             output = output + error
         (output, truncated) = truncated_log(output)
-        result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed)
+        result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed,
+                       log_format=CheckerResult.TEXT_LOG)
         result.set_passed(not exitcode and not timed_out and not oom_ed and self.output_ok(output) and not truncated)
         return result
 
