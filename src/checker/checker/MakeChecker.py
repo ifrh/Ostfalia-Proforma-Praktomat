@@ -41,10 +41,10 @@ class MakeChecker(ProFormAChecker):
 
     def handle_command_error(self, env, output, error, timed_out, oom_ed):
         logger.error("output: " + output)
-        logger.error("error: " + error)
         result = self.create_result(env)
         result.set_passed(False)
         if error != None and len(error) > 0:
+            logger.error("error: " + error)
             output = output + error
         (output, truncated) = truncated_log(output)
         result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
