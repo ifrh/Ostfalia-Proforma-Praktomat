@@ -21,7 +21,9 @@ The following programming languages and test frameworks are provided with the Pr
 | :---:        |    :----:   |         
 | Java 11     | Compiler,  JUnit 4.12 and 5, Checkstyle 8.23 / 8.29   |
 | Python 3.8   | Doctest        |
+| C     | Make, CMake, CUnit    |
 | SetlX   | Test, Syntax Check        |
+
 
 For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy the `setlx-2.7.x.jar` 
 into the extra folder.
