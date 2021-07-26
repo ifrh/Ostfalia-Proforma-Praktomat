@@ -28,7 +28,7 @@ import traceback
 
 from os.path import dirname
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
 
 from django.views.decorators.csrf import csrf_exempt
@@ -357,8 +357,11 @@ def import_task_internal(filename, task_file):
         if type(task_file) == InMemoryUploadedFile:
             task_xml = task_file.read()  # todo check name
         else:
-            logger.debug('task_file class name is ' + task_file.__class__.__name__)
-            task_xml = task_file  # todo check name
+            if type(task_file) == TemporaryUploadedFile:
+                task_xml = task_file.read()
+            else:
+                task_xml = task_file
+        logger.debug('task_xml classname is ' + task_xml.__class__.__name__)
         md5 = hashlib.md5(task_xml).hexdigest()
 
     logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
