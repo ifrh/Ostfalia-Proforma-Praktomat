@@ -70,20 +70,28 @@ class MakeChecker(ProFormAChecker):
         # do not output too much information
         # call make twice in order to get only errors in student code
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
-        # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make', '--quiet'], env.tmpdir())
         if exitcode != 0:
+            if error != None:
+                # delete output when error text exists because output contains a lot of irrelevant information
+                # for student
+                # logger.error(error)
+                output = error
+                error = ''
+            # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
             return self.handle_command_error(env, output, error, timed_out, oom_ed)
 
+        # run program
         logger.debug('entrypoint ' + self.class_name)
         cmd = [self.class_name]
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
+        [output, error, exitcode, timed_out, oom_ed] = \
+            execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
         logger.debug(output)
-        logger.debug(error)
         logger.debug("exitcode: " + str(exitcode))
 
+        # get result
         result = self.create_result(env)
         if error != None and len(error) > 0:
+            logger.debug(error)
             output = output + error
         (output, truncated) = truncated_log(output)
         result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed,

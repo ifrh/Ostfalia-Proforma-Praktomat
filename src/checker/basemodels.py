@@ -404,7 +404,7 @@ def delete_sandbox(dir):
             # logger.debug('failed => removed in meantime 1: ' + path)
             # racing? nothing to be done
             return
-        logger.debug('failed => try deleting ' + path)
+        # logger.debug('failed => try deleting ' + path)
 
         # Check if file access issue
         if not os.access(path, os.W_OK):
