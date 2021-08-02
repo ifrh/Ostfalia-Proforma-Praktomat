@@ -51,6 +51,24 @@ class MakeChecker(ProFormAChecker):
         return result
 
 
+    def remove_source_files(self, env):
+        logger.debug('remove source files')
+        # remove all files with extension c
+        files_in_directory = os.listdir(env.tmpdir())
+        extensions = ('.c', '.h')
+        for root, dirs, files in os.walk(env.tmpdir()):
+            for file in files:
+                if file.lower().endswith(extensions):
+                    # logger.debug('remove ' + file)
+                    cmd = ['rm', file]
+                    [output, error, exitcode, timed_out, oom_ed] = \
+                        execute_arglist(cmd, env.tmpdir())
+                    # os.remove fails because of missing permissions
+                    #try:
+                    #    os.remove(os.path.join(root, file))
+                    #except:
+                    #    logger.error("Error while deleting file : ", file)
+
     def run(self, env):
         self.copy_files(env)
         # check if there is only one file with extension zip
@@ -80,8 +98,10 @@ class MakeChecker(ProFormAChecker):
             # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
             return self.handle_command_error(env, output, error, timed_out, oom_ed)
 
+        self.remove_source_files(env)
+
         # run program
-        logger.debug('entrypoint ' + self.class_name)
+        logger.debug('run ' + self.class_name)
         cmd = [self.class_name]
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
