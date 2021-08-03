@@ -130,17 +130,29 @@ def execute_arglist(args, working_directory, environment_variables={}, timeout=N
             logger.debug("TIMEOUT")
             timed_out = True
 
-        logger.debug("try and kill process group") # os.killpg()
+        # kill session
         term_cmd = ["pkill", "-TERM", "-s", str(process.pid)]
         kill_cmd = ["pkill", "-KILL", "-s", str(process.pid)]
         if not unsafe and settings.USEPRAKTOMATTESTER:
+            # negative pid means process group
+            # restrict used
+            term_cmd = ["kill", "-TERM", "-" + str(process.pid)]
+            kill_cmd = ["kill", "-KILL", "-" + str(process.pid)]
             term_cmd = sudo_prefix + ["-n"] + term_cmd
             kill_cmd = sudo_prefix + ["-n"] + kill_cmd
+
         subprocess.call(term_cmd)
         if process.poll() == None:
             time.sleep(5)
-            logger.debug("call kill: " + str(kill_cmd))
+            logger.debug("force kill: " + str(kill_cmd))
             subprocess.call(kill_cmd)
+
+            # if not unsafe and settings.USEPRAKTOMATTESTER:
+            #    # restrict used
+            #    group = os.getpgid(process.pid)
+            #    logger.error("try and kill process group " + str(group))
+            #    os.killpg(group, signal.SIGTERM)
+
 
         [output, error] = process.communicate()
         if not timed_out:
