@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
-version = "Version 4.10.0 | 20210803"
+version = "Version 4.10.1 | 20210823"
 
