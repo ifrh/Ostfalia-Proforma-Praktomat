@@ -41,9 +41,16 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 # install OpenJFK for GUI tests (for Java JFX tasks)
 # install SVN (delete if you do not want to access submissions from SVN repository)
 # install cmake and cunit for testing with cunit
-RUN apt-get update && apt-get install -y default-jdk openjfx subversion cmake libcunit1 libcunit1-dev
-#RUN apt-get update && apt-get install -y openjdk-8-jdk openjfx
- 
+
+# RUN apt-get update && apt-get install -y default-jdk openjfx subversion cmake libcunit1 libcunit1-dev
+RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev
+
+# install Java 17 from Bellsoft
+RUN wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
+RUN echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
+RUN sudo apt-get update && apt-get install -y bellsoft-java17
+# Install JavaFX
+RUN apt-get update && apt-get install -y openjfx
 
 
 # ADD UNIX USERS

@@ -134,6 +134,18 @@ class JUnitChecker(ProFormAChecker):
                runner, self.class_name]
         return cmd, use_run_listener
 
+    def remove_depricated_warning(text):
+        warning1 = "WARNING: A command line option has enabled the Security Manager"
+        warning2 = "WARNING: The Security Manager is deprecated and will be removed in a future release"
+
+        if text.startswith(warning1):
+            # print("found 1")
+            text = text[len(warning1) + 1:]
+        if text.startswith(warning2):
+            # print("found 2")
+            text = text[len(warning2) + 1:]
+        return text
+
     def run(self, env):
         self.copy_files(env)
 
@@ -183,11 +195,13 @@ class JUnitChecker(ProFormAChecker):
             # JUNIT4
             [cmd, use_run_listener] = self.get_run_command_junit4(java_builder.libs()[1])
 
-        # use Java policy instead of restrict
+        # use Java security manager instead of restrict application        
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
                             fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
 
+        # Remove depricated warning for Java 17 and security manager
+        output = JUnitChecker.remove_depricated_warning(output)
         # logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))
         logger.debug('JUNIT exitcode:' + str(exitcode))
