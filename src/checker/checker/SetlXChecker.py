@@ -112,15 +112,20 @@ class SetlXChecker(ProFormAChecker):
 
 
         (output, truncated) = truncated_log(output)
+
         # Remove Praktomat-Path-Prefixes from result:
         # output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
         output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
 
+        passed = True
+        if len(output.strip()) == 0:
+            output = "no output"
+            passed = False
+
         if ProFormAChecker.retrieve_subtest_results:
             # plain text output
-            if len(output.strip()) == 0:
-                output = "OK"
-            else:
+            if passed and (RXFAIL.search(output) is not None or exitcode):
+                # add regular expression in case of an error
                 regexp = 'line\ (?<line>[0-9]+)(:(?<column>[0-9]+))?\s(?<text>.+)'
                 result.set_regexp(regexp)
             result.set_log(output, timed_out=timed_out, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
@@ -128,7 +133,7 @@ class SetlXChecker(ProFormAChecker):
             output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
             result.set_log(output, timed_out=timed_out, truncated=truncated)
-        result.set_passed(not exitcode and not timed_out and (RXFAIL.search(output) is None) and not truncated)
+        result.set_passed(passed and not exitcode and not timed_out and (RXFAIL.search(output) is None) and not truncated)
 
         return result
 
