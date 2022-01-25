@@ -43,14 +43,17 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 # install cmake and cunit for testing with cunit
 
 # RUN apt-get update && apt-get install -y default-jdk openjfx subversion cmake libcunit1 libcunit1-dev
+# Install C
 RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev
 
 # install Java 17 from Bellsoft
-RUN wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
-RUN echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
-RUN sudo apt-get update && apt-get install -y bellsoft-java17
-# Install JavaFX
-RUN apt-get update && apt-get install -y openjfx
+# CHANGE 'arch=amd64' to something that fits your architecture
+###RUN wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
+###RUN echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
+###RUN sudo apt-get update && apt-get install -y bellsoft-java17
+
+# Install Java 17 and JavaFX
+RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx
 
 
 # ADD UNIX USERS
@@ -94,10 +97,7 @@ RUN mkdir -p /praktomat/upload
 # COPY media media/
 
 
-# clean packages
-###### RUN apt-get clean
-###### RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
-# && apt-get autoremove -y
+
 
 # create cron job for deleting temporary files (no dots in new filename)
 COPY cron.conf /etc/cron.d/praktomat-cron
@@ -127,6 +127,11 @@ RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 # compile and install restrict.c
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
 # RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
+
+
+# clean packages
+RUN apt-get clean
+RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* && apt-get autoremove -y
 
 # change user
 USER praktomat
