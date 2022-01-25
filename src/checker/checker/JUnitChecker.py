@@ -216,11 +216,15 @@ class JUnitChecker(ProFormAChecker):
             # ERROR: Execution timed out
             logger.error('Execution timeout')
             if use_run_listener:
-                # clean log for timeout with Run Listener
+                # clear log for timeout with Run Listener
+                # because truncating log will result in invalid XML.
                 output = ''
                 truncated = False
+            output = '\Execution timed out... (Check for infinite loop in your code)\r\n' + output
             (output, truncated) = truncated_log(output)
-            result.set_log(output, timed_out=True, truncated=truncated, oom_ed=oom_ed)
+            # Do not set timout flag in order to handle timeout only as failed testcase.
+            # Student shall be motivated to look for error in his or her code and not in testcode.
+            result.set_log(output, timed_out=False, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
             result.set_passed(False)
             return result
 
