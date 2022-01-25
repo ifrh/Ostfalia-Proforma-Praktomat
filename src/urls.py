@@ -101,3 +101,9 @@ if settings.DEBUG:
     urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
+
+
+# handle invalid URI as 404
+urlpatterns += [
+    url(r'^.*/$', proforma.views.error_page, name='error_page')
+]

@@ -96,6 +96,15 @@ def show_info(request):
 def icon(request):
     return HttpResponseNotFound('icon not found')
 
+# @api_view()
+@csrf_exempt
+def error_page(request):
+    logger.error('invalid url: ' + request.get_full_path())
+    response = HttpResponse()
+    response.write('not found')
+    response.status_code = 404
+    return response
+
 @csrf_exempt  # NOTE: f�r Marcel danach remove;)
 def test_post(request, ):
     response = HttpResponse()
