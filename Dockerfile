@@ -35,7 +35,6 @@ ENV LC_ALL ${LOCALE}
 RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
-
 # Java:
 # install OpenJDK (for Java Compiler checks)
 # install OpenJFK for GUI tests (for Java JFX tasks)
@@ -43,8 +42,6 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 # install cmake and cunit for testing with cunit
 
 # RUN apt-get update && apt-get install -y default-jdk openjfx subversion cmake libcunit1 libcunit1-dev
-# Install C
-RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev
 
 # install Java 17 from Bellsoft
 # CHANGE 'arch=amd64' to something that fits your architecture
@@ -54,6 +51,15 @@ RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-de
 
 # Install Java 17 and JavaFX
 RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx
+
+# Install C, cmake, Googletest
+RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev libgtest-dev && \
+   cd /usr/src/gtest && \
+   cmake CMakeLists.txt && \
+   make && \
+   ls && \
+   cp lib/*.a /usr/lib &&
+   ls /usr/lib
 
 
 # ADD UNIX USERS
