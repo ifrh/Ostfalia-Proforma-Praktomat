@@ -200,7 +200,7 @@ class JUnitChecker(ProFormAChecker):
             execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
                             fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
 
-        # Remove depricated warning for Java 17 and security manager
+        # Remove deprecated warning for Java 17 and security manager
         output = JUnitChecker.remove_depricated_warning(output)
         # logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))

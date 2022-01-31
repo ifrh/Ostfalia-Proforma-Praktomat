@@ -31,7 +31,7 @@ from django.core.files import File
 
 from checker.checker import PythonChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
-    CreateFileChecker, MakeChecker
+    CreateFileChecker, MakeChecker, GoogleTestChecker
 from checker.compiler import JavaBuilder, CBuilder
 from os.path import dirname
 from . import task
@@ -378,7 +378,26 @@ class Task_2_00:
                                              checker_ns, 'unittest element for testconfiguration = \'unittest\'')
 
         # get entrypoint
-        inst.class_name = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'JUnit entrypoint').strip()
+        inst.class_name = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'CUnit entrypoint').strip()
+
+        x = Praktomat_Test_2_0(inst, self._ns)
+        x.set_test_base_parameters(xmlTest)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
+        x.save()
+
+    def _create_cpp_unit_test(self, xmlTest):
+        # create list with valid namespaces for unit test
+        checker_ns = self._ns.copy() # base: default namespace
+        checker_ns['unit_1.1'] = 'urn:proforma:tests:unittest:v1.1'
+
+        inst = GoogleTestChecker.GoogleTestChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
+
+        # get unittest element
+        unittest = _get_required_xml_element(xmlTest, "p:test-configuration/unit_1.1:unittest",
+                                             checker_ns, 'unittest element for testconfiguration = \'unittest\'')
+
+        # get entrypoint, i.e. run command
+        inst.exec_command = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'Googletest entrypoint').strip()
 
         x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
@@ -475,6 +494,7 @@ class Task_2_00:
         if CACHE_TASKS:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task != None:
+                logger.debug('use cached task')
                 return old_task
 
         # no need to actually validate xml against xsd
@@ -515,6 +535,9 @@ class Task_2_00:
                     elif task_proglang == 'c':
                         logger.debug('** create_c_unit_test')
                         self._create_c_unit_test(xmlTest)
+                    elif task_proglang == 'cpp':
+                        logger.debug('** create_cpp_unit_test')
+                        self._create_cpp_unit_test(xmlTest)
                     else:
                         raise task.TaskXmlException('invalid proglang, supported is java and c')
                 elif testtype == "java-checkstyle":

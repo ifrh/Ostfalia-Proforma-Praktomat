@@ -1,0 +1,11 @@
+{% if filenames %}
+<div>{{ filenames|length }} file(s) found for compilation: {% for file in filenames%} {{ file }} &nbsp; {% endfor %}</div>
+{% if output %}
+<div>Compiler output:</div>
+<pre>{{output|safe}}</pre>
+{% else %}
+<div>The compiler produced no messages.</div>
+{% endif %}
+{% else %}
+<div>No input files found.</div>
+{% endif %}

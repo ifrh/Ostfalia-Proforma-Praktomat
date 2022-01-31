@@ -473,17 +473,18 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
 
                 if can_run_checker:
                     # Invoke Checker
-                    if settings.DEBUG or 'test' in sys.argv:
-                        result = checker.run(env)
-                    else:
-                        try:
-                            result = checker.run(env)
-                        except Exception as inst:
-                            logger.exception(inst)
-                            result = checker.create_result(env)
-                            result.set_log("The Checker caused an unexpected internal error: " + str(inst))
-                            result.set_passed(False)
-                            #TODO: Email Admins
+                    # if settings.DEBUG or 'test' in sys.argv:
+                    result = checker.run(env)
+                    #else:
+                    #    try:
+                    #        result = checker.run(env)
+                    #    except Exception as inst:
+                    #        logger.exception(inst)
+                    #        result = checker.create_result(env)
+                    #        result.set_log("The Checker caused an unexpected internal error: " + str(inst))
+                    #        result.set_passed(False)
+                    #        logger.debug('Exception caught and result set to failed')
+                    #        #TODO: Email Admins
                 else:
                     # make non passed result
                     # this as well as the dependency check should propably go into checker class
