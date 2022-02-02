@@ -10,7 +10,7 @@ from utilities.file_operations import *
 from django.template.loader import get_template
 from functools import reduce
 from django.utils.html import escape
-
+import signal
 
 
 import os
@@ -88,8 +88,8 @@ class ProFormAChecker(Checker):
     def remove_sandbox_paths(self, output, env):
         return output.replace(env.tmpdir() + "/", "")
 
-    # default handling of exit code error
-    def handle_command_error(self, env, output, error, timed_out, oom_ed):
+    # default handling of compilation code error
+    def handle_compile_error(self, env, output, error, timed_out, oom_ed):
         logger.error("output: " + output)
         output = self.remove_sandbox_paths(output, env)
         result = self.create_result(env)
@@ -124,7 +124,7 @@ class ProFormAChecker(Checker):
             logger.debug('cmakefile found, execute cmake')
             [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], env.tmpdir())
             if exitcode != 0:
-                return self.handle_command_error(env, output, error, timed_out, oom_ed)
+                return self.handle_compile_error(env, output, error, timed_out, oom_ed)
 
         # run make
         logger.debug('make')
@@ -139,9 +139,43 @@ class ProFormAChecker(Checker):
                 # logger.error(error)
                 output = error
                 error = ''
-            return self.handle_command_error(env, output, error, timed_out, oom_ed)
+            return self.handle_compile_error(env, output, error, timed_out, oom_ed)
             
         return True
 
-    
+    def run_command(self, cmd, env):
+        [output, error, exitcode, timed_out, oom_ed] = \
+            execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
+        logger.debug(output)
+        logger.debug("exitcode: " + str(exitcode))
+        if error != None and len(error) > 0:
+            logger.debug("error: " + error)
+            output = output + error
+
+        result = self.create_result(env)
+        if timed_out or oom_ed:
+            # ERROR: Execution timed out
+            logger.error('Execution timeout')
+            # clear log for timeout
+            # because truncating log will result in invalid XML.
+            truncated = False
+            output = '\Execution timed out... (Check for infinite loop in your code)\r\n' + output
+            (output, truncated) = truncated_log(output)
+            # Do not set timout flag in order to handle timeout only as failed testcase.
+            # Student shall be motivated to look for error in his or her code and not in testcode.
+            result.set_log(output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
+            result.set_passed(False)
+            return result, None
+
+        if exitcode != 0:
+            (output, truncated) = truncated_log(output)
+            if exitcode < 0:
+                # append signal message
+                output = output + '\r\nSignal:\r\n' + signal.strsignal(- exitcode)
+            result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
+            result.set_passed(False)
+            return result, None
+
+        result.set_passed(True)
+        return result, output
     

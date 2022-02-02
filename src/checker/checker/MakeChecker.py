@@ -44,29 +44,32 @@ class MakeChecker(ProFormAChecker):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
 
+        # compile
         build_result = self.compile_make(env)
         if build_result != True:
             return build_result
 
+        # remove source code files
         extensions = ('.c', '.h')
         self.remove_source_files(env, extensions)
 
-        # run program
+        # run test
         logger.debug('run ' + self.class_name)
         cmd = [self.class_name]
-        [output, error, exitcode, timed_out, oom_ed] = \
-            execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
-        logger.debug(output)
-        logger.debug("exitcode: " + str(exitcode))
+        #[output, error, exitcode, timed_out, oom_ed] = \
+        #    execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
+        #logger.debug(output)
+        #logger.debug("exitcode: " + str(exitcode))
 
         # get result
-        result = self.create_result(env)
-        if error != None and len(error) > 0:
-            logger.debug(error)
-            output = output + error
+        (result, output) = self.run_command(cmd, env)
+        if not result.passed:
+            # error
+            return result
+					
         (output, truncated) = truncated_log(output)
-        result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed,
+        result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
                        log_format=CheckerResult.TEXT_LOG)
-        result.set_passed(not exitcode and not timed_out and not oom_ed and self.output_ok(output) and not truncated)
+        result.set_passed(self.output_ok(output) and not truncated)
         return result
 

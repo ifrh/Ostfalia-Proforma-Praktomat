@@ -10,7 +10,6 @@ from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
 
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -93,43 +92,27 @@ class GoogleTestChecker(ProFormAChecker):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
 
+        # compile
         build_result = self.compile_make(env)
         if build_result != True:
             return build_result
 
+        # remove source code files
         extensions = ('.c', '.h', '.cpp', '.cxx')
         self.remove_source_files(env, extensions)
-        logger.debug('exec_command ' + self.exec_command)
 
         # run test
         logger.debug('run ' + self.exec_command)
         cmd = [self.exec_command, '--gtest_output=xml']
-        [output, error, exitcode, timed_out, oom_ed] = \
-            execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
-        # logger.debug(output)
-        logger.debug("exitcode: " + str(exitcode))
-        #if error != None:
-        #    logger.debug("error: " + error)
+        # get result
+        (result, output) = self.run_command(cmd, env)
+        if not result.passed:
+            # error
+            return result
 
-        result = self.create_result(env)       
-        if timed_out or oom_ed:
-            # ERROR: Execution timed out
-            logger.error('Execution timeout')
-            # clear log for timeout
-            # because truncating log will result in invalid XML.
-            truncated = False
-            output = '\Execution timed out... (Check for infinite loop in your code)\r\n' + output
-            (output, truncated) = truncated_log(output)
-            # Do not set timout flag in order to handle timeout only as failed testcase.
-            # Student shall be motivated to look for error in his or her code and not in testcode.
-            result.set_log(output, timed_out=False, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
-            result.set_passed(False)
-            return result        
-        
         # XSLT
         xmloutput = self.convert_xml(env.tmpdir() + "/test_detail.xml")
-        
-        result.set_log(xmloutput, timed_out=timed_out, truncated=False, oom_ed=oom_ed, log_format=CheckerResult.PROFORMA_SUBTESTS)
-        result.set_passed(not exitcode)
+
+        result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False, log_format=CheckerResult.PROFORMA_SUBTESTS)
         return result
         
