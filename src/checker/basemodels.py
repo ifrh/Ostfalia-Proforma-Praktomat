@@ -505,7 +505,8 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
 
                 if result.passed:
                     passed_checkers.add(checker.__class__)
-
+            except Exception as inst: # do we need that?
+                raise inst
             finally:
                 # Delete temporary directory
                 if not(debug_keep_tmp): #  and settings.DEBUG):

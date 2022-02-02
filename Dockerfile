@@ -57,10 +57,7 @@ RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-de
    cd /usr/src/gtest && \
    cmake CMakeLists.txt && \
    make && \
-   ls && \
-   cp lib/*.a /usr/lib &&
-   ls /usr/lib
-
+   cp lib/*.a /usr/lib
 
 # ADD UNIX USERS
 ################

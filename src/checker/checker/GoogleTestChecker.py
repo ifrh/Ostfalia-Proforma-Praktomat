@@ -108,6 +108,8 @@ class GoogleTestChecker(ProFormAChecker):
             execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
         # logger.debug(output)
         logger.debug("exitcode: " + str(exitcode))
+        #if error != None:
+        #    logger.debug("error: " + error)
 
         result = self.create_result(env)       
         if timed_out or oom_ed:

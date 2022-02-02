@@ -9,6 +9,7 @@ from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from django.template.loader import get_template
 from functools import reduce
+from django.utils.html import escape
 
 
 
@@ -97,6 +98,7 @@ class ProFormAChecker(Checker):
             logger.error("error: " + error)
             output = output + error
         (output, truncated) = truncated_log(output)
+        output = escape(output)
         
         filenames = [name for name in self.get_file_names(env)]
         submissionfiles = set(filenames).intersection([solutionfile.path() for solutionfile in env.solution().solutionfile_set.all()])
@@ -126,17 +128,17 @@ class ProFormAChecker(Checker):
 
         # run make
         logger.debug('make')
-        # do not output too much information
-        # call make twice in order to get only errors in student code
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
         if exitcode != 0:
+            # suppress as much information as needed
+            # call make twice in order to get only errors in student code
+            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
             if error != None:
                 # delete output when error text exists because output contains a lot of irrelevant information
                 # for student
                 # logger.error(error)
                 output = error
                 error = ''
-            # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
             return self.handle_command_error(env, output, error, timed_out, oom_ed)
             
         return True
