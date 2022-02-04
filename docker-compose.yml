@@ -25,7 +25,8 @@ services:
     build:
         context: .
         args:
-            LOCALE: de_DE.UTF-8
+          LOCALE: de_DE.UTF-8
+          PASSWORD: ${PRAKTOMATPASSWORD}
             # LOCALE: en_US.UTF-8
     container_name: praktomat3
     # restart container if it exits:
@@ -33,7 +34,6 @@ services:
     environment:
       SUPERUSER: praktomat
       EMAIL: ${PRAKTOMATMAIL}
-      PASSWORD: ${PRAKTOMATPASSWORD}
       # todo: check what is needed?
       DB_NAME: pmdb
       DB_USER: pmuser
