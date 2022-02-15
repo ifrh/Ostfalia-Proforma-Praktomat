@@ -153,6 +153,15 @@ class ProFormAChecker(Checker):
                     # remove zip file
                     os.unlink(env.tmpdir() + '/' + file.filename)
 
+        # create /tmp folder
+        os.makedirs(env.tmpdir() + '/tmp', 0o777, True)
+        os.chmod(env.tmpdir() + '/tmp',
+                 stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC |
+                 stat.S_IROTH | stat.S_IWOTH  | stat.S_IXOTH |
+                 stat.S_IRGRP | stat.S_IWGRP  | stat.S_IXGRP
+                 )
+
+
     def compile_make(self, env):
         # compile CMakeLists.txt
         if os.path.exists(env.tmpdir() + '/CMakeLists.txt'):

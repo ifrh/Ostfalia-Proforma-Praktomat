@@ -73,7 +73,9 @@ class PythonChecker(ProFormAChecker):
         This runs the check in the environment ENV, returning a CheckerResult. """
 
         # Setup
-        self.copy_files(env)
+        # copy files and unzip zip file if submission consists of just a zip file.
+        self.prepare_run(env)
+
         test_dir = env.tmpdir()
         replace = [(u'PROGRAM', env.program())] if env.program() else []
         copy_file(self.doctest.path, os.path.join(test_dir,
