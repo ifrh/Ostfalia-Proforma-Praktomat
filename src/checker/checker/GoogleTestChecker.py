@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os.path
 import re
 from lxml import etree
 
@@ -110,13 +110,27 @@ class GoogleTestChecker(ProFormAChecker):
         cmd = [self.exec_command, '--gtest_output=xml']
         # get result
         (result, output) = self.run_command(cmd, env)
-        if not result.passed:
+#        if not result.passed:
             # error
-            return result
+#            return result
 
         # XSLT
-        xmloutput = self.convert_xml(env.tmpdir() + "/test_detail.xml")
+        if os.path.exists(env.tmpdir() + "/test_detail.xml"):
+            try:
+                xmloutput = self.convert_xml(env.tmpdir() + "/test_detail.xml")
+                result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
+                               log_format=CheckerResult.PROFORMA_SUBTESTS)
+                return result
+            except:
+                # fallback
+                logger.error('could not convert to XML format')
+                # (output, truncated) = truncated_log(output)
+                # result.set_log(output, timed_out=False, truncated=False, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
+                raise 'Inconclusive test result (1)'
+        else:
+            if result.passed:
+                # Test is passed but there is no XML file.
+                # exit(0) in code ??
+                raise 'Inconclusive test result (2)'
+            return result
 
-        result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False, log_format=CheckerResult.PROFORMA_SUBTESTS)
-        return result
-        
