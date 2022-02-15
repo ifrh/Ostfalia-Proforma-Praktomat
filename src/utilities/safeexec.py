@@ -47,7 +47,8 @@ def escape_xml_invalid_chars(xml_text):
     return _illegal_xml_chars_re.sub('[??]', xml_text)
 #################
 
-def execute_arglist(args, working_directory, environment_variables={}, timeout=None, maxmem=None, fileseeklimit=None, extradirs=[], unsafe=False, error_to_output=True):
+def execute_arglist(args, working_directory, environment_variables={},
+                    timeout=None, maxmem=None, fileseeklimit=None, extradirs=[], unsafe=False, error_to_output=True):
     """ Wrapper to execute Commands with the praktomat testuser. Excpects Command as list of arguments, the first being the execeutable to run. """
     assert isinstance(args, list)
 

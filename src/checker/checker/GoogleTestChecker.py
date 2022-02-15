@@ -98,8 +98,12 @@ class GoogleTestChecker(ProFormAChecker):
             return build_result
 
         # remove source code files
-        extensions = ('.c', '.h', '.cpp', '.cxx')
+        extensions = ('.c', '.C', '.hxx', '.hpp', '.h', '.cpp', '.cxx', '.o', '.a',
+                      'CMakeCache.txt', 'Makefile', 'makefile', 'CMakeLists.txt', 'cmake_install.cmake')
         self.remove_source_files(env, extensions)
+
+        # copy shared objects
+        self.copy_shared_objects(env)
 
         # run test
         logger.debug('run ' + self.exec_command)

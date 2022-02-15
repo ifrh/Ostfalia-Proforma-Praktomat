@@ -50,8 +50,12 @@ class MakeChecker(ProFormAChecker):
             return build_result
 
         # remove source code files
-        extensions = ('.c', '.h')
+        extensions = ('.c', '.h', '.a', '.o', 'CMakeCache.txt', 'Makefile', 'makefile', 'CMakeLists.txt',
+                      'cmake_install.cmake')
         self.remove_source_files(env, extensions)
+
+        # copy shared objects
+        self.copy_shared_objects(env)
 
         # run test
         logger.debug('run ' + self.class_name)

@@ -11,9 +11,12 @@ from django.template.loader import get_template
 from functools import reduce
 from django.utils.html import escape
 import signal
-
-
 import os
+import shutil
+import stat
+from lddcollect.vendor.lddtree import lddtree
+
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -58,7 +61,7 @@ class ProFormAChecker(Checker):
                     # logger.debug('remove ' + file)
                     cmd = ['rm', file]
                     [output, error, exitcode, timed_out, oom_ed] = \
-                        execute_arglist(cmd, env.tmpdir())
+                        execute_arglist(cmd, env.tmpdir(), unsafe=True)
                     # os.remove fails because of missing permissions
                     #try:
                     #    os.remove(os.path.join(root, file))
@@ -108,7 +111,37 @@ class ProFormAChecker(Checker):
         # result.set_log(log["log"], log_format=log["format"])
 
         return result                    
-        
+
+    # copy shared libaries for all executables in env.tmpdir
+    def copy_shared_objects(self, env):
+        executable = stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH
+        filelist = []
+        for dirpath, dirs, files in os.walk(env.tmpdir()):
+            for file in files:
+                file = os.path.join(dirpath, file)
+                st = os.stat(file)
+                mode = st.st_mode
+                if mode & executable:
+                    # executable found
+                    logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
+                    filelist.append(file)
+
+        for file in filelist:
+            logger.debug('process executable ' + file)
+            # look for shared libraries
+            try:
+                ltree = lddtree(file)
+                # ltree = lddtree(env.tmpdir() + '/' + file)
+                # print(ltree)
+                for key, value in ltree['libs'].items():
+                    logger.debug('=> ' + value['path'])
+                    os.makedirs(os.path.dirname(env.tmpdir() + '/' + value['path']), 0o755, True)
+                    shutil.copyfile(value['path'], env.tmpdir() + '/' + value['path'])
+                    os.chmod(env.tmpdir() + '/' + value['path'], 0o755)
+            except Exception as inst:
+                logger.error('could not find shared objects ')
+                print(inst)
+
     def prepare_run(self, env):
         self.copy_files(env)
         # check if there is only one file with extension zip
@@ -117,22 +150,24 @@ class ProFormAChecker(Checker):
                 if file.filename.lower().endswith('.zip'):
                     # unpack zip file
                     unpack_zipfile_to(env.tmpdir() + '/' + file.filename, env.tmpdir())
+                    # remove zip file
+                    os.unlink(env.tmpdir() + '/' + file.filename)
 
     def compile_make(self, env):
         # compile CMakeLists.txt
         if os.path.exists(env.tmpdir() + '/CMakeLists.txt'):
             logger.debug('cmakefile found, execute cmake')
-            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], env.tmpdir())
+            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], env.tmpdir(), unsafe=True)
             if exitcode != 0:
                 return self.handle_compile_error(env, output, error, timed_out, oom_ed)
 
         # run make
         logger.debug('make')
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
         if exitcode != 0:
             # suppress as much information as needed
             # call make twice in order to get only errors in student code
-            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir())
+            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
             if error != None:
                 # delete output when error text exists because output contains a lot of irrelevant information
                 # for student

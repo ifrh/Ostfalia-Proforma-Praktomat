@@ -9,6 +9,8 @@
 #include <sched.h>
 #include <string.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 int main(int argc, char **argv) {
@@ -41,7 +43,7 @@ int main(int argc, char **argv) {
     pid_t pid = getpid();
     if (sid != pid) {
         if (setsid() < 0) {
-            perror("setsid)");
+            perror("setsid");
             return 1;
         }
     }
@@ -93,6 +95,14 @@ int main(int argc, char **argv) {
         perror("getpwnam(tester)");
         return 1;
     }
+
+
+	// change root directory
+    if (chroot(".") < 0) {
+        perror("chroot");
+        return 1;
+    }  	
+	
     // become tester
     if (setgid(entry->pw_gid) < 0) {
         perror("setgid");

@@ -8,6 +8,11 @@ from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from django.utils.html import escape
 from checker.checker.ProFormAChecker import ProFormAChecker
+import os
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 RXFAIL = re.compile(
     r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|"
@@ -71,11 +76,24 @@ class PythonChecker(ProFormAChecker):
         self.copy_files(env)
         test_dir = env.tmpdir()
         replace = [(u'PROGRAM', env.program())] if env.program() else []
-        copy_file(self.doctest.path, os.path.join(test_dir, os.path.basename(self.doctest.path)))
+        copy_file(self.doctest.path, os.path.join(test_dir,
+                        os.path.basename(self.doctest.path)))
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
+        # copy python interpreter with all its shared libraries into sandbox
+        # since it is not available because of chroot in restrict
+
+        # todo: make properly
+        copy_file('/usr/bin/python3', test_dir + '/python3')
+        self.copy_shared_objects(env)
+
+        # todo: make properly
+        # python3 instead of 3.8 and prepare outside checker
+        createpathonlib = "(cd / && tar -cf - usr/lib/python3.8) | (cd " + test_dir + " && tar -xf -)"
+        os.system(createpathonlib)
+
 
         # Run the tests -- execute dumped shell script 'script.sh'
-        cmd = ["python3", os.path.basename(self.doctest.name), "-v"]
+        cmd = ["./python3", os.path.basename(self.doctest.name), "-v"]
         environ = dict()
         environ['USER'] = env.user().get_full_name()
         environ['HOME'] = test_dir
@@ -95,8 +113,23 @@ class PythonChecker(ProFormAChecker):
                                                                # use_default_user_configuration=True,
                                                                timeout=settings.TEST_TIMEOUT,
                                                                fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                               extradirs=[script_dir])
+                                                               # extradirs=[script_dir]
+                                                                       )
 
+
+        # cleanup sandbox
+        # todo: make properly shutil...
+        try:
+            os.system('rm -rf ' + test_dir + '/lib')
+            os.system('rm -rf ' + test_dir + '/lib64')
+            os.system('rm -rf ' + test_dir + '/usr/lib')
+            os.system('rm -rf ' + test_dir + '/__pycache__')
+            os.system('rm ' + test_dir + '/python3')
+        except:
+            logger.error('error while cleaning up python sandbox')
+
+        logger.debug(output)
+        logger.debug(error)
         result = self.create_result(env)
         (output, truncated) = truncated_log(output)
 
