@@ -120,6 +120,7 @@ class GoogleTestChecker(ProFormAChecker):
                 xmloutput = self.convert_xml(env.tmpdir() + "/test_detail.xml")
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
+                result.set_extralog(output)
                 return result
             except:
                 # fallback

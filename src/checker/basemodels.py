@@ -206,6 +206,9 @@ class CheckerResult(models.Model):
     runtime = models.IntegerField(default=0, help_text=_('Runtime in milliseconds'))
     internal_error = models.BooleanField(default=False,  help_text=_('Indicates whether an error occured during test exceution'))
 
+    has_extra_log = models.BooleanField(default=False, help_text = _('Is there extra log output for feedback (Proforma)'))
+    extra_log = models.TextField(default='', help_text=_('Extra log for feedback'))
+
 
     # Proforma new: for handling subtest results in ProFormA
     NORMAL_LOG = '0' # Original (old) log
@@ -273,6 +276,11 @@ class CheckerResult(models.Model):
         #logger.debug('logformat: ' + log_format)
         #logger.debug('log: ' + log)
         self.log = log
+
+    def set_extralog(self, log):
+        """ Sets the extra log"""
+        self.extra_log = log
+        self.has_extra_log = True
 
     def set_regexp(self, regexp):
         """ Sets the regular expression for evaluating log. """

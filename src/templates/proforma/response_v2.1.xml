@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<response xmlns="{{ namespace }}" xmlns:praktomat="urn:proforma:praktomat:v2.1"
+<response xmlns="{{ namespace }}" xmlns:praktomat="urn:proforma:praktomat:v2.2"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" {% if solution.lang %}lang="{{solution.lang }} }}"{% endif %}>
     {% if solution.seperate %}<separate-test-feedback>
         <submission-feedback-list>
@@ -74,6 +74,14 @@
         <grader-engine name="{{ grader.name }}" version="{{ grader.version }}"/>
         <praktomat:response-meta-data>
 {% if solution.versioncontrol %}            <praktomat:version-control-system name="{{solution.versioncontrol.system}}" submission-uri="{{solution.versioncontrol.uri}}" submission-revision="{{solution.versioncontrol.revision}}"/>{% endif %}
+            <praktomat:logs>{% for testResult in testResultList %}{% if testResult.has_extra_log  %}
+                <praktomat:testlog id="{{ testResult.checker.proforma_id }}">
+                    <praktomat:log>
+                        <praktomat:content format="plaintext">{{ testResult.extra_log }}
+                        </praktomat:content>
+                    </praktomat:log>
+                </praktomat:testlog>{% endif %}{% endfor %}
+            </praktomat:logs>
         </praktomat:response-meta-data>
     </response-meta-data>
 </response>
