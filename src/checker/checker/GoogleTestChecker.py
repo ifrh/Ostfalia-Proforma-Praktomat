@@ -127,11 +127,11 @@ class GoogleTestChecker(ProFormAChecker):
                 logger.error('could not convert to XML format')
                 # (output, truncated) = truncated_log(output)
                 # result.set_log(output, timed_out=False, truncated=False, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
-                raise 'Inconclusive test result (1)'
+                raise Exception('Inconclusive test result (1)')
         else:
             if result.passed:
                 # Test is passed but there is no XML file.
                 # exit(0) in code ??
-                raise 'Inconclusive test result (2)'
+                raise Exception('Inconclusive test result (2)')
             return result
 

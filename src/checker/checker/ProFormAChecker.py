@@ -190,7 +190,7 @@ class ProFormAChecker(Checker):
     def run_command(self, cmd, env):
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
-        logger.debug(output)
+        logger.debug("output: " + output)
         logger.debug("exitcode: " + str(exitcode))
         if error != None and len(error) > 0:
             logger.debug("error: " + error)
@@ -209,7 +209,7 @@ class ProFormAChecker(Checker):
             # Student shall be motivated to look for error in his or her code and not in testcode.
             result.set_log(output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
             result.set_passed(False)
-            return result, None
+            return result, output
 
         if exitcode != 0:
             (output, truncated) = truncated_log(output)
@@ -218,7 +218,7 @@ class ProFormAChecker(Checker):
                 output = output + '\r\nSignal:\r\n' + signal.strsignal(- exitcode)
             result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
             result.set_passed(False)
-            return result, None
+            return result, output
 
         result.set_passed(True)
         return result, output
