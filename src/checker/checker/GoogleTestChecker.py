@@ -148,10 +148,9 @@ class GoogleTestChecker(ProFormAChecker):
             if result.passed:
                 # Test is passed but there is no XML file.
                 # (exit in submission?)
-                result = self.create_result(env)
                 result.set_passed(False)
                 result.set_log("Inconclusive test result", log_format=CheckerResult.TEXT_LOG)
                 return result
-#                raise Exception('Inconclusive test result (2)')
+                # raise Exception('Inconclusive test result (2)')
             return result
 
