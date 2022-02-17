@@ -132,7 +132,8 @@ class GoogleTestChecker(ProFormAChecker):
 #            return result
 
         # XSLT
-        if os.path.exists(env.tmpdir() + "/test_detail.xml"):
+        if os.path.exists(env.tmpdir() + "/test_detail.xml") and \
+                os.path.isfile(env.tmpdir() + "/test_detail.xml"):
             try:
                 xmloutput = self.convert_xml(env.tmpdir() + "/test_detail.xml")
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
