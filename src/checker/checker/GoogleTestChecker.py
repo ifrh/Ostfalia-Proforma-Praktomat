@@ -88,9 +88,26 @@ class GoogleTestChecker(ProFormAChecker):
         result_tree = transform(doc)
         return str(result_tree)
 
+    def submission_ok(self, env, RXSECURE):
+        """ Check submission for invalid keywords """
+        for (name, content) in env.sources():
+            logger.debug('check ' + name)
+            if RXSECURE.search(content):
+                logger.error('invalid keyword found')
+                return False
+        return True
+
     def run(self, env):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
+
+        # TODO
+        # RXSECURE = re.compile(r"(exit|test_detail\.xml)", re.MULTILINE)
+        # if not self.submission_ok(env, RXSECURE):
+        #    result = self.create_result(env)
+        #    result.set_passed(False)
+        #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
+        #    return result
 
         # compile
         build_result = self.compile_make(env)
@@ -123,15 +140,18 @@ class GoogleTestChecker(ProFormAChecker):
                 result.set_extralog(output)
                 return result
             except:
-                # fallback
-                logger.error('could not convert to XML format')
-                # (output, truncated) = truncated_log(output)
-                # result.set_log(output, timed_out=False, truncated=False, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
-                raise Exception('Inconclusive test result (1)')
+                # fallback: use default output
+                return result
+                # logger.error('could not convert to XML format')
+                # raise Exception('Inconclusive test result (1)')
         else:
             if result.passed:
                 # Test is passed but there is no XML file.
-                # exit(0) in code ??
-                raise Exception('Inconclusive test result (2)')
+                # (exit in submission?)
+                result = self.create_result(env)
+                result.set_passed(False)
+                result.set_log("Inconclusive test result", log_format=CheckerResult.TEXT_LOG)
+                return result
+#                raise Exception('Inconclusive test result (2)')
             return result
 
