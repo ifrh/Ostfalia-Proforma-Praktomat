@@ -29,7 +29,7 @@ import xmlschema
 
 from django.core.files import File
 
-from checker.checker import PythonChecker, SetlXChecker
+from checker.checker import PythonChecker, PythonUnittestChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
     CreateFileChecker, MakeChecker, GoogleTestChecker
 from checker.compiler import JavaBuilder, CBuilder
@@ -404,6 +404,25 @@ class Task_2_00:
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
         x.save()
 
+    def _create_python_unit_test(self, xmlTest):
+        # create list with valid namespaces for unit test
+        checker_ns = self._ns.copy() # base: default namespace
+        checker_ns['unit_1.1'] = 'urn:proforma:tests:unittest:v1.1'
+
+        inst = PythonUnittestChecker.PythonUnittestChecker.objects.create(task=self._praktomat_task.object, order=self._val_order)
+
+        # get unittest element
+        # unittest = _get_required_xml_element(xmlTest, "p:test-configuration/unit_1.1:unittest",
+        #                                     checker_ns, 'unittest element for testconfiguration = \'unittest\'')
+
+        # get entrypoint, i.e. run command
+        # inst.exec_command = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'Googletest entrypoint').strip()
+
+        x = Praktomat_Test_2_0(inst, self._ns)
+        x.set_test_base_parameters(xmlTest)
+        self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
+        x.save()
+
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
         checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
@@ -538,6 +557,9 @@ class Task_2_00:
                     elif task_proglang == 'cpp':
                         logger.debug('** create_cpp_unit_test')
                         self._create_cpp_unit_test(xmlTest)
+                    elif task_proglang == 'python':
+                        logger.debug('** create_python_unit_test')
+                        self._create_python_unit_test(xmlTest)
                     else:
                         raise task.TaskXmlException('invalid proglang, supported is java and c')
                 elif testtype == "java-checkstyle":
