@@ -141,18 +141,24 @@ with open('unittest_results.xml', 'wb') as output:
         #extensions = ('.py')
         #self.remove_source_files(env, extensions)
 
+        # get python version
+        path = os.readlink('/usr/bin/python3')
+        logger.debug('python is ' + path) # expect python3.x
+
         # copy python interpreter into sandbox
-        copy_file('/usr/bin/python3', test_dir + '/python3')
-        self.copy_shared_objects(env)
-        # python3 instead of 3.8 and prepare outside checker
-        createpathonlib = "(cd / && tar -cf - usr/lib/python3.8) | (cd " + test_dir + " && tar -xf -)"
+        copy_file('/usr/bin/' + path, test_dir + '/' + path)
+        # copy python libs
+        createpathonlib = "(cd / && tar -chf - usr/lib/" + path + ") | (cd " + test_dir + " && tar -xf -)"
         os.system(createpathonlib)
+        # copy module xmlrunner (avoid pip)
         createpathonlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
-            "&& tar -cf - usr/local/lib/python3.8/dist-packages/xmlrunner) | " + \
+            "&& tar -chf - usr/local/lib/" + path + "/dist-packages/xmlrunner) | " + \
             "(cd " + test_dir + " && tar -xf -)"
         os.system(createpathonlib)
+        # copy shared objects needed
+        self.copy_shared_objects(env)
 
-        cmd = ['./python3', 'run_unit_test.py']
+        cmd = ['./' + path, 'run_unit_test.py']
         logger.debug('run ' + str(cmd))
         # get result
         (result, output) = self.run_command(cmd, env)
@@ -161,18 +167,6 @@ with open('unittest_results.xml', 'wb') as output:
         if os.path.exists(test_dir + "/unittest_results.xml") and \
                 os.path.isfile(test_dir + "/unittest_results.xml"):
             try:
-                # read output into string
-                #with open(test_dir + "/unittest_results.xml", 'rb') as file:
-                #    data = file.read()
-                #    print(str(data))
-#                    # transform output to slightly modified file
-#                    with open(test_dir + "/unittest_results_transform.xml", 'wb') as report:
-#                        print('data: ' + str(data))
-#                        output = transform(data)
-#                        print('output: ' + str(output))
-#                        report.write(output)
-                # transform output to Proforma format
-#                xmloutput = self.convert_xml(test_dir + "/unittest_results_transform.xml")
                 xmloutput = self.convert_xml(test_dir + "/unittest_results.xml")
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)

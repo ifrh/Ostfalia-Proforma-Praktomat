@@ -123,8 +123,13 @@ class ProFormAChecker(Checker):
                 mode = st.st_mode
                 if mode & executable:
                     # executable found
-                    logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
-                    filelist.append(file)
+                    # read file as a binary string
+                    with open(file, 'rb') as f:
+                        content = f.read(4)
+                        # check for magic number for ELF files
+                        if content[0] == 0x7f and content[1] == 0x45 and content[2] == 0x4c and content[3] == 0x46:
+                            logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
+                            filelist.append(file)
 
         for file in filelist:
             logger.debug('process executable ' + file)
