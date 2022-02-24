@@ -81,6 +81,15 @@ int main(int argc, char **argv) {
         return 1;
     }    
 
+    // rlimit AS (address space)
+    // struct rlimit limit;
+    limit.rlim_cur = 1024 * 1024 * 500; // bytes soft (500MB)
+    limit.rlim_max = 1024 * 1024 * 600; // bytes hard (600MB)
+    if (setrlimit(RLIMIT_AS, &limit) < 0) {
+        perror("setrlimit AS");
+        return 1;
+    }
+
     // rlimit RLIMIT_NOFILE
     limit.rlim_cur = 64; // number of open file handles soft
     limit.rlim_max = 64; // number of open file handles hard
