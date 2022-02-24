@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os.path
 import re
+import traceback
+
 from lxml import etree
 
 from django.db import models
@@ -9,6 +11,7 @@ from checker.basemodels import CheckerResult, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
+from xmlrunner.extra.xunit_plugin import transform
 
 import logging
 
@@ -111,15 +114,15 @@ class PythonUnittestChecker(ProFormAChecker):
         with open(test_dir + '/run_unit_test.py', 'w') as file:
             file.write("""# coding=utf-8
 import unittest
-import xmlrunner 
+import xmlrunner
 loader = unittest.TestLoader()
 start_dir = '.'
-suite = loader.discover(start_dir, "*test*.py") 
+suite = loader.discover(start_dir, "*test*.py")
 with open('unittest_results.xml', 'wb') as output:
-    runner=xmlrunner.XMLTestRunner(output=output)
-    runner.run(suite)          
+    runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
+    runner.run(suite)
 """)
-            os.chmod(test_dir + '/run_unit_test.py', 0o770)
+        os.chmod(test_dir + '/run_unit_test.py', 0o770)
 
         # TODO
         # RXSECURE = re.compile(r"(exit|test_detail\.xml)", re.MULTILINE)
@@ -140,7 +143,6 @@ with open('unittest_results.xml', 'wb') as output:
 
         # copy python interpreter into sandbox
         copy_file('/usr/bin/python3', test_dir + '/python3')
-        # copy_file('/usr/local/bin/pip', test_dir + '/pip3')
         self.copy_shared_objects(env)
         # python3 instead of 3.8 and prepare outside checker
         createpathonlib = "(cd / && tar -cf - usr/lib/python3.8) | (cd " + test_dir + " && tar -xf -)"
@@ -148,7 +150,6 @@ with open('unittest_results.xml', 'wb') as output:
         createpathonlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
             "&& tar -cf - usr/local/lib/python3.8/dist-packages/xmlrunner) | " + \
             "(cd " + test_dir + " && tar -xf -)"
-        print(createpathonlib)
         os.system(createpathonlib)
 
         cmd = ['./python3', 'run_unit_test.py']
@@ -160,12 +161,27 @@ with open('unittest_results.xml', 'wb') as output:
         if os.path.exists(test_dir + "/unittest_results.xml") and \
                 os.path.isfile(test_dir + "/unittest_results.xml"):
             try:
+                # read output into string
+                #with open(test_dir + "/unittest_results.xml", 'rb') as file:
+                #    data = file.read()
+                #    print(str(data))
+#                    # transform output to slightly modified file
+#                    with open(test_dir + "/unittest_results_transform.xml", 'wb') as report:
+#                        print('data: ' + str(data))
+#                        output = transform(data)
+#                        print('output: ' + str(output))
+#                        report.write(output)
+                # transform output to Proforma format
+#                xmloutput = self.convert_xml(test_dir + "/unittest_results_transform.xml")
                 xmloutput = self.convert_xml(test_dir + "/unittest_results.xml")
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
                 result.set_extralog(output)
                 return result
             except:
+                logger.error('Error in XML transformation')
+                traceback.print_exc()
+                # logger.error(inst)
                 # fallback: use default output
                 return result
                 # logger.error('could not convert to XML format')
