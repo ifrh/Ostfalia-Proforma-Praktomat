@@ -17,27 +17,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-RXFAIL = re.compile(
-    r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|ABBRUCH DURCH ZEITUEBERSCHREITUNG|Could not find class|Killed|failures)(.*)$",
-    re.MULTILINE)
-
-
 class PythonUnittestChecker(ProFormAChecker):
     """ New Checker for Python Unittests. """
-
-    exec_command = models.CharField(max_length=200, help_text=_("executable name"))
-#    name = models.CharField(max_length=100, default='googletest',
-#                            help_text=_("Name of the Testcase. To be displayed as title on Checker Results page"))
-
-#    def title(self):
-#        return "GoogleTest: " + self.name
-
-#    @staticmethod
-#    def description():
-#        return "This Checker runs a Testcases existing in the sandbox compiled with Googletest and Makefile."
-
-#    def output_ok(self, output):
-#        return (RXFAIL.search(output) == None)
+#    exec_command = models.CharField(max_length=200, help_text=_("executable name"))
 
     def convert_xml(self, filename):
         stylesheet = '''<?xml version="1.0"?>
@@ -95,29 +77,38 @@ class PythonUnittestChecker(ProFormAChecker):
         result_tree = transform(doc)
         return str(result_tree)
 
-    def submission_ok(self, env, RXSECURE):
-        """ Check submission for invalid keywords """
-        for (name, content) in env.sources():
-            logger.debug('check ' + name)
-            if RXSECURE.search(content):
-                logger.error('invalid keyword found')
-                return False
-        return True
-
     def run(self, env):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
         test_dir = env.tmpdir()
         print(test_dir)
 
+        # compile python code in order to prevent leaking testcode to student (part 1)
+        logger.debug('compile python')
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], env.tmpdir(), unsafe=True)
+        if exitcode != 0:
+            return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+
+        pythonbin = os.readlink('/usr/bin/python3')
+
         # create run script:
         with open(test_dir + '/run_unit_test.py', 'w') as file:
             file.write("""# coding=utf-8
 import unittest
 import xmlrunner
+import os
+
 loader = unittest.TestLoader()
 start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
+# delete python files in order to prevent leaking testcode to student (part 2)
+for dirpath, dirs, files in os.walk('.'):
+    for file in files:
+        if file.endswith('.py'):
+            try:
+                os.unlink(os.path.join(dirpath, file))
+            except:
+                pass
 with open('unittest_results.xml', 'wb') as output:
     runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
     runner.run(suite)
@@ -132,33 +123,10 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-        # compile
-        # build_result = self.compile_make(env)
-        # if build_result != True:
-        #    return build_result
+        pythonbin = self.prepare_sandbox(env)
 
-        # remove source code files
-        #extensions = ('.py')
-        #self.remove_source_files(env, extensions)
-
-        # get python version
-        path = os.readlink('/usr/bin/python3')
-        logger.debug('python is ' + path) # expect python3.x
-
-        # copy python interpreter into sandbox
-        copy_file('/usr/bin/' + path, test_dir + '/' + path)
-        # copy python libs
-        createpathonlib = "(cd / && tar -chf - usr/lib/" + path + ") | (cd " + test_dir + " && tar -xf -)"
-        os.system(createpathonlib)
-        # copy module xmlrunner (avoid pip)
-        createpathonlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
-            "&& tar -chf - usr/local/lib/" + path + "/dist-packages/xmlrunner) | " + \
-            "(cd " + test_dir + " && tar -xf -)"
-        os.system(createpathonlib)
-        # copy shared objects needed
-        self.copy_shared_objects(env)
-
-        cmd = ['./' + path, 'run_unit_test.py']
+        # run command
+        cmd = ['./' + pythonbin, 'run_unit_test.py']
         logger.debug('run ' + str(cmd))
         # get result
         (result, output) = self.run_command(cmd, env)
@@ -189,4 +157,23 @@ with open('unittest_results.xml', 'wb') as output:
                 return result
                 # raise Exception('Inconclusive test result (2)')
             return result
+
+    def prepare_sandbox(self, env):
+        test_dir = env.tmpdir()
+        # get python version
+        pythonbin = os.readlink('/usr/bin/python3')
+        logger.debug('python is ' + pythonbin)  # expect python3.x
+        # copy python interpreter into sandbox
+        copy_file('/usr/bin/' + pythonbin, test_dir + '/' + pythonbin)
+        # copy python libs
+        createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + test_dir + " && tar -xf -)"
+        os.system(createlib)
+        # copy module xmlrunner (avoid pip)
+        createlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
+                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/xmlrunner) | " + \
+                          "(cd " + test_dir + " && tar -xf -)"
+        os.system(createlib)
+        # copy shared objects needed
+        self.copy_shared_objects(env)
+        return pythonbin
 
