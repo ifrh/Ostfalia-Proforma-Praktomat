@@ -11,7 +11,6 @@ from checker.basemodels import CheckerResult, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
-from xmlrunner.extra.xunit_plugin import transform
 
 import logging
 
@@ -92,7 +91,7 @@ class PythonUnittestChecker(ProFormAChecker):
         pythonbin = os.readlink('/usr/bin/python3')
 
         # create run script:
-        with open(test_dir + '/run_unit_test.py', 'w') as file:
+        with open(test_dir + '/run_suite.py', 'w') as file:
             file.write("""# coding=utf-8
 import unittest
 import xmlrunner
@@ -113,7 +112,7 @@ with open('unittest_results.xml', 'wb') as output:
     runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
     runner.run(suite)
 """)
-        os.chmod(test_dir + '/run_unit_test.py', 0o770)
+        os.chmod(test_dir + '/run_suite.py', 0o770)
 
         # TODO
         # RXSECURE = re.compile(r"(exit|test_detail\.xml)", re.MULTILINE)
@@ -126,10 +125,12 @@ with open('unittest_results.xml', 'wb') as output:
         pythonbin = self.prepare_sandbox(env)
 
         # run command
-        cmd = ['./' + pythonbin, 'run_unit_test.py']
+        cmd = ['./' + pythonbin, 'run_suite.py']
         logger.debug('run ' + str(cmd))
         # get result
+        print('START')
         (result, output) = self.run_command(cmd, env)
+        print('END')
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \
