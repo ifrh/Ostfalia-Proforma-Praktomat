@@ -80,7 +80,6 @@ class PythonUnittestChecker(ProFormAChecker):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
         test_dir = env.tmpdir()
-        print(test_dir)
 
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
@@ -128,9 +127,7 @@ with open('unittest_results.xml', 'wb') as output:
         cmd = ['./' + pythonbin, 'run_suite.py']
         logger.debug('run ' + str(cmd))
         # get result
-        print('START')
         (result, output) = self.run_command(cmd, env)
-        print('END')
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \
