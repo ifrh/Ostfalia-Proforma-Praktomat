@@ -69,11 +69,12 @@ class ProFormAChecker(Checker):
                     #    logger.error("Error while deleting file : ", file)
                     
                     
-    def build_compilation_error_log(self, output, args, filenames):
+    def build_compilation_error_log(self, output, args, filenames, regexp = None):
         result = dict()
         if ProFormAChecker.retrieve_subtest_results:
             t = get_template('checker/compiler/proforma_builder_report.xml')
-            regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+            if regexp is None:
+                regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
 #            regexp = '(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<msgtype>[a-z]+):\s(?<text>.+)'
             result["format"] = CheckerResult.FEEDBACK_LIST_LOG
             result["log"] = t.render({
@@ -92,7 +93,7 @@ class ProFormAChecker(Checker):
         return output.replace(env.tmpdir() + "/", "")
 
     # default handling of compilation code error
-    def handle_compile_error(self, env, output, error, timed_out, oom_ed):
+    def handle_compile_error(self, env, output, error, timed_out, oom_ed, regexp = None):
         logger.error("output: " + output)
         output = self.remove_sandbox_paths(output, env)
         result = self.create_result(env)
@@ -105,7 +106,7 @@ class ProFormAChecker(Checker):
         
         filenames = [name for name in self.get_file_names(env)]
         submissionfiles = set(filenames).intersection([solutionfile.path() for solutionfile in env.solution().solutionfile_set.all()])
-        log = self.build_compilation_error_log(output, '', submissionfiles)
+        log = self.build_compilation_error_log(output, '', submissionfiles, regexp)
         
         result.set_log(log["log"], timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed, log_format=log["format"])
         # result.set_log(log["log"], log_format=log["format"])

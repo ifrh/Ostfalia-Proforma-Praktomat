@@ -85,7 +85,11 @@ class PythonUnittestChecker(ProFormAChecker):
         logger.debug('compile python')
         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], env.tmpdir(), unsafe=True)
         if exitcode != 0:
-            return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+            # could not compile.
+            # TODO: run without compilation in order to generate better output???
+            regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
+            # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+            return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
 
         pythonbin = os.readlink('/usr/bin/python3')
 
