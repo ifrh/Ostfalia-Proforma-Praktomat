@@ -51,13 +51,10 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 
 # Install Java 17 and JavaFX
 RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx
-
-# Install C, cmake, Googletest
-RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev libgtest-dev && \
-   cd /usr/src/gtest && \
-   cmake CMakeLists.txt && \
-   make && \
-   cp lib/*.a /usr/lib
+# Install C, cmake, Googletest (must be compiled)
+# pkg-config can be used to locate gmock (and other packages) after installation
+RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev googletest pkg-config && \
+    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install .
 
 # ADD UNIX USERS
 ################
