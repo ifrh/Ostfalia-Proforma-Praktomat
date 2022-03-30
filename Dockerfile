@@ -106,6 +106,7 @@ COPY cron.conf /etc/cron.d/praktomat-cron
 
 # add JAVA test specific libraries
 # Checkstyle
+ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar /praktomat/lib/
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar /praktomat/lib/
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar /praktomat/lib/
 # JUnit4 runtime libraries
