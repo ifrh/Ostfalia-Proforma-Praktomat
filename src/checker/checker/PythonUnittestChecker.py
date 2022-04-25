@@ -43,6 +43,9 @@ class PythonUnittestChecker(ProFormAChecker):
 						<xsl:when test="failure">
 							<score>0.0</score>
 						</xsl:when>
+						<xsl:when test="error">
+							<score>0.0</score>
+						</xsl:when>
 						<xsl:otherwise>
 							<score>1.0</score>
 						</xsl:otherwise>						
@@ -52,16 +55,24 @@ class PythonUnittestChecker(ProFormAChecker):
 					<student-feedback level="info">
 						<xsl:attribute name="level">
 							<xsl:choose>
+								<xsl:when test="error">error</xsl:when>
 								<xsl:when test="failure">error</xsl:when>
 								<xsl:otherwise>info</xsl:otherwise>
 							</xsl:choose>
 						</xsl:attribute>
 						<title><xsl:value-of select="../@name"/>.<xsl:value-of select="@name"/></title>
-						<xsl:if test="failure">
-							<content format="plaintext">
-								<xsl:value-of select="failure"/>
-							</content>
-						</xsl:if>
+                        <xsl:choose>
+                            <xsl:when test="failure">
+                                <content format="plaintext">
+                                    <xsl:value-of select="failure"/>
+                                </content>
+                            </xsl:when>
+                            <xsl:when test="error">
+                                <content format="plaintext">
+                                    <xsl:value-of select="error"/>
+                                </content>
+                            </xsl:when>
+                        </xsl:choose>													
 					</student-feedback>
 				</feedback-list>
 			</test-result>
@@ -137,6 +148,9 @@ with open('unittest_results.xml', 'wb') as output:
         if os.path.exists(test_dir + "/unittest_results.xml") and \
                 os.path.isfile(test_dir + "/unittest_results.xml"):
             try:
+                # f = open(test_dir + "/unittest_results.xml", "r")
+                # logger.debug(f.read())
+
                 xmloutput = self.convert_xml(test_dir + "/unittest_results.xml")
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
