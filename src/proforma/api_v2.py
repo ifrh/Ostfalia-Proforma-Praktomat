@@ -32,6 +32,7 @@ from lxml import etree
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files import File
+from django.template.loader import render_to_string
 
 import os
 import re
@@ -69,6 +70,9 @@ Callstack:
 # the submission cannot be found from external resource
 class ExternalSubmissionException(Exception):
     pass
+#    def __init__(self, message):
+#        self.message = message
+#        super(ExternalSubmissionException, self).__init__(message)
 
 # wrapper class for handling submissions already stored on disk
 class PhysicalFile:
@@ -168,13 +172,13 @@ def grade_api_v2(request,):
         #submission_dict = xml2dict(xml)
 
         logger.info("grading request for task " + task_filename)
-
-        submission_files, version_control = get_submission_files(root, request, NAMESPACES) # returns a dictionary (filename -> content)
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
+        grader = grade.Grader(proformatask, NAMESPACE)
+
+        submission_files, version_control = get_submission_files(root, request, NAMESPACES) # returns a dictionary (filename -> content)
 
         # run tests
-        grader = grade.Grader(proformatask, NAMESPACE)
         grader.grade(submission_files, version_control, True)
         # get result
         grade_result = grader.get_result(templatefile)
@@ -188,12 +192,30 @@ def grade_api_v2(request,):
         return response
 
     except ExternalSubmissionException as inst:
+        import sys
+        ex_type, ex_value, ex_traceback = sys.exc_info()
+
+        print(inst)
         logger.exception(inst)
         callstack = traceback.format_exc()
         print("ExternalSubmissionException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
-        response.write(get_http_error_page('Could not get submission files', str(inst), callstack))
-        response.status_code = 404 # file not found
+        from datetime import datetime
+        now = datetime.now().isoformat()
+
+        response_xml = render_to_string("proforma/response_student_visible_error.xml",
+                           {"error": "ExternalSubmissionException caught Stack Trace: " + str(inst),
+                            "now": now,
+#                                        "solution": solution,
+#                            "testResultList": res_arr if remove_CopyFileChecker else result,
+                            "fileName": "proforma/response_student_visible_error.xml",
+                            "gradername": "praktomat",
+                            "graderversion": VERSION.version,
+                            "namespace": grader.namespace})
+
+        # response.write(get_http_error_page('Could not get submission files', str(inst), callstack))
+        response.write(response_xml)
+        response.status_code = 200 # file not found
         return response
     except task.TaskXmlException as inst:
         logger.exception(inst)

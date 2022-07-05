@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response xmlns="{{ namespace }}" xmlns:praktomat="urn:proforma:praktomat:v2.2"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <separate-test-feedback>
+        <submission-feedback-list>
+            <student-feedback>
+                {{ error }}
+            </student-feedback>
+        </submission-feedback-list>
+        <tests-response>
+        </tests-response>
+    </separate-test-feedback>
+    <files>
+    </files>
+    <response-meta-data>
+        <response-datetime>{{ now }}</response-datetime>
+        <grader-engine name="{{ gradername }}" version="{{ graderversion }}"/>
+        <praktomat:response-meta-data>
+            <praktomat:logs>
+            </praktomat:logs>
+        </praktomat:response-meta-data>
+    </response-meta-data>
+</response>
