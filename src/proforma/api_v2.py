@@ -204,7 +204,9 @@ def grade_api_v2(request,):
         now = datetime.now().isoformat()
 
         response_xml = render_to_string("proforma/response_student_visible_error.xml",
-                           {"error": "ExternalSubmissionException caught Stack Trace: " + str(inst),
+                           {
+                            "title" : "External submission error",
+                            "error": str(inst),
                             "now": now,
 #                                        "solution": solution,
 #                            "testResultList": res_arr if remove_CopyFileChecker else result,

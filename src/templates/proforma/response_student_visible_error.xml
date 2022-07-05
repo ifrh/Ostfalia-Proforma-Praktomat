@@ -3,8 +3,9 @@
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <separate-test-feedback>
         <submission-feedback-list>
-            <student-feedback>
-                {{ error }}
+            <student-feedback level="error">
+                <title>{{ title }}</title>
+                <content format="plaintext"> {{ error }} </content>
             </student-feedback>
         </submission-feedback-list>
         <tests-response>
