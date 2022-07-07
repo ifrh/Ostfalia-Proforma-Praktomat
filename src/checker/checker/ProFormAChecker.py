@@ -20,6 +20,12 @@ from lddcollect.vendor.lddtree import lddtree
 import logging
 logger = logging.getLogger(__name__)
 
+# TODO: use exceptions for error handling?
+# - RunPreparationException
+# - CompilationException
+
+
+
 class ProFormAChecker(Checker):
     """ Checker referencing Files (abstract class) """
 
@@ -172,24 +178,29 @@ class ProFormAChecker(Checker):
         # compile CMakeLists.txt
         if os.path.exists(env.tmpdir() + '/CMakeLists.txt'):
             logger.debug('cmakefile found, execute cmake')
+            # cmake .
+            # cmake --build .
             [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], env.tmpdir(), unsafe=True)
             if exitcode != 0:
                 return self.handle_compile_error(env, output, error, timed_out, oom_ed)
-
-        # run make
-        logger.debug('make')
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
-        if exitcode != 0:
-            # suppress as much information as needed
-            # call make twice in order to get only errors in student code
+            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '--build', '.'], env.tmpdir(), unsafe=True)
+            if exitcode != 0:
+                return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+        else:
+            # run make
+            logger.debug('make')
             [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
-            if error != None:
-                # delete output when error text exists because output contains a lot of irrelevant information
-                # for student
-                # logger.error(error)
-                output = error
-                error = ''
-            return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+            if exitcode != 0:
+                # suppress as much information as possible
+                # call make twice in order to get only errors in student code
+                [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
+                if error != None:
+                    # delete output when error text exists because output contains a lot of irrelevant information
+                    # for student
+                    # logger.error(error)
+                    output = error
+                    error = ''
+                return self.handle_compile_error(env, output, error, timed_out, oom_ed)
             
         return True
 
