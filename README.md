@@ -26,7 +26,7 @@ The following programming languages and test frameworks are provided with the Pr
 
 
 For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy the `setlx-2.7.x.jar` 
-into the extra folder.
+into the `extra` folder and rename it to `setlX-2.7.jar`.
 
 
 #### Submission types
