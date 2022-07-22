@@ -135,23 +135,25 @@ class ProFormAChecker(Checker):
                         content = f.read(4)
                         # check for magic number for ELF files
                         if content[0] == 0x7f and content[1] == 0x45 and content[2] == 0x4c and content[3] == 0x46:
-                            logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
+                            # logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
                             filelist.append(file)
 
         for file in filelist:
-            logger.debug('process executable ' + file)
+            # logger.debug('process executable ' + file)
             # look for shared libraries
             try:
                 ltree = lddtree(file)
                 # ltree = lddtree(env.tmpdir() + '/' + file)
                 # print(ltree)
                 for key, value in ltree['libs'].items():
-                    logger.debug('=> ' + value['path'])
+                    if value['path'] is None:
+                        continue
+                    # logger.debug('=> ' + value['path'])
                     os.makedirs(os.path.dirname(env.tmpdir() + '/' + value['path']), 0o755, True)
                     shutil.copyfile(value['path'], env.tmpdir() + '/' + value['path'])
                     os.chmod(env.tmpdir() + '/' + value['path'], 0o755)
             except Exception as inst:
-                logger.error('could not find shared objects ')
+                logger.exception('could not find shared objects ')
                 print(inst)
 
     def prepare_run(self, env):
