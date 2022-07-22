@@ -174,6 +174,13 @@ with open('unittest_results.xml', 'wb') as output:
                 # raise Exception('Inconclusive test result (2)')
             return result
 
+    def copy_module_into_sandbox(self, modulename, pythonbin, test_dir):
+        # avoid pip
+        createlib = "(mkdir " + test_dir + "/" + modulename + " && cd / " + \
+                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/" + modulename + ") | " + \
+                          "(cd " + test_dir + " && tar -xf -)"
+        os.system(createlib)
+
     def prepare_sandbox(self, env):
         test_dir = env.tmpdir()
         # get python version
@@ -184,11 +191,29 @@ with open('unittest_results.xml', 'wb') as output:
         # copy python libs
         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + test_dir + " && tar -xf -)"
         os.system(createlib)
-        # copy module xmlrunner (avoid pip)
-        createlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
-                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/xmlrunner) | " + \
-                          "(cd " + test_dir + " && tar -xf -)"
-        os.system(createlib)
+        # copy module xmlrunner
+        self.copy_module_into_sandbox('xmlrunner', pythonbin, test_dir)
+        # copy modules for numpy and matplotlib
+        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
+        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
+        self.copy_module_into_sandbox('matplotlib', pythonbin, test_dir)
+        self.copy_module_into_sandbox('packaging', pythonbin, test_dir)
+        self.copy_module_into_sandbox('PIL', pythonbin, test_dir)
+        self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
+        self.copy_module_into_sandbox('pyparsing', pythonbin, test_dir)
+        self.copy_module_into_sandbox('dateutil', pythonbin, test_dir)
+        self.copy_module_into_sandbox('kiwisolver', pythonbin, test_dir)
+        self.copy_module_into_sandbox('mpl_toolkits', pythonbin, test_dir)
+
+        copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/cycler.py", test_dir + '/cycler.py')
+        copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/six.py", test_dir + '/six.py')
+
+
+
+#        createlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
+#                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/xmlrunner) | " + \
+#                          "(cd " + test_dir + " && tar -xf -)"
+#        os.system(createlib)
         # copy shared objects needed
         self.copy_shared_objects(env)
         return pythonbin
