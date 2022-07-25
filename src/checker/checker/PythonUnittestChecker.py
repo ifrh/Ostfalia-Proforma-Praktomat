@@ -176,12 +176,19 @@ with open('unittest_results.xml', 'wb') as output:
 
     def copy_module_into_sandbox(self, modulename, pythonbin, test_dir):
         # avoid pip
-        createlib = "(mkdir " + test_dir + "/" + modulename + " && cd / " + \
-                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/" + modulename + ") | " + \
-                          "(cd " + test_dir + " && tar -xf -)"
-        os.system(createlib)
+        if os.path.isfile('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py"):
+            # module is single file
+            copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py", test_dir + '/' + modulename + '.py')
+        else:
+            # module is folder
+            createlib = "(mkdir \"" + test_dir + "/" + modulename + "\" && cd / " + \
+                              "&& tar -chf - \"usr/local/lib/" + pythonbin + "/dist-packages/" + modulename + "\") | " + \
+                              "(cd " + test_dir + " && tar -xf -)"
+            # print(createlib)
+            os.system(createlib)
 
     def prepare_sandbox(self, env):
+        logger.debug('Prepare sandbox')
         test_dir = env.tmpdir()
         # get python version
         pythonbin = os.readlink('/usr/bin/python3')
@@ -194,21 +201,39 @@ with open('unittest_results.xml', 'wb') as output:
         # copy module xmlrunner
         self.copy_module_into_sandbox('xmlrunner', pythonbin, test_dir)
         # copy modules for numpy and matplotlib
-        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
-        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
-        self.copy_module_into_sandbox('matplotlib', pythonbin, test_dir)
-        self.copy_module_into_sandbox('packaging', pythonbin, test_dir)
-        self.copy_module_into_sandbox('PIL', pythonbin, test_dir)
-        self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
-        self.copy_module_into_sandbox('pyparsing', pythonbin, test_dir)
-        self.copy_module_into_sandbox('dateutil', pythonbin, test_dir)
-        self.copy_module_into_sandbox('kiwisolver', pythonbin, test_dir)
-        self.copy_module_into_sandbox('mpl_toolkits', pythonbin, test_dir)
+        if os.path.isfile(test_dir + '/requirements.txt'):
+            logger.debug('copy extra modules')
+            with open(test_dir + '/requirements.txt') as f:
+                for module in f.readlines():
+                    module = module.strip()
+                    if not module:
+                        continue # skip empty lines
+                    # logger.debug(module)
+                    # some module names do not match folder name
+                    if module == 'python-dateutil':
+                        module = 'dateutil'
+                    if module == 'mpl-toolkits.clifford':
+                        module = 'mpl_toolkits'
+                    # copy module folder into sandbox
+                    self.copy_module_into_sandbox(module, pythonbin, test_dir)
+                    # add further libs
+                    if (module == 'numpy'):
+                        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
+                    if (module == 'PIL'):
+                        self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
 
-        copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/cycler.py", test_dir + '/cycler.py')
-        copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/six.py", test_dir + '/six.py')
-
-
+        #        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('matplotlib', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('packaging', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('PIL', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('pyparsing', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('dateutil', pythonbin, test_dir)
+#        self.copy_module_into_sandbox('kiwisolver', pythonbin, test_dir)
+ #       self.copy_module_into_sandbox('mpl_toolkits', pythonbin, test_dir)
+ #       self.copy_module_into_sandbox('cycler', pythonbin, test_dir)
+ #       self.copy_module_into_sandbox('six', pythonbin, test_dir)
 
 #        createlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
 #                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/xmlrunner) | " + \
