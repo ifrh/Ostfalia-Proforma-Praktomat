@@ -175,7 +175,7 @@ class Task(models.Model):
 
         # fetch tasks, media objects, checker and serialize
         task_objects = list(qureyset)
-        media_objects = list( MediaFile.objects.filter(task__in=task_objects) )
+#        media_objects = list( MediaFile.objects.filter(task__in=task_objects) ) # unused in Proforma
         model_solution_objects = list( Solution.objects.filter(model_solution_task__in=task_objects) )
         model_solution_file_objects = list( SolutionFile.objects.filter(solution__in=model_solution_objects) )
 
@@ -183,15 +183,16 @@ class Task(models.Model):
         checker_app = apps.get_app_config('checker')
         checker_classes = [x for x in checker_app.get_models() if issubclass(x, Checker)]
         checker_objects = sum([list(x.objects.filter(task__in=task_objects)) for x in checker_classes], [])
-        data = serializers.serialize("xml", task_objects + media_objects + checker_objects + model_solution_objects + model_solution_file_objects)
+        data = serializers.serialize("xml", task_objects +  # media_objects +
+                                     checker_objects + model_solution_objects + model_solution_file_objects)
 
         # fetch files
         files = []
         for checker_object in checker_objects:
             file_fields = [x for x in checker_object.__class__._meta.fields if isinstance(x, models.FileField)]
             files += [checker_object.__getattribute__(file_field.attname) for file_field in file_fields]
-        for media_object in media_objects:
-            files.append(media_object.media_file)
+#        for media_object in media_objects:
+#            files.append(media_object.media_file)
         for model_solution_file_object in model_solution_file_objects:
             files.append(model_solution_file_object.file)
 
@@ -256,35 +257,38 @@ class Task(models.Model):
         for solution in solution_list:
             solution.check_solution(run_secret=True)
 
-def get_mediafile_storage_path(instance, filename):
-    return 'TaskMediaFiles/Task_%s/%s' % (instance.task.pk, filename)
+# unused in Proforma
+# def get_mediafile_storage_path(instance, filename):
+#    return 'TaskMediaFiles/Task_%s/%s' % (instance.task.pk, filename)
 
-def get_htmlinjectorfile_storage_path(instance, filename):
-    return 'TaskHtmlInjectorFiles/Task_%s/%s' % (instance.task.pk, filename)
-
-
-class MediaFile(models.Model):
-
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    media_file = DeletingFileField(upload_to=get_mediafile_storage_path, max_length=500)
+# unused in Proforma
+# def get_htmlinjectorfile_storage_path(instance, filename):
+#    return 'TaskHtmlInjectorFiles/Task_%s/%s' % (instance.task.pk, filename)
 
 
-class HtmlInjector(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    inject_in_solution_view      = models.BooleanField(
-        default=False,
-        help_text = _("Indicates whether HTML code shall be injected in public  solution views, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/solutions/5710/")
-    )
-    inject_in_solution_full_view = models.BooleanField(
-        default=False,
-        help_text = _("Indicates whether HTML code shall be injected in private solution views, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/solutions/5710/full")
-    )
-    inject_in_attestation_edit = models.BooleanField(
-        default=True,
-        help_text = _("Indicates whether HTML code shall be injected in attestation edits, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/attestation/134/edit")
-    )
-    inject_in_attestation_view = models.BooleanField(
-        default=False,
-        help_text = _("Indicates whether HTML code shall be injected in attestation views, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/attestation/134")
-    )
-    html_file = DeletingFileField(upload_to=get_htmlinjectorfile_storage_path, max_length=500)
+# unused in Proforma
+# class MediaFile(models.Model):
+#
+#    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+#    media_file = DeletingFileField(upload_to=get_mediafile_storage_path, max_length=500)
+
+# unused in Proforma
+#class HtmlInjector(models.Model):
+#    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+#    inject_in_solution_view      = models.BooleanField(
+#        default=False,
+#        help_text = _("Indicates whether HTML code shall be injected in public  solution views, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/solutions/5710/")
+#    )
+#    inject_in_solution_full_view = models.BooleanField(
+#        default=False,
+#        help_text = _("Indicates whether HTML code shall be injected in private solution views, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/solutions/5710/full")
+#    )
+#    inject_in_attestation_edit = models.BooleanField(
+#        default=True,
+#        help_text = _("Indicates whether HTML code shall be injected in attestation edits, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/attestation/134/edit")
+#    )
+#    inject_in_attestation_view = models.BooleanField(
+#        default=False,
+#        help_text = _("Indicates whether HTML code shall be injected in attestation views, e.g.: in https://praktomat.cs.kit.edu/2016_WS_Abschluss/attestation/134")
+#    )
+#    html_file = DeletingFileField(upload_to=get_htmlinjectorfile_storage_path, max_length=500)
