@@ -82,12 +82,13 @@ echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 RUN mkdir /praktomat && chown 999:999 /praktomat
 WORKDIR /praktomat
 ADD --chown=999:999 requirements.txt /praktomat/
-RUN pip3 install --upgrade pip
-RUN pip3 --version
+RUN pip3 install --upgrade pip && pip3 --version
 RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
 
 
-ADD . /praktomat
+COPY . /praktomat
+
+
 
 RUN mkdir -p /praktomat/upload
 
@@ -128,7 +129,6 @@ RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 # compile and install restrict.c
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
 # RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
-
 
 # clean packages
 RUN apt-get clean

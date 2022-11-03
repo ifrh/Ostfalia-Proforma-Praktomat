@@ -55,10 +55,10 @@ services:
     #command: ./manage.py runserver 0.0.0.0:8010
     #command: ./src/manage.py runserver 0.0.0.0:8010
 
-    volumes:
-     - ./src:/praktomat/src
-     - ./extra:/praktomat/extra    
-     - ./media:/praktomat/media
+#    volumes:
+#     - ./src:/praktomat/src
+#     - ./extra:/praktomat/extra
+#     - ./media:/praktomat/media
     ports:
       - "8010:8010"
     depends_on:

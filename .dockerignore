@@ -1,0 +1,15 @@
+# Ignore any files or directories any level, including the context root,
+# named migrations
+
+# keep migrations if needed
+# **/migrations
+
+# no compiled python
+**/__pycache__
+
+examples
+
+documentation
+
+docker-image
+

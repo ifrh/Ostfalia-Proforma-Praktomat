@@ -28,13 +28,13 @@ sudo -n /usr/bin/py3clean /praktomat
 find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 # update tables in case of a modified or added checker
+
 echo "make migrations"
 # do not use exit here!
 sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations configuration
 sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations accounts
 sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations tasks
-# do not create migrations for solutions as we have circular dependencies with tasks!
-# sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations solutions
+sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations solutions
 sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations checker
 sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations
 
