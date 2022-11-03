@@ -92,7 +92,7 @@ def load_defaults(settings):
         'accounts',
         'tasks',
         'solutions',
-        'attestation',
+#        'attestation', # not needed for Proforma
         'checker',
         'utilities',
         'settings',
@@ -106,7 +106,7 @@ def load_defaults(settings):
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'accounts.middleware.AuthenticationMiddleware',
-        'accounts.middleware.LogoutInactiveUserMiddleware',
+#        'accounts.middleware.LogoutInactiveUserMiddleware',
     ]
 
     # needed since Django 1.11 in order to show the 'Deactivated' page

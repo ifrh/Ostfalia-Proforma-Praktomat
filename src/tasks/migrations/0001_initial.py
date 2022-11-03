@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('solutions', '0001_initial'),
-        ('attestation', '0001_initial'),
+#        ('attestation', '0001_initial'), # not needed for Proforma
     ]
 
     operations = [
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('max_file_size', models.IntegerField(default=1000, help_text='The maximum size of an uploaded solution file in kilobyte.')),
                 ('all_checker_finished', models.BooleanField(default=False, help_text="Indicates whether the checker which don't run immediately on submission have been executed.", editable=False)),
                 ('only_trainers_publish', models.BooleanField(default=False, help_text='Indicates that only trainers may publish attestations. Otherwise, tutors may publish final attestations within their tutorials.')),
-                ('final_grade_rating_scale', models.ForeignKey(to='attestation.RatingScale', on_delete=models.CASCADE, help_text='The scale used to mark the whole solution.', null=True)),
+# unused in Proforma                ('final_grade_rating_scale', models.ForeignKey(to='attestation.RatingScale', on_delete=models.CASCADE, help_text='The scale used to mark the whole solution.', null=True)),
                 ('model_solution', models.ForeignKey(related_name='model_solution_task', on_delete=models.CASCADE, blank=True, to='solutions.Solution', null=True)),
             ],
         ),

@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='task',
-            name='final_grade_rating_scale',
-            field=models.ForeignKey(help_text='The scale used to mark the whole solution.', null=True, on_delete=django.db.models.deletion.SET_NULL, to='attestation.RatingScale'),
-        ),
+#        migrations.AlterField(
+#            model_name='task',
+#            name='final_grade_rating_scale',
+#            field=models.ForeignKey(help_text='The scale used to mark the whole solution.', null=True, on_delete=django.db.models.deletion.SET_NULL, to='attestation.RatingScale'),
+#        ),
         migrations.AlterField(
             model_name='task',
             name='model_solution',

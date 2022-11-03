@@ -31,7 +31,7 @@ class Task(models.Model):
     max_file_size = models.IntegerField(default=1000, help_text = _("The maximum size of an uploaded solution file in kilobyte."))
     model_solution = models.ForeignKey('solutions.Solution', on_delete=models.SET_NULL, blank=True, null=True, related_name='model_solution_task')
     all_checker_finished = models.BooleanField(default=False, editable=False, help_text = _("Indicates whether the checker which don't run immediately on submission have been executed."))
-    final_grade_rating_scale = models.ForeignKey('attestation.RatingScale', on_delete=models.SET_NULL, null=True, help_text = _("The scale used to mark the whole solution."))
+# unused in Proforma    final_grade_rating_scale = models.ForeignKey('attestation.RatingScale', on_delete=models.SET_NULL, null=True, help_text = _("The scale used to mark the whole solution."))
     warning_threshold = models.DecimalField(max_digits=8, decimal_places=2, default=0, help_text = _("If the student has less points in his tasks than the sum of their warning thresholds, display a warning."))
     only_trainers_publish = models.BooleanField(default=False, help_text = _("Indicates that only trainers may publish attestations. Otherwise, tutors may publish final attestations within their tutorials."))
     jplag_up_to_date = models.BooleanField(default=False, help_text = _("No new solution uploads since the last jPlag run"))
@@ -226,7 +226,7 @@ class Task(models.Model):
                 task_id_map[old_id] = object.id
                 old_solution_to_new_task_map[object.model_solution_id] = object.id
                 object.model_solution = None
-                object.final_grade_rating_scale = None
+                # object.final_grade_rating_scale = None # unused in ProForma
                 deserialized_object.save()
             else:
                 # save modelsolution, media and checker, update task id
