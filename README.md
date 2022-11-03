@@ -108,8 +108,8 @@ The required module names must be entered there.
 
 In order to build and start the docker composition simply run 
 
-    docker-compose build
-    docker-compose up
+    docker compose build
+    docker compose up
       
         
 
@@ -207,8 +207,8 @@ The Praktomat stores tasks and results in a database and in the filesystem. In o
 run out of disk space the whole system should be reset from time to time (e.g. before starting a new semester).
 This can easily be done by calling 
 
-    docker-compose down
-    docker-dompose up 
+    docker compose down
+    docker dompose up 
   
 There is no need to back-up anything!
 
@@ -216,8 +216,8 @@ There is no need to back-up anything!
 
 In case of a software update this is the recommended process:
 
-1. `docker-compose down`
+1. `docker compose down`
 2. update software (e.g. `git pull`)
-3. `docker-dompose build`    
-4. `docker-dompose up` 
+3. `docker dompose build`    
+4. `docker dompose up` 
 
