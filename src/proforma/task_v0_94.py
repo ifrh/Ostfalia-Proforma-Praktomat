@@ -205,7 +205,7 @@ def importTask(task_xml, dict_zip_files):
                         solutionFile = SolutionFile(solution=solution)
                         solutionFile.file = embeddedFileDict.get(fileRef.attrib.get("refid"))  #TODO check more than one solution
                         solutionFile.save()
-                        newTask.model_solution = solution
+                        # newTask.model_solution = solution # not needed
                     else:
                         newTask.delete()
                         response.write("You reference a model-solution to the files but there is no refid!")

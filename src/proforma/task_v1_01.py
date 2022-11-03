@@ -199,7 +199,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
                             solution_file = SolutionFile(solution=solution)
                             solution_file.file = embedded_file_dict.get(fileRef.attrib.get("refid"))
                             solution_file.save()
-                            new_task.model_solution = solution
+                            # new_task.model_solution = solution # not needed here
                         else:
                             raise Exception("You reference a model-solution to the files but there is no refid!")
         else:
