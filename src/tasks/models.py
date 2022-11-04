@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db.models import Max
 
-from configuration import get_settings
+# from configuration import get_settings
 
 from utilities.deleting_file_field import DeletingFileField
 from utilities.safeexec import execute_arglist
@@ -124,9 +124,9 @@ class Task(models.Model):
             raise RuntimeError("Unknown jplag settings %s" % lang)
 
         # Remember jplag setting
-        configuration = get_settings()
-        configuration.jplag_setting = lang
-        configuration.save()
+        # configuration = get_settings()
+        # configuration.jplag_setting = lang
+        # configuration.save()
 
         jplag_settings = self.jplag_languages()[lang]
         path = self.jplag_dir_path()

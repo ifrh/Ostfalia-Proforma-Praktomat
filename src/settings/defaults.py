@@ -88,7 +88,7 @@ def load_defaults(settings):
         # contains a widget to render a form field as a TinyMCE editor
         # 'tinymce',
 
-        'configuration',
+#        'configuration', # not needed for Proforma
         'accounts',
         'tasks',
         'solutions',

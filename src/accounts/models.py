@@ -14,18 +14,18 @@ from django.core.validators import RegexValidator
 from django.core import serializers
 from django.db.transaction import atomic
 
-from configuration import get_settings
+# from configuration import get_settings
 
 
-def validate_mat_number(value):
-    regex = get_settings().mat_number_validation_regex
-    if regex:
-        RegexValidator("^"+regex+"$", message="This is not a valid student number.", code="")(value)
+# def validate_mat_number(value):
+#    regex = get_settings().mat_number_validation_regex
+#    if regex:
+#        RegexValidator("^"+regex+"$", message="This is not a valid student number.", code="")(value)
 
 class User(BasicUser):
     # all fields need to be null-able in order to create user
     tutorial = models.ForeignKey('Tutorial', on_delete=models.SET_NULL, null=True, blank=True, help_text = _("The tutorial the student belongs to."))
-    mat_number = models.IntegerField( null=True, blank=True, validators=[validate_mat_number]) # special blank and unique validation in forms
+    mat_number = models.IntegerField( null=True, blank=True) # , validators=[validate_mat_number]) # special blank and unique validation in forms
     final_grade = models.CharField( null=True, blank=True, max_length=100,  help_text = _('The final grade for the whole class.'))
     programme = models.CharField(null=True, blank=True, max_length=100, help_text = _('The programme the student is enlisted in.'))
     activation_key=models.CharField(_('activation key'), max_length=40, editable=False)
@@ -56,8 +56,10 @@ class User(BasicUser):
 
         The date the user signed up is incremented by the number of days specified in the setting ''get_settings().acount_activation_days`` (which should be the number of days after signup during which a user is allowed to activate their account); if the result is less than or equal to the current date, the key has expired and this method returns ``True``.
         """
-        expiration_date = datetime.timedelta(days=get_settings().acount_activation_days)
-        return     (self.user.date_joined + expiration_date <= datetime.datetime.now())
+        # skipped in Proforma
+        # expiration_date = datetime.timedelta(days=get_settings().acount_activation_days)
+        return False #     (self.user.date_joined + expiration_date <= datetime.datetime.now())
+
     activation_key_expired.boolean = True
 
     def is_activated(self):

@@ -22,7 +22,7 @@ from django.core.mail import EmailMessage
 
 from accounts.models import User
 from utilities import encoding, file_operations
-from configuration import get_settings
+# from configuration import get_settings
 
 # TODO: This is duplicated from solutions/forms.py. Where should this go?
 for (mimetype, extension) in settings.MIMETYPE_ADDITIONAL_EXTENSIONS:
@@ -262,12 +262,13 @@ def get_solutions_zip(solutions,include_file_copy_checker_files=False):
 
     for solution in solutions:
         # TODO: make this work for anonymous attestation, too
-        if get_settings().anonymous_attestation:
-            project_path = 'User' + index
-            project_name = str(solution.task) + "-" + 'User ' + index
-        else:
-            project_path = path_for_user(solution.author)
-            project_name = str(solution.task) + "-" + solution.author.get_full_name()
+        # skipped for Proforma:
+        # if get_settings().anonymous_attestation:
+        #    project_path = 'User' + index
+        #    project_name = str(solution.task) + "-" + 'User ' + index
+        #else:
+        project_path = path_for_user(solution.author)
+        project_name = str(solution.task) + "-" + solution.author.get_full_name()
         base_name = path_for_task(solution.task) + '/' + project_path + '/'
 
         # We need to pass unicode strings to ZipInfo to ensure that it sets bit
