@@ -322,7 +322,7 @@ def load_defaults(settings):
 
     # Set this to False to disable registration via the website, e.g. when
     # Single Sign On is used
-    d.REGISTRATION_POSSIBLE = True
+    # d.REGISTRATION_POSSIBLE = True
 
     # Length of timeout applied whenever an external check that runs a students
     # submission is executed,

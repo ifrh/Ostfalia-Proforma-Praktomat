@@ -91,7 +91,7 @@ SECRET_KEY = "not-so-secret"
 
 # Enable Shibboleth:
 # SHIB_ENABLED = True
-REGISTRATION_POSSIBLE = False
+# REGISTRATION_POSSIBLE = False
 
 SYSADMIN_MOTD_URL = "https://praktomat.cs.kit.edu/sysadmin_motd.html"
 

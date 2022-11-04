@@ -334,42 +334,43 @@ def path_for_user(user):
 def path_for_task(task):
     return task.title
 
-path_regexp = re.compile(r'[^-]*-[^-]*-(.*)')
+# not used in Proforma
+# path_regexp = re.compile(r'[^-]*-[^-]*-(.*)')
 
-def id_for_path(path):
-    return path_regexp.match(path).group(1)
+# def id_for_path(path):
+#    return path_regexp.match(path).group(1)
 
-class ConfirmationMessage(EmailMessage):
-    """
-    Special EmailMessage to combine headers set by OpenSSL S/MIME and django sendmail.
-    """
-    def __init__(self, subject='', body='', from_email=None, to=None, bcc=None,
-                 connection=None, attachments=None, headers=None, cc=None,
-                 reply_to=None):
-        super(ConfirmationMessage, self).__init__(
-            subject, body, from_email, to, bcc, connection, attachments,
-            headers, cc, reply_to,
-        )
+#class ConfirmationMessage(EmailMessage):
+#    """
+#    Special EmailMessage to combine headers set by OpenSSL S/MIME and django sendmail.
+#    """
+#    def __init__(self, subject='', body='', from_email=None, to=None, bcc=None,
+#                 connection=None, attachments=None, headers=None, cc=None,
+#                 reply_to=None):
+#        super(ConfirmationMessage, self).__init__(
+#            subject, body, from_email, to, bcc, connection, attachments,
+#            headers, cc, reply_to,
+#        )
 
-    def message(self):
-        message = super(ConfirmationMessage, self).message()
-        return MessageWrapper(message)
+#    def message(self):
+#        message = super(ConfirmationMessage, self).message()
+#        return MessageWrapper(message)
 
-class MessageWrapper():
-    def __init__(self, message):
-        self.message = message
+# class MessageWrapper():
+#    def __init__(self, message):
+#        self.message = message
 
-    # Django supplies Strings as "linesep" (and not Bytes)
-    def as_bytes(self, linesep='\n'):
-        # byte version of linesep
-        linesep_bytes = linesep.encode('ascii')
-        # Construct the message with the full S/MIME mail as body
-        msg = self.message.as_bytes(linesep=linesep)
-        # Now, use the S/MIME headers as headers for the email
-        lines = msg.split(linesep_bytes)
-        i = lines.index(b'')
-        transformed = [s.replace(b"Content-Type: text/plain", lines[i+2]) for s in lines[0:i]] + lines[i+3:]
-        return linesep_bytes.join(transformed)
+#    # Django supplies Strings as "linesep" (and not Bytes)
+#    def as_bytes(self, linesep='\n'):
+#        # byte version of linesep
+#        linesep_bytes = linesep.encode('ascii')
+#        # Construct the message with the full S/MIME mail as body
+#        msg = self.message.as_bytes(linesep=linesep)
+#        # Now, use the S/MIME headers as headers for the email
+#        lines = msg.split(linesep_bytes)
+#        i = lines.index(b'')
+#        transformed = [s.replace(b"Content-Type: text/plain", lines[i+2]) for s in lines[0:i]] + lines[i+3:]
+#        return linesep_bytes.join(transformed)
 
-    def get_charset(self):
-        return None
+#    def get_charset(self):
+#        return None
