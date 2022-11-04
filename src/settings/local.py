@@ -139,7 +139,7 @@ PRIVATE_KEY = '/srv/praktomat/mailsign/signer_key.pem'
 CERTIFICATE = '/srv/praktomat/mailsign/signer.pem'
 
 # Enable Shibboleth:
-SHIB_ENABLED = True
+# SHIB_ENABLED = True
 REGISTRATION_POSSIBLE = False
 
 SYSADMIN_MOTD_URL = "https://praktomat.cs.kit.edu/sysadmin_motd.html"

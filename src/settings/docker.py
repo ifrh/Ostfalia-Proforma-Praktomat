@@ -90,7 +90,7 @@ CERTIFICATE = join(dirname(dirname(dirname(__file__))), 'examples', 'certificate
 SECRET_KEY = "not-so-secret"
 
 # Enable Shibboleth:
-SHIB_ENABLED = True
+# SHIB_ENABLED = True
 REGISTRATION_POSSIBLE = False
 
 SYSADMIN_MOTD_URL = "https://praktomat.cs.kit.edu/sysadmin_motd.html"

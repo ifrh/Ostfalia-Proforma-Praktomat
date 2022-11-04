@@ -88,9 +88,7 @@ RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgr
 
 COPY . /praktomat
 
-
-
-RUN mkdir -p /praktomat/upload
+RUN mkdir -p /praktomat/upload && mkdir -p /praktomat/media
 
 
 # COPY src/ src/
