@@ -1,5 +1,7 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ns1="urn:proforma:praktomat:v2.2" targetNamespace="urn:proforma:praktomat:v2.2" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<!-- Work in progress, not yet working! -->
 
     <xs:element name="response-meta-data">
         <xs:complexType>    
