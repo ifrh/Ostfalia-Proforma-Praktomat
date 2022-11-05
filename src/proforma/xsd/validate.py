@@ -20,4 +20,4 @@ is_valid = validate_xml(xml=xml, xsdfile="proforma_2.1.xsd")
 print("read: praktomat_2.3.xsd")
 schema = xmlschema.XMLSchema("praktomat_2.3.xsd")
 
-is_valid = validate_xml(xml=xml, xsdfile="proforma-test.xsd")
+is_valid = validate_xml(xml=xml, xsdfile="proforma_full_v2.1.xsd")

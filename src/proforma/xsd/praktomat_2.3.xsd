@@ -20,6 +20,25 @@
         <xs:attribute name="submission-revision" type="xs:string" use="optional"/>
     </xs:complexType>    
     
+
+    <!-- TODO: oder doch besser das nehmen, was es in der response bereits gibt??? -->
+
+    <xs:complexType name="git-type">
+      <!-- may contain further information in future -->
+    </xs:complexType>
+    <xs:complexType name="svn-type">
+      <!-- may contain further information in future -->
+    </xs:complexType>
+    <xs:complexType name="version-control-type">
+        <xs:choice>
+          <xs:element name="git" type="ns1:git-type"/>
+          <xs:element name="svn" type="ns1:svn-type"/>            
+        </xs:choice>
+    </xs:complexType>
+
+
+
+
     <xs:complexType name="logs-type">
 <!--        <xs:sequence maxOccurs="unbounded">
             <xs:element name="testlog" type="ns1:testlog-type"/>
@@ -69,37 +88,8 @@
 		
     </xs:complexType>
 
-<!--	
-  <xs:simpleType name="version-control-type" final="restriction">
-    <xs:restriction base="xs:string">
-        <xs:enumeration value="svn" />
-        <xs:enumeration value="git" />
-    </xs:restriction>
-  </xs:simpleType>
--->  	
 
 
 
-<xs:complexType name="git-type">
-</xs:complexType>
-
-
-<xs:complexType name="svn-type">
-</xs:complexType>
-
-
-<xs:complexType name="version-control-type">
-		<xs:choice>
-			<xs:element name="git" type="ns1:git-type"/>
-			<xs:element name="svn" type="ns1:svn-type"/>            
-		</xs:choice>
-</xs:complexType>
-
-	
-<xs:complexType name="external-submission-information">    
-    <xs:choice>
-        <xs:element name="version-control" type="ns1:version-control-type"/>
-    </xs:choice>
-</xs:complexType>
 	
 </xs:schema>
