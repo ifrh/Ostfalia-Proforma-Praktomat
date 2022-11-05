@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema 
     xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-    targetNamespace="urn:proforma:v2.0" 
-    xmlns:tns="urn:proforma:v2.0"
+    targetNamespace="urn:proforma:v2.1" 
+    xmlns:tns="urn:proforma:v2.1"
     elementFormDefault="qualified"
     xmlns:cs="urn:proforma:tests:java-checkstyle:v1.1"
-    xmlns:praktomat="urn:proforma:praktomat:v2.2"
+    xmlns:praktomat="urn:proforma:praktomat:v2.3"
     xmlns:unit="urn:proforma:tests:unittest:v1.1">
+    
     <xs:import namespace="urn:proforma:tests:unittest:v1.1" schemaLocation="proforma-unittest.xsd"/>
     <xs:import namespace="urn:proforma:tests:java-checkstyle:v1.1" schemaLocation="proforma-checkstyle.xsd"/>
-    <xs:import namespace="urn:proforma:praktomat:v2.2" schemaLocation="praktomat_2.2.xsd"/>
+    <xs:import namespace="urn:proforma:praktomat:v2.3" schemaLocation="praktomat_2.3.xsd"/>
 
   <xs:element name="task" type="tns:task-type">
     <xs:key name="task-fileids">
