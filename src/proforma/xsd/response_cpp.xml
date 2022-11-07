@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response xmlns="urn:proforma:v2.1" xmlns:praktomat="urn:proforma:praktomat:v2.2"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" >
+    <separate-test-feedback>
+        <submission-feedback-list>
+        </submission-feedback-list>
+        <tests-response>
+            
+            <test-response id="2">
+                
+                
+
+                
+                
+                <subtests-response>
+  <subtest-response id="WriteFileTest.hallo">
+    <test-result>
+      <result>
+        <score>1.0</score>
+      </result>
+      <feedback-list>
+        <student-feedback level="info">
+          <title>WriteFileTest.hallo</title>
+        </student-feedback>
+      </feedback-list>
+    </test-result>
+  </subtest-response>
+  <subtest-response id="WriteFileTest.Empty">
+    <test-result>
+      <result>
+        <score>1.0</score>
+      </result>
+      <feedback-list>
+        <student-feedback level="info">
+          <title>WriteFileTest.Empty</title>
+        </student-feedback>
+      </feedback-list>
+    </test-result>
+  </subtest-response>
+</subtests-response>
+
+                
+
+                
+            </test-response>
+            
+        </tests-response>
+    </separate-test-feedback>
+    
+    <files>
+    </files>
+    <response-meta-data>
+        <response-datetime>2022-02-16T18:58:48.999732</response-datetime>
+        <grader-engine name="praktomat" version="Version 4.12.1 | 20220215"/>
+        <praktomat:response-meta-data>
+
+            <praktomat:logs>
+                <praktomat:testlog id="2">
+                    <praktomat:log>
+                        <praktomat:content format="plaintext">[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from WriteFileTest
+[ RUN      ] WriteFileTest.hallo
+[       OK ] WriteFileTest.hallo (0 ms)
+[ RUN      ] WriteFileTest.Empty
+[       OK ] WriteFileTest.Empty (0 ms)
+[----------] 2 tests from WriteFileTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 2 tests.
+
+                        </praktomat:content>
+                    </praktomat:log>
+                </praktomat:testlog>
+            </praktomat:logs>
+        </praktomat:response-meta-data>
+    </response-meta-data>
+</response>

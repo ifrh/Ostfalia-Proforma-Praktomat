@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ns1="urn:proforma:praktomat:v2.3" targetNamespace="urn:proforma:praktomat:v2.3" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:schema 
+targetNamespace="urn:proforma:praktomat:v2.3"
+xmlns:ns1="urn:proforma:praktomat:v2.3"
+xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+elementFormDefault="qualified">
 <!-- Work in progress, not yet working! -->
+<!-- attributeFormDefault="unqualified" -->
 
-    <xs:element name="response-meta-data">
-        <xs:complexType>    
-            <xs:sequence>
-                <xs:element name="version-control-system" type="ns1:version-control-system-type" minOccurs="0" maxOccurs="1"/>
-                <xs:element name="logs" type="ns1:logs-type" minOccurs="0" maxOccurs="1"/>
-            </xs:sequence>            
-        </xs:complexType>        
-    </xs:element>
+    <xs:complexType name="praktomat-response-meta-data-type">    
+        <xs:sequence>
+            <xs:element name="version-control-system" type="ns1:version-control-system-type" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="logs" type="ns1:logs-type" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>            
+    </xs:complexType>        
     
     <xs:complexType name="version-control-system-type">
         <xs:attribute name="name" type="xs:string" use="optional"/>
@@ -40,9 +43,9 @@
 
 
     <xs:complexType name="logs-type">
-<!--        <xs:sequence maxOccurs="unbounded">
+        <xs:sequence maxOccurs="unbounded">
             <xs:element name="testlog" type="ns1:testlog-type"/>
-        </xs:sequence>	 -->
+        </xs:sequence>
     </xs:complexType>
     
     <xs:complexType name="testlog-type">

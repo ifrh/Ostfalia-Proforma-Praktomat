@@ -6,10 +6,12 @@
     elementFormDefault="qualified"
     xmlns:cs="urn:proforma:tests:java-checkstyle:v1.1"
     xmlns:unit="urn:proforma:tests:unittest:v1.1"
-    xmlns:praktomat="urn:praktomat:v2.3">
+    xmlns:praktomat="urn:proforma:praktomat:v2.3">
+    
     <xs:import namespace="urn:proforma:tests:unittest:v1.1" schemaLocation="proforma-unittest.xsd"/>
     <xs:import namespace="urn:proforma:tests:java-checkstyle:v1.1" schemaLocation="proforma-checkstyle.xsd"/>
     <xs:import namespace="urn:proforma:praktomat:v2.3" schemaLocation="praktomat_2.3.xsd"/>
+    
   <xs:element name="task" type="tns:task-type">
     <xs:key name="task-fileids">
       <xs:selector xpath=".//tns:file"/>
@@ -941,6 +943,7 @@
     <xs:sequence>
       <xs:element name="response-datetime" minOccurs="0" type="xs:dateTime"/>
       <xs:element name="grader-engine" type="tns:grader-engine-type"/>
+      <xs:element name="response-meta-data" type="praktomat:praktomat-response-meta-data-type" minOccurs="0"/>      
       <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
     </xs:sequence>
   </xs:complexType>
