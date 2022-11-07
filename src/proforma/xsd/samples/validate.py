@@ -17,22 +17,22 @@ def validate_xml(xml, xsdfile):
 
 
 print("validate proforma_2.1.xsd")
-schema = xmlschema.XMLSchema("proforma_2.1.xsd")
+schema = xmlschema.XMLSchema("../proforma_2.1.xsd")
 print("validate praktomat_2.3.xsd")
-schema = xmlschema.XMLSchema("praktomat_2.3.xsd")
+schema = xmlschema.XMLSchema("../praktomat_2.3.xsd")
 print("validate proforma_full_v2.1.xsd")
-schema = xmlschema.XMLSchema("proforma_full_v2.1.xsd")
+schema = xmlschema.XMLSchema("../proforma_full_v2.1.xsd")
 
 print("")
 # xml_request
-is_valid = validate_xml(xml=xml_request, xsdfile="proforma_2.1.xsd")
-is_valid = validate_xml(xml=xml_request, xsdfile="proforma_full_v2.1.xsd")
+is_valid = validate_xml(xml=xml_request, xsdfile="../proforma_2.1.xsd")
+is_valid = validate_xml(xml=xml_request, xsdfile="../proforma_full_v2.1.xsd")
 # is_valid = validate_xml(xml=xml_request, xsdfile="praktomat_2.3.xsd")
 
 # xml_response_cpp
-is_valid = validate_xml(xml=xml_response_cpp, xsdfile="proforma_2.1.xsd")
-is_valid = validate_xml(xml=xml_response_cpp, xsdfile="proforma_full_v2.1.xsd")
+is_valid = validate_xml(xml=xml_response_cpp, xsdfile="../proforma_2.1.xsd")
+is_valid = validate_xml(xml=xml_response_cpp, xsdfile="../proforma_full_v2.1.xsd")
 
 # xml_response_cpp
-is_valid = validate_xml(xml=xml_response_svn, xsdfile="proforma_2.1.xsd")
-is_valid = validate_xml(xml=xml_response_svn, xsdfile="proforma_full_v2.1.xsd")
+is_valid = validate_xml(xml=xml_response_svn, xsdfile="../proforma_2.1.xsd")
+is_valid = validate_xml(xml=xml_response_svn, xsdfile="../proforma_full_v2.1.xsd")
