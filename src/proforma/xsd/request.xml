@@ -6,10 +6,12 @@
         <uri>http-file:invalidsvnpath.zip</uri>
     </external-task>
     <external-submission>
-        <uri>https://code.ostfalia.de/svn/i-audss2019/Gruppe1/invalid/path</uri>
-        <praktomat:version-control-system>
-            <praktomat:git/>
-        </praktomat:version-control-system>
+        <uri>https://code.ostfalia.de/svn/i-audss2019/Gruppe1/invalid/path</uri>        
+        <praktomat:meta-data>
+            <praktomat:source>
+                <praktomat:git/>
+            </praktomat:source>
+        </praktomat:meta-data>
     </external-submission>
     <lms url="testcase">
         <submission-datetime>1900-01-01T01:01:01+01:00</submission-datetime>
