@@ -82,10 +82,19 @@ class PhysicalFile:
 
 # class for storing information about source control
 class VersionControlSystem:
-    def __init__(self, revision, uri):
-        self.system = 'SVN'
-        self.revision = revision
+    def __init__(self, type, uri, revision = None):
+        self.system = type
         self.uri = uri
+        self.revision = revision
+
+class Subversion(VersionControlSystem):
+    def __init__(self, uri, revision):
+        VersionControlSystem.__init__('SVN', uri, revision)
+
+class Git(VersionControlSystem):
+    def __init__(self, uri, commit):
+        VersionControlSystem.__init__('GIT', uri, commit)
+
 
 def grade_api_v2(request,):
     """
@@ -518,7 +527,7 @@ def get_submission_files_from_svn(submission_uri, NAMESPACES):
             revision = m.group('revision')
         logger.debug("SVN revision is: " + revision)
 
-    versioncontrolinfo = VersionControlSystem(revision, submission_uri)
+    versioncontrolinfo = Subversion(submission_uri, revision)
 
     # create filename dictionary
     submission_files_dict = dict()
@@ -531,5 +540,57 @@ def get_submission_files_from_svn(submission_uri, NAMESPACES):
         # logger.debug('add ' + str(shortname))
         submission_files_dict[shortname] = PhysicalFile(file_name)
     return submission_files_dict, versioncontrolinfo
+
+
+# TODO...
+def get_submission_files_from_git(submission_uri, NAMESPACES):
+    from utilities.safeexec import execute_arglist
+    from django.conf import settings
+
+    folder = tempfile.mkdtemp()
+    tmp_dir = os.path.join(folder, "submission")
+    cmd = ['git', 'clone', submission_uri, 'C', tmp_dir]
+    # logger.debug(cmd)
+    # fileseeklimit: do not limit here!
+    [output, error, exitcode, timed_out, oom_ed] = \
+        execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
+                        fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
+                        extradirs=[], unsafe=True)
+
+    if exitcode != 0:
+        message = ''
+        if error != None:
+            logger.debug('error: ' + str(error))
+            message += error + ' '
+        if output != None:
+            logger.debug('output: ' + str(output))
+            message += output
+        raise ExternalSubmissionException(message)
+    if timed_out:
+        raise ExternalSubmissionException('timeout when getting git submission')
+
+    # logger.debug('GIT-output: ' + output)
+    # find revision
+#    m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
+#    revision = 'unknown revision'
+#    if m:
+#        if m.group('revision') is not None:
+#            revision = m.group('revision')
+#        logger.debug("SVN revision is: " + revision)
+
+    versioncontrolinfo = Subversion(submission_uri, None)
+
+    # create filename dictionary
+    submission_files_dict = dict()
+    import glob
+    for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
+        if not os.path.isfile(file_name):  # ignore directories
+            continue
+
+        shortname = file_name[len(tmp_dir) + 1:]
+        # logger.debug('add ' + str(shortname))
+        submission_files_dict[shortname] = PhysicalFile(file_name)
+    return submission_files_dict, versioncontrolinfo
+
 
 
