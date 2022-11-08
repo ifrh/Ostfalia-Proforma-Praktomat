@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<submission 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns="urn:proforma:v2.1" xmlns:praktomat="urn:proforma:praktomat:v2.3">
+    <external-task uuid="uuid1">
+        <uri>http-file:invalidsvnpath.zip</uri>
+    </external-task>
+    <external-submission>
+        <uri>https://code.ostfalia.de/svn/i-audss2019/Gruppe1/invalid/path</uri>        
+        <praktomat:meta-data>
+            <praktomat:source>
+                <praktomat:git/>
+            </praktomat:source>
+        </praktomat:meta-data>
+    </external-submission>
+    <lms url="testcase">
+        <submission-datetime>1900-01-01T01:01:01+01:00</submission-datetime>
+        <user-id>test user</user-id>
+        <course-id>test course</course-id>
+    </lms>
+    <result-spec format="xml" structure="separate-test-feedback" lang="de">
+        <student-feedback-level>debug</student-feedback-level>
+        <teacher-feedback-level>debug</teacher-feedback-level>
+    </result-spec>
+</submission>
