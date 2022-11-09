@@ -164,7 +164,13 @@ def grade_api_v2(request,):
         task_filename = None
         task_element = root.find(".//dns:external-task", NAMESPACES)
         if task_element is not None:
-            task_file, task_filename = get_external_task(request, task_element.text)
+            uri_element = task_element.find(".//dns:uri", NAMESPACES)
+            if uri_element is not None:
+                # new 2.1: external task is defined in sub element uri
+                task_file, task_filename = get_external_task(request, uri_element.text)
+            else:
+                # old 2.1: external task is defined as text
+                task_file, task_filename = get_external_task(request, task_element.text)
             #logger.debug('external-task in ' + task_path)
         else:
             task_element = root.find(".//dns:task", NAMESPACES)
@@ -255,7 +261,7 @@ def get_external_task(request, task_uri):
     if m:
         file_name = m.group('file_name')
     else:
-        raise Exception("uunsupported external task URI: " + task_uri)
+        raise Exception("unsupported external task URI: " + task_uri)
 
     logger.debug("file_name: " + str(file_name))
     for filename, file in list(request.FILES.items()):
@@ -426,8 +432,15 @@ def get_submission_files(root, request, NAMESPACES):
     # check for external submission
     submission_element = root.find(".//dns:external-submission", NAMESPACES)
     if submission_element is not None:
+        uri_element = submission_element.find(".//dns:uri", NAMESPACES)
+        if uri_element is not None:
+            # new 2.1: external submission is defined in sub element uri
+            submission_uri = uri_element.text
+        else:
+            # old 2.1: external task is defined as text
+            submission_uri = submission_element.text
+
         # handle external submission
-        submission_uri = submission_element.text
         if not submission_uri:
             raise Exception("invalid value for external-submission (none)")
 
