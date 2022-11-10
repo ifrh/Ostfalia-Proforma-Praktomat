@@ -44,6 +44,8 @@ services:
       DATABASE: postgres
       SVNUSER: ${SVNUSERNAME}
       SVNPASS: ${SVNPASSWORD}
+      GITUSER: ${GITUSERNAME}
+      GITPASS: ${GITPASSWORD}
 
     # number of workers = 2* cumber of CPU cores + 1
     #command: python3 ./manage-docker.py runserver 0.0.0.0:8010
