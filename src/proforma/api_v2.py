@@ -145,20 +145,28 @@ def grade_api_v2(request,):
         # print (root.nsmap[None])
         # NAMESPACES = {'dns': root.nsmap[None]}
         NAMESPACE = None
+        NAMESPACES = {}
+        # print(root.nsmap)
         for key, value in root.nsmap.items():
-            if key == None:
+            if key is None:
                 if value == NAMESPACES_V2_0:
                     NAMESPACE = NAMESPACES_V2_0
                     templatefile = 'proforma/response_v2.0.xml'
+                    NAMESPACES['dns'] = value
                 elif value == NAMESPACES_V2_1:
                     NAMESPACE = NAMESPACES_V2_1
                     templatefile = 'proforma/response_v2.1.xml'
+                    NAMESPACES['dns'] = value
                 else:
                     raise Exception("do not support namespace " + value)
+            else:
+                if value.find('praktomat') >= 0:
+                    NAMESPACES['praktomat'] = value
+                else:
+                    NAMESPACES[key] = value
 
-        NAMESPACES = {'dns': NAMESPACE}
-
-
+        if NAMESPACE is None:
+            raise Exception("no proforma namespace found")
 
         task_file = None
         task_filename = None
@@ -462,12 +470,26 @@ def get_submission_files(root, request, NAMESPACES):
                 submission_files_dict.update(get_submission_file_from_request(searched_file_name, request))
             return submission_files_dict, None
         else:
-            # expect actual URI
-            # SVN:
-            # export submission from URI
-            logger.debug('SVN submission')
-            return get_submission_files_from_svn(submission_uri, NAMESPACES)
-
+            # expect submission from version control system
+            # => figure out which system
+            # print(NAMESPACES)
+            metadata_element = submission_element.find(".//praktomat:meta-data", NAMESPACES)
+            if metadata_element is not None:
+                source_element = metadata_element.find(".//praktomat:source", NAMESPACES)
+                git_element = source_element.find(".//praktomat:git", NAMESPACES)
+                if git_element is not None:
+                    logger.debug('GIT submission')
+                    return get_submission_files_from_git(submission_uri, NAMESPACES)
+                svn_element = source_element.find(".//praktomat:svn", NAMESPACES)
+                if svn_element is not None:
+                    logger.debug('SVN submission')
+                    return get_submission_files_from_svn(submission_uri, NAMESPACES)
+                raise Exception('cannot determine source of external submission')
+            else:
+                # SVN:
+                # export submission from URI
+                logger.debug('SVN submission')
+                return get_submission_files_from_svn(submission_uri, NAMESPACES)
 
     #embedded submission
     logger.debug('embedded submission')
@@ -555,15 +577,17 @@ def get_submission_files_from_svn(submission_uri, NAMESPACES):
     return submission_files_dict, versioncontrolinfo
 
 
-# TODO...
 def get_submission_files_from_git(submission_uri, NAMESPACES):
+    """ get submission from gitlab/github or somewhere else """
+
     from utilities.safeexec import execute_arglist
     from django.conf import settings
 
+    submission_uri = submission_uri.strip()
     folder = tempfile.mkdtemp()
     tmp_dir = os.path.join(folder, "submission")
-    cmd = ['git', 'clone', submission_uri, 'C', tmp_dir]
-    # logger.debug(cmd)
+    cmd = ['git', 'clone', submission_uri, tmp_dir]
+    logger.debug(cmd)
     # fileseeklimit: do not limit here!
     [output, error, exitcode, timed_out, oom_ed] = \
         execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,

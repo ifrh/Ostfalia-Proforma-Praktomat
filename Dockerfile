@@ -32,7 +32,7 @@ ENV LC_ALL ${LOCALE}
 #    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 
-RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo
+RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo subversion git
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
 # Java:
@@ -53,7 +53,7 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
-RUN apt-get update && apt-get install -y subversion cmake libcunit1 libcunit1-dev googletest pkg-config && \
+RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
     mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install .
 
 # ADD UNIX USERS
