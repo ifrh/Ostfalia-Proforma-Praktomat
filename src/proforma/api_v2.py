@@ -577,6 +577,7 @@ def get_submission_files_from_svn(submission_uri, NAMESPACES):
     return submission_files_dict, versioncontrolinfo
 
 
+
 def get_submission_files_from_git(submission_uri, NAMESPACES):
     """ get submission from gitlab/github or somewhere else """
 
@@ -584,15 +585,33 @@ def get_submission_files_from_git(submission_uri, NAMESPACES):
     from django.conf import settings
 
     submission_uri = submission_uri.strip()
+
+    user = os.environ['GITUSER']
+    token = os.environ['GITPASS']
+    if user is not None:
+        user = user.strip()
+        if len(user) > 0:
+            if token is not None:
+                token = token.strip()
+            else:
+                token = ""
+            # we have credentials. Place them into uri.
+            # https://username@github.com/username/repository.git
+            # https://username:password@github.com/username/repository.git
+            submission_uri = submission_uri.replace('://', '://' + user + ':' + token + '@')
+
+    # do not print, credentials are visible in commandline
+    # print(submission_uri)
+
     folder = tempfile.mkdtemp()
     tmp_dir = os.path.join(folder, "submission")
     cmd = ['git', 'clone', submission_uri, tmp_dir]
     logger.debug(cmd)
     # fileseeklimit: do not limit here!
     [output, error, exitcode, timed_out, oom_ed] = \
-        execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
-                        fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
-                        extradirs=[], unsafe=True)
+    execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
+                    fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
+                    extradirs=[], unsafe=True)
 
     if exitcode != 0:
         message = ''
@@ -615,7 +634,7 @@ def get_submission_files_from_git(submission_uri, NAMESPACES):
 #            revision = m.group('revision')
 #        logger.debug("SVN revision is: " + revision)
 
-    versioncontrolinfo = Subversion(submission_uri, None)
+    versioncontrolinfo = Git(submission_uri, None)
 
     # create filename dictionary
     submission_files_dict = dict()
