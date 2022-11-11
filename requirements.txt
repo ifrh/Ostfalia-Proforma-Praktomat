@@ -10,8 +10,11 @@ lxml==4.9.1
 # for getting shared objects for sandbox
 lddcollect==0.2.0
 
+
 psycopg2-binary==2.9.3
-Pygments==2.11.2
+
+# Pygments is used for highlighting in 'Isabelle'
+# Pygments==2.11.2
 
 # for python unittests
 unittest-xml-reporting==3.2.0
