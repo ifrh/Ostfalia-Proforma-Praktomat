@@ -83,7 +83,7 @@ def load_defaults(settings):
 
         # ./manage.py runserver_plus allows for debugging on werkzeug traceback page. invoke error with assert false
         # not needed for production
-        'django_extensions',
+        # 'django_extensions',
 
 #        'configuration', # not needed for Proforma
         'accounts',
@@ -322,17 +322,17 @@ def load_defaults(settings):
     # This is actually a django setting, but depends on a praktomat setting:
     d.LOGIN_URL = 'login'
 
-    if DEBUG:
+    # if DEBUG:
         # Setup for the debug toolbar
-        settings['INSTALLED_APPS'] = ('debug_toolbar',) + settings['INSTALLED_APPS']
-        settings['MIDDLEWARE'] = [
-            'debug_toolbar.middleware.DebugToolbarMiddleware',
-        ] + settings['MIDDLEWARE']
+        # settings['INSTALLED_APPS'] = ('debug_toolbar',) + settings['INSTALLED_APPS']
+        # settings['MIDDLEWARE'] = [
+        #    'debug_toolbar.middleware.DebugToolbarMiddleware',
+        # ] + settings['MIDDLEWARE']
 
-    d.DEBUG_TOOLBAR_PATCH_SETTINGS = False
-    d.DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': 'settings.defaults.show_toolbar',
-    }
+    # d.DEBUG_TOOLBAR_PATCH_SETTINGS = False
+    # d.DEBUG_TOOLBAR_CONFIG = {
+    #     'SHOW_TOOLBAR_CALLBACK': 'settings.defaults.show_toolbar',
+    # }
 
     d.LOGGING = {
         'version': 1,

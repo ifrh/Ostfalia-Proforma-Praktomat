@@ -46,8 +46,8 @@ echo "from django.contrib.auth.models import User; User.objects.create_superuser
 echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | python3 ./src/manage-docker.py shell
 
 # update media folder for nginx to serve static django files
-echo "collect static files for webserver"
-python3 ./src/manage-docker.py collectstatic -i tiny_mce -i django_tinymce  -i django_extensions  --noinput || exit
+# echo "collect static files for webserver"
+# python3 ./src/manage-docker.py collectstatic -i tiny_mce -i django_tinymce  -i django_extensions  --noinput || exit
 #save it output the file
 echo $DATABASE_INITIALISED > "/praktomat/.DATABASE_INITIALISED"
 echo "Database has been initialised successfully"  
