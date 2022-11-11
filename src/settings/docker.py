@@ -28,9 +28,9 @@ BASE_PATH = '/'
 ALLOWED_HOSTS = [ '*', ]
 
 # URL to use when referring to static files.
-STATIC_URL = BASE_PATH + 'static/'
+# STATIC_URL = BASE_PATH + 'static/'
 
-STATIC_ROOT = "/praktomat/static"
+# STATIC_ROOT = "/praktomat/static"
 #STATIC_ROOT = join(dirname(PRAKTOMAT_PATH), "static")
 
 TEST_MAXLOGSIZE=64

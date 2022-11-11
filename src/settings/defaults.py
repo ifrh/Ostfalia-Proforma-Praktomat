@@ -78,15 +78,12 @@ def load_defaults(settings):
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.admin',
-        'django.contrib.admindocs',
-        'django.contrib.staticfiles',
+        # 'django.contrib.admindocs',
+        # 'django.contrib.staticfiles',
 
         # ./manage.py runserver_plus allows for debugging on werkzeug traceback page. invoke error with assert false
         # not needed for production
         'django_extensions',
-
-        # contains a widget to render a form field as a TinyMCE editor
-        # 'tinymce',
 
 #        'configuration', # not needed for Proforma
         'accounts',
@@ -119,11 +116,11 @@ def load_defaults(settings):
     # URL and file paths
     # Template file path is set in template section
 
-    d.STATICFILES_DIRS = (
-        join(PRAKTOMAT_ROOT, "media"),
-    )
+    # d.STATICFILES_DIRS = (
+    #    join(PRAKTOMAT_ROOT, "media"),
+    # )
 
-    d.STATIC_ROOT = join(PRAKTOMAT_ROOT, "static")
+    # d.STATIC_ROOT = join(PRAKTOMAT_ROOT, "static")
 
 
     # This directory is used to compiling and running the users code.
@@ -140,14 +137,14 @@ def load_defaults(settings):
     # If not None, this will be used as the base path for asset definitions
     # (the Media class) and the staticfiles app.
     # It must end in a slash if set to a non-empty value.
-    d.STATIC_URL = BASE_PATH + 'static/'
+    # d.STATIC_URL = BASE_PATH + 'static/'
 
     # The URL prefix for admin media - CSS, JavaScript and images used by the
     # Django administrative interface. Make sure to use a trailing slash, and to
     # have this be different from the MEDIA_URL setting (since the same URL cannot
     # be mapped onto two different sets of files). For integration with
     # staticfiles, this should be the same as STATIC_URL followed by 'admin/'.
-    d.ADMIN_MEDIA_PREFIX = STATIC_URL + 'admin/'
+    # d.ADMIN_MEDIA_PREFIX = STATIC_URL + 'admin/'
 
     # Security
 
