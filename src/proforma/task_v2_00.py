@@ -99,7 +99,7 @@ class Praktomat_Task_2_00:
     def __init__(self):
         self._task = Task.objects.create(title="test",
                                          description="",
-                                         submission_date=datetime.now(),
+                                         # submission_date=datetime.now(),
                                          publication_date=datetime.now())
 
     def _getTask(self):

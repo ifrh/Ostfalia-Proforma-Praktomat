@@ -134,7 +134,8 @@ def importTask(task_xml, dict_zip_files):
         return response
 
     #TODO datetime max?
-    newTask = Task.objects.create(title="test", description=xmlTask.description.text, submission_date=datetime.now(), publication_date=datetime.now())
+    newTask = Task.objects.create(title="test", description=xmlTask.description.text, publication_date=datetime.now())
+                                  # submission_date=datetime.now(), publication_date=datetime.now())
     if (xmlTask.xpath("proforma:submission-restrictions", namespaces=ns) is None) \
        or xmlTask.xpath("proforma:submission-restrictions", namespaces=ns) is False:
         newTask.delete()

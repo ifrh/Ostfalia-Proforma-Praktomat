@@ -8,15 +8,11 @@ import shutil
 from django.apps import apps
 from django.db import models
 from django.db import transaction
-from django import db
 from django.core import serializers
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-from django.db.models import Max
 
-# from configuration import get_settings
 
-from utilities.deleting_file_field import DeletingFileField
 from utilities.safeexec import execute_arglist
 
 import logging
@@ -26,7 +22,7 @@ class Task(models.Model):
     title = models.CharField(max_length=100, help_text = _("The name of the task"))
     description = models.TextField(help_text = _("Description of the assignment."))
     publication_date = models.DateTimeField(help_text = _("The time on which the user will see the task."))
-    submission_date = models.DateTimeField(help_text = _("The time up until the user has time to complete the task. This time will be extended by one hour for those who just missed the deadline."))
+    # unused in Proforma    submission_date = models.DateTimeField(help_text = _("The time up until the user has time to complete the task. This time will be extended by one hour for those who just missed the deadline."))
     supported_file_types = models.CharField(max_length=1000, default ="^(text/.*|image/.*|application/pdf)$", help_text = _("Regular Expression describing the mime types of solution files that the user is allowed to upload."))
     max_file_size = models.IntegerField(default=1000, help_text = _("The maximum size of an uploaded solution file in kilobyte."))
     # unused in Proforma    model_solution = models.ForeignKey('solutions.Solution', on_delete=models.SET_NULL, blank=True, null=True, related_name='model_solution_task')
@@ -43,7 +39,8 @@ class Task(models.Model):
     proformatask_title = models.TextField(editable=False, null=True, help_text = _("title of proforma task"))
 
     class Meta:
-        ordering = ['submission_date', 'title']
+        ordering = ['title']
+#        ordering = ['submission_date', 'title']
 
     def __str__(self):
         return self.title
@@ -57,19 +54,19 @@ class Task(models.Model):
         solutions = self.solution_set.filter(author=user, final=True)
         return solutions.first()
 
-    def expired(self):
-        """returns whether the task has expired"""
-        return self.submission_date + timedelta(hours=1) < datetime.now()
+#    def expired(self):
+#        """returns whether the task has expired"""
+#        return self.submission_date + timedelta(hours=1) < datetime.now()
 
-    def check_all_final_solutions(self):
-        from checker.basemodels import check_multiple
-        final_solutions = self.solution_set.filter(final=True)
-        count = check_multiple(final_solutions, True)
-
-        if self.expired():
-                self.all_checker_finished = True
-                self.save()
-        return final_solutions.count()
+#    def check_all_final_solutions(self):
+#        from checker.basemodels import check_multiple
+#        final_solutions = self.solution_set.filter(final=True)
+#        count = check_multiple(final_solutions, True)
+#
+#        if self.expired():
+#                self.all_checker_finished = True
+#                self.save()
+#        return final_solutions.count()
 
     def get_checkers(self):
         from checker.basemodels import Checker

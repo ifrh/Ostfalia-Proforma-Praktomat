@@ -290,39 +290,8 @@ def load_defaults(settings):
     # Make sure uploaded solution are not work-readable
     d.FILE_UPLOAD_PERMISSIONS = 0o640
 
-    # No Shibboleth for proforma
-    # This enables Shibboleth support.
-    # In order to actually get it working, you need to protect the location
-    # .../accounts/shib_login in the apache configuration, e.g. with this
-    # stanca:
-    #    <Location /shibtest/accounts/shib_login>
-    #        Order deny,allow
-    #        AuthType shibboleth
-    #        ShibRequireSession On
-    #        Require valid-user
-    #    </Location>
-    #
-    # You probably want to disable REGISTRATION_POSSIBLE if you enable
-    # Shibboleth support
-    #d.SHIB_ENABLED = False
-
-    #d.SHIB_ATTRIBUTE_MAP = {
-    #    "mail": (True, "email"),
-    #    "givenName": (True, "first_name"),
-    #    "sn": (True, "last_name"),
-    #    "matriculationNumber": (False, "matriculationNumber"),
-    #    "fieldOfStudyText": (False, "programme"),
-    #}
-
-    # d.SHIB_USERNAME = "email"
-    # d.SHIB_PROVIDER = "kit.edu"
-    
     # URL to the MOTD page which will be shown on login page and task list
     d.SYSADMIN_MOTD_URL = None
-
-    # Set this to False to disable registration via the website, e.g. when
-    # Single Sign On is used
-    # d.REGISTRATION_POSSIBLE = True
 
     # Length of timeout applied whenever an external check that runs a students
     # submission is executed,
@@ -354,9 +323,6 @@ def load_defaults(settings):
     d.TEST_RUNNER = 'utilities.TestSuite.TestSuiteRunner'
 
     # This is actually a django setting, but depends on a praktomat setting:
-    # if SHIB_ENABLED:
-    #     d.LOGIN_URL = 'shib_hello'
-    # else:
     d.LOGIN_URL = 'login'
 
     if DEBUG:

@@ -68,7 +68,7 @@ class TestStaffViews(TestCase):
 
     def test_task_run_all_checker(self):
         # needs to be expired first
-        self.task.submission_date = datetime.now() - timedelta(hours=2)
+        # self.task.submission_date = datetime.now() - timedelta(hours=2)
         self.task.save()
 
         # TODO: Create checker for test task!

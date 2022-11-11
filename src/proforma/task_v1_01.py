@@ -98,7 +98,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
 
     new_task = Task.objects.create(title="test",
                                    description=xml_task.description.text,
-                                   submission_date=datetime.now(),
+                                   # submission_date=datetime.now(),
                                    publication_date=datetime.now())
 
     try:

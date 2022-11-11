@@ -6,15 +6,12 @@ import random
 from functools import reduce
 
 from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
 from django.db import models, utils
 from django.contrib.auth.models import User as BasicUser, UserManager
 from django.db.models import signals
-from django.core.validators import RegexValidator
 from django.core import serializers
 from django.db.transaction import atomic
 
-# from configuration import get_settings
 
 
 # def validate_mat_number(value):
@@ -24,10 +21,10 @@ from django.db.transaction import atomic
 
 class User(BasicUser):
     # all fields need to be null-able in order to create user
-    tutorial = models.ForeignKey('Tutorial', on_delete=models.SET_NULL, null=True, blank=True, help_text = _("The tutorial the student belongs to."))
-    mat_number = models.IntegerField( null=True, blank=True) # , validators=[validate_mat_number]) # special blank and unique validation in forms
-    final_grade = models.CharField( null=True, blank=True, max_length=100,  help_text = _('The final grade for the whole class.'))
-    programme = models.CharField(null=True, blank=True, max_length=100, help_text = _('The programme the student is enlisted in.'))
+    # tutorial = models.ForeignKey('Tutorial', on_delete=models.SET_NULL, null=True, blank=True, help_text = _("The tutorial the student belongs to."))
+    # mat_number = models.IntegerField( null=True, blank=True) # , validators=[validate_mat_number]) # special blank and unique validation in forms
+    # final_grade = models.CharField( null=True, blank=True, max_length=100,  help_text = _('The final grade for the whole class.'))
+    # programme = models.CharField(null=True, blank=True, max_length=100, help_text = _('The programme the student is enlisted in.'))
     activation_key=models.CharField(_('activation key'), max_length=40, editable=False)
 
     # Use UserManager to get the create_user method, etc.
@@ -83,8 +80,8 @@ class User(BasicUser):
 
         3.     If an other user already activated an account with the same matnumber this method returns ``False``.
         """
-        dublicate_matnumber = User.objects.filter(mat_number=self.mat_number, is_active=True).count() >= 1
-        return not self.is_activated() and not self.activation_key_expired() and not dublicate_matnumber
+        #dublicate_matnumber = User.objects.filter(mat_number=self.mat_number, is_active=True).count() >= 1
+        return not self.is_activated() and not self.activation_key_expired() # and not dublicate_matnumber
     can_activate.boolean = True
 
     def activate_user(activation_key):
@@ -117,8 +114,8 @@ class User(BasicUser):
             return False
     activate_user = staticmethod(activate_user)
 
-    def is_shibboleth_user(self):
-        return not self.has_usable_password()
+    # def is_shibboleth_user(self):
+    #    return not self.has_usable_password()
 
     # Cache group membership for users
     def cached_groups(self):
@@ -155,8 +152,8 @@ class User(BasicUser):
             object = deserialized_object.object
             if isinstance(object, User):
                 try:
-                    object.tutorial = None
-                    object.final_grade = None
+                    # object.tutorial = None
+                    # object.final_grade = None
                     object.user_ptr = basicUser_id_map[int(object.pk)]    # object.id is null! so parse id.
                     deserialized_object.save()
                     imported_user_ids.append(object.pk)
@@ -194,14 +191,14 @@ def create_user_for_basicuser(sender, **kwargs):
         u.save()
 signals.post_save.connect(create_user_for_basicuser, sender=BasicUser)
 
-class Tutorial(models.Model):
-    name = models.CharField(max_length=100, blank=True, help_text=_("The name of the tutorial"))
-    # A Tutorial may have many tutors as well as a Tutor may have multiple tutorials
-    tutors = models.ManyToManyField('User', limit_choices_to = {'groups__name': 'Tutor'}, related_name='tutored_tutorials', help_text = _("The tutors in charge of the tutorial."))
-
-    def tutors_flat(self):
-        return reduce(lambda x, y: x + ', ' + y.get_full_name(), self.tutors.all(), '')[2:]
-    tutors_flat.short_description = _('Tutors')
-
-    def __str__(self):
-        return("%s: %s" % (self.name, self.tutors_flat()))
+#class Tutorial(models.Model):
+#    name = models.CharField(max_length=100, blank=True, help_text=_("The name of the tutorial"))
+#    # A Tutorial may have many tutors as well as a Tutor may have multiple tutorials
+#    tutors = models.ManyToManyField('User', limit_choices_to = {'groups__name': 'Tutor'}, related_name='tutored_tutorials', help_text = _("The tutors in charge of the tutorial."))
+#
+#    def tutors_flat(self):
+#        return reduce(lambda x, y: x + ', ' + y.get_full_name(), self.tutors.all(), '')[2:]
+#    tutors_flat.short_description = _('Tutors')
+#
+#    def __str__(self):
+#        return("%s: %s" % (self.name, self.tutors_flat()))

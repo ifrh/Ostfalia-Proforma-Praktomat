@@ -89,10 +89,6 @@ PRIVATE_KEY = join(dirname(dirname(dirname(__file__))), 'examples', 'certificate
 CERTIFICATE = join(dirname(dirname(dirname(__file__))), 'examples', 'certificates', 'signer.pem')
 SECRET_KEY = "not-so-secret"
 
-# Enable Shibboleth:
-# SHIB_ENABLED = True
-# REGISTRATION_POSSIBLE = False
-
 SYSADMIN_MOTD_URL = "https://praktomat.cs.kit.edu/sysadmin_motd.html"
 
 # Use a dedicated user to test submissions

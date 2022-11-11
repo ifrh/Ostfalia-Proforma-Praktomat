@@ -51,7 +51,7 @@ class ScriptChecker(Checker):
 
         environ = {}
         environ['USER'] = str(env.user().id)
-        environ['USER_MATR'] = str(env.user().mat_number)
+        # environ['USER_MATR'] = str(env.user().mat_number)
         environ['SOLUTION_ID'] = str(env.solution().id)
         environ['HOME'] = env.tmpdir()
         environ['JAVA'] = settings.JVM

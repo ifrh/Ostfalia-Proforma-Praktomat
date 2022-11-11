@@ -69,7 +69,7 @@ class SeleniumTestCase(LiveServerTestCase):
 
 
 
-from accounts.models import User, Tutorial
+from accounts.models import User #, Tutorial
 from django.contrib.auth.models import Group
 from tasks.models import Task
 from solutions.models import Solution, SolutionFile
@@ -92,13 +92,13 @@ def create_test_data():
     tutor = User.objects.create_user('tutor', 'trainer@praktomat.com', 'demo')
     tutor.groups.add(Group.objects.get(name='Tutor'))
 
-    tutorial = Tutorial.objects.create(name='Tutorial 1')
-    tutorial.tutors.add(tutor)
+    #tutorial = Tutorial.objects.create(name='Tutorial 1')
+    #tutorial.tutors.add(tutor)
 
     user = User.objects.create_user('user', 'user@praktomat.com', 'demo')
     user.groups.add(Group.objects.get(name='User'))
-    user.tutorial = tutorial
-    user.mat_number = 11111
+    #user.tutorial = tutorial
+    #user.mat_number = 11111
     user.save()
 
     # Tasks
@@ -106,7 +106,7 @@ def create_test_data():
             title = 'Test task',
             description = 'Test description.',
             publication_date = datetime.now() - timedelta(hours=5),
-            submission_date =  datetime.now() + timedelta(hours=5)
+            # submission_date =  datetime.now() + timedelta(hours=5)
             #model_solution
             #all_checker_finished = False
             #final_grade_rating_scale =

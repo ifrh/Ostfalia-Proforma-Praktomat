@@ -18,7 +18,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
-from django.core.mail import EmailMessage
 
 from accounts.models import User
 from utilities import encoding, file_operations
@@ -329,7 +328,8 @@ def get_solutions_zip(solutions,include_file_copy_checker_files=False):
     return zip_file
 
 def path_for_user(user):
-    return user.get_full_name()+'-'+str(user.mat_number)+'-'+str(user.id)
+    return user.get_full_name()+'-'+str(user.id)
+#    return user.get_full_name()+'-'+str(user.mat_number)+'-'+str(user.id)
 
 def path_for_task(task):
     return task.title
