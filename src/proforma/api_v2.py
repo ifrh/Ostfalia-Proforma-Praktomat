@@ -82,18 +82,18 @@ class PhysicalFile:
 
 # class for storing information about source control
 class VersionControlSystem:
-    def __init__(self, type, uri, revision = None):
-        self.system = type
+    def __init__(self, vcstype, uri, revision=None):
+        self.system = vcstype
         self.uri = uri
         self.revision = revision
 
 class Subversion(VersionControlSystem):
     def __init__(self, uri, revision):
-        VersionControlSystem.__init__('SVN', uri, revision)
+        super().__init__('Subversion', uri, revision)
 
 class Git(VersionControlSystem):
     def __init__(self, uri, commit):
-        VersionControlSystem.__init__('GIT', uri, commit)
+        super().__init__('Git', uri, commit)
 
 
 def grade_api_v2(request,):
@@ -598,14 +598,14 @@ def get_submission_files_from_git(submission_uri, NAMESPACES):
             # we have credentials. Place them into uri.
             # https://username@github.com/username/repository.git
             # https://username:password@github.com/username/repository.git
-            submission_uri = submission_uri.replace('://', '://' + user + ':' + token + '@')
+            submission_with_creadentials_uri = submission_uri.replace('://', '://' + user + ':' + token + '@')
 
     # do not print, credentials are visible in commandline
     # print(submission_uri)
 
     folder = tempfile.mkdtemp()
     tmp_dir = os.path.join(folder, "submission")
-    cmd = ['git', 'clone', submission_uri, tmp_dir]
+    cmd = ['git', 'clone', submission_with_creadentials_uri, tmp_dir]
     logger.debug(cmd)
     # fileseeklimit: do not limit here!
     [output, error, exitcode, timed_out, oom_ed] = \
