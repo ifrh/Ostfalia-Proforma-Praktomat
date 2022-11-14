@@ -218,6 +218,7 @@ In case of a software update this is the recommended process:
 
 1. `docker compose down`
 2. update software (e.g. `git pull`)
-3. `docker dompose build`    
-4. `docker dompose up` 
+3. ./remove_migrations.sh (delete old build files) 
+4. `docker dompose build`    
+5. `docker dompose up` 
 
