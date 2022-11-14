@@ -132,6 +132,9 @@ CHECKSTYLE_VER['check-8.29'] = '/praktomat/lib/checkstyle-8.29-all.jar'
 CHECKSTYLE_VER['check-10.1'] = '/praktomat/lib/checkstyle-10.1-all.jar'
 
 
+GIT_LOG_FORMAT = "--oneline" # short hash message
+# GIT_LOG_FORMAT = "--pretty=format:%H" # only full hash
+
 JCFDUMP = 'jcf-dump'
 SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 

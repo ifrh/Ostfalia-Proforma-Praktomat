@@ -541,18 +541,7 @@ def get_submission_files_from_svn(submission_uri, NAMESPACES):
                         fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
                         extradirs=[], unsafe=True)
 
-    if exitcode != 0:
-        message = ''
-        if error != None:
-            logger.debug('error: ' + str(error))
-            message += error + ' '
-        if output != None:
-            logger.debug('output: ' + str(output))
-            message += output
-        raise ExternalSubmissionException(message)
-    if timed_out:
-        raise ExternalSubmissionException('timeout when getting svn submission')
-
+    check_exitcode(error, exitcode, output, timed_out)
     # logger.debug('SVN-output: ' + output)
     # find revision
     m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
@@ -606,37 +595,28 @@ def get_submission_files_from_git(submission_uri, NAMESPACES):
     folder = tempfile.mkdtemp()
     tmp_dir = os.path.join(folder, "submission")
     cmd = ['git', 'clone', submission_with_creadentials_uri, tmp_dir]
-    logger.debug(cmd)
     # fileseeklimit: do not limit here!
     [output, error, exitcode, timed_out, oom_ed] = \
     execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
                     fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
                     extradirs=[], unsafe=True)
+    check_exitcode(error, exitcode, output, timed_out)
 
-    if exitcode != 0:
-        message = ''
-        if error != None:
-            logger.debug('error: ' + str(error))
-            message += error + ' '
-        if output != None:
-            logger.debug('output: ' + str(output))
-            message += output
-        raise ExternalSubmissionException(message)
-    if timed_out:
-        raise ExternalSubmissionException('timeout when getting git submission')
 
-    # logger.debug('GIT-output: ' + output)
-    # find revision
-#    m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
-#    revision = 'unknown revision'
-#    if m:
-#        if m.group('revision') is not None:
-#            revision = m.group('revision')
-#        logger.debug("SVN revision is: " + revision)
+    # find commit
+    # cmd = ['git', 'log', '-1', '--pretty=format:%H']
+    cmd = ['git', 'log', '-1', settings.GIT_LOG_FORMAT]
 
-    versioncontrolinfo = Git(submission_uri, None)
+    [output, error, exitcode, timed_out, oom_ed] = \
+    execute_arglist(cmd, tmp_dir, environment_variables={}, timeout=settings.TEST_TIMEOUT,
+                    fileseeklimit=settings.TEST_MAXFILESIZE,
+                    extradirs=[], unsafe=True)
+    check_exitcode(error, exitcode, output, timed_out)
+    logger.debug(output)
 
-    # create filename dictionary
+    versioncontrolinfo = Git(submission_uri, output.strip())
+
+    # create filenames dictionary
     submission_files_dict = dict()
     import glob
     for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
@@ -647,6 +627,22 @@ def get_submission_files_from_git(submission_uri, NAMESPACES):
         # logger.debug('add ' + str(shortname))
         submission_files_dict[shortname] = PhysicalFile(file_name)
     return submission_files_dict, versioncontrolinfo
+
+
+def check_exitcode(error, exitcode, output, timed_out):
+    if exitcode != 0:
+        message = ''
+        if error != None:
+            logger.debug('error: ' + str(error))
+            message += error + ' '
+        if output != None:
+            logger.debug('output: ' + str(output))
+            message += output
+        raise ExternalSubmissionException(message)
+
+    if timed_out:
+        raise ExternalSubmissionException('timeout')
+
 
 
 
