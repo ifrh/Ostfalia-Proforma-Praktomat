@@ -17,7 +17,7 @@ ARG LOCALE=de_DE.UTF-8
 ARG DEBIAN_FRONTEND=noninteractive
 
 # change locale to something UTF-8
-RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE}
+RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE} && rm -rf /var/lib/apt/lists/*
 ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
 
@@ -32,7 +32,9 @@ ENV LC_ALL ${LOCALE}
 #    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 
-RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo subversion git
+RUN apt-get update && \
+    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo subversion git && \
+    rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
 # Java:
@@ -50,7 +52,7 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3-p
 ###RUN sudo apt-get update && apt-get install -y bellsoft-java17
 
 # Install Java 17 and JavaFX
-RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx
+RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx && rm -rf /var/lib/apt/lists/*
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
 RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
@@ -63,15 +65,13 @@ RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletes
 # RUN apt-get update && apt-get -y install sudo
 
 # create group praktomat
-RUN groupadd -g 999 praktomat
-
-# add user praktomat (uid=999)
-RUN useradd -g 999 -u 999 praktomat -s /bin/sh --no-create-home -c "Praktomat Demon" && \
-   usermod -aG sudo praktomat && \
-   echo "praktomat:$PASSWORD" | sudo chpasswd
-
-# add user tester (uid=1000)
-RUN useradd -g 999 -u 1000 tester -s /bin/false --no-create-home -c "Test Exceution User"
+RUN groupadd -g 999 praktomat && \
+# add user praktomat (uid=999) \
+  useradd -g 999 -u 999 praktomat -s /bin/sh --no-create-home -c "Praktomat Demon" && \
+  usermod -aG sudo praktomat && \
+  echo "praktomat:$PASSWORD" | sudo chpasswd && \
+# add user tester (uid=1000) \
+  useradd -g 999 -u 1000 tester -s /bin/false --no-create-home -c "Test Exceution User"
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
@@ -82,8 +82,9 @@ echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 RUN mkdir /praktomat && chown 999:999 /praktomat
 WORKDIR /praktomat
 ADD --chown=999:999 requirements.txt /praktomat/
-RUN pip3 install --upgrade pip && pip3 --version
-RUN pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
+RUN pip3 install --upgrade pip && \
+    pip3 --version && \
+    pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
 
 
 COPY . /praktomat
@@ -114,9 +115,7 @@ RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.z
 # JUnit 5
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar /praktomat/lib/
 
-RUN pip3 list
-RUN python3 --version
-RUN java -version
+RUN pip3 list && python3 --version && java -version
 
 # set permissions
 RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
@@ -128,7 +127,7 @@ RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
 # RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
 
-# clean packages
+# clean packages??? Does it make sense?
 RUN apt-get clean
 RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* && apt-get autoremove -y
 
