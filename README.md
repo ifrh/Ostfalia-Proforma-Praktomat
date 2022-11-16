@@ -111,7 +111,7 @@ In order to build and start the docker composition simply run
     docker compose build
     docker compose up
       
-        
+     
 
 ## ProFormA API (CURL)
 
@@ -141,11 +141,17 @@ A typical grading HTTP request in CURL is
 
 with the following 'submission.xml'
 
-
     <?xml version="1.0" encoding="utf-8"?>
-    <submission xmlns="urn:proforma:v2.0">
-        <external-task uuid="{UUID}">http-file:{taskfilename}</external-task>
-        <external-submission>http-file:{solutionfilename}</external-submission>
+    <submission 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xmlns="urn:proforma:v2.1" xmlns:praktomat="urn:proforma:praktomat:v2.3">
+
+        <external-task uuid="{UUID}">
+            <uri>http-file:{taskfilename}</uri>
+        </external-task>
+        <external-submission>
+            <uri>http-file:{solutionfilename}</uri>
+        </external-submission>
         <lms url="{your URI}">
             <submission-datetime>{timestamp}</submission-datetime>
             <user-id>{user id}</user-id>
@@ -155,6 +161,7 @@ with the following 'submission.xml'
             <student-feedback-level>{level}</student-feedback-level>
             <teacher-feedback-level>{level}</teacher-feedback-level>
         </result-spec>
+
     </submission>"
 
 `submission.xml` can be transferred as a separate file or simply as data.
@@ -165,7 +172,7 @@ Note that embedding the student submission file(s) into `submission.xml` as `emb
 
 A sample for a timestamp is:
 
-        2019-04-03T01:01:01+01:00
+        2022-04-03T01:01:01+01:00
 
 
 #### Submission with more than one file
