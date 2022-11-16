@@ -8,9 +8,7 @@
     <external-submission>
         <uri>https://code.ostfalia.de/svn/i-audss2019/Gruppe1/invalid/path</uri>        
         <praktomat:meta-data>
-            <praktomat:source>
-                <praktomat:git/>
-            </praktomat:source>
+			<praktomat:git/>
         </praktomat:meta-data>
     </external-submission>
     <lms url="testcase">

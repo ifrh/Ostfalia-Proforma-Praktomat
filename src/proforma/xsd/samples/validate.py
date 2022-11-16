@@ -16,8 +16,8 @@ def validate_xml(xml, xsdfile):
     # print("XML schema validation succeeded\n")
 
 
-print("validate proforma_2.1.xsd")
-schema = xmlschema.XMLSchema("../proforma_2.1.xsd")
+#print("validate proforma_2.1.xsd")
+#schema = xmlschema.XMLSchema("../proforma_2.1.xsd")
 print("validate praktomat_2.3.xsd")
 schema = xmlschema.XMLSchema("../praktomat_2.3.xsd")
 print("validate proforma_full_v2.1.xsd")
