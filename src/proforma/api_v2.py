@@ -89,7 +89,7 @@ class VersionControlSystem:
 
 class Subversion(VersionControlSystem):
     def __init__(self, uri, revision):
-        super().__init__('Subversion', uri, revision)
+        super().__init__('SVN', uri, revision)
 
 class Git(VersionControlSystem):
     def __init__(self, uri, commit):
@@ -475,12 +475,11 @@ def get_submission_files(root, request, NAMESPACES):
             # print(NAMESPACES)
             metadata_element = submission_element.find(".//praktomat:meta-data", NAMESPACES)
             if metadata_element is not None:
-                source_element = metadata_element.find(".//praktomat:source", NAMESPACES)
-                git_element = source_element.find(".//praktomat:git", NAMESPACES)
+                git_element = metadata_element.find(".//praktomat:git", NAMESPACES)
                 if git_element is not None:
                     logger.debug('GIT submission')
                     return get_submission_files_from_git(submission_uri, NAMESPACES)
-                svn_element = source_element.find(".//praktomat:svn", NAMESPACES)
+                svn_element = metadata_element.find(".//praktomat:svn", NAMESPACES)
                 if svn_element is not None:
                     logger.debug('SVN submission')
                     return get_submission_files_from_svn(submission_uri, NAMESPACES)
@@ -532,6 +531,7 @@ def get_submission_files_from_svn(submission_uri, NAMESPACES):
 
     folder = tempfile.mkdtemp()
     tmp_dir = os.path.join(folder, "submission")
+    submission_uri = submission_uri.strip()
     cmd = ['svn', 'export', '--username', os.environ['SVNUSER'], '--password', os.environ['SVNPASS'], submission_uri,
            tmp_dir]
     # logger.debug(cmd)
