@@ -34,6 +34,9 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files import File
 from django.template.loader import render_to_string
 
+# from solutions.models import Solution
+
+
 import os
 import re
 import logging
@@ -197,6 +200,8 @@ def grade_api_v2(request,):
         logger.info("grading request for task " + task_filename)
         logger.debug('import task')
         proformatask = task.import_task_internal(task_filename, task_file)
+#        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
+
         grader = grade.Grader(proformatask, NAMESPACE)
 
         submission_files, version_control = get_submission_files(root, request, NAMESPACES) # returns a dictionary (filename -> content)
@@ -212,6 +217,7 @@ def grade_api_v2(request,):
         response = HttpResponse()
         response.write(grade_result)
         response.status_code = 200
+#        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
         return response
 
     except ExternalSubmissionException as inst:

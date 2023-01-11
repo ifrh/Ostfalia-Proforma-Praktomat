@@ -512,7 +512,7 @@ class Task_2_00:
         # check if task is already in database
         if CACHE_TASKS:
             old_task = task.get_task(self._hash, task_uuid, task_title)
-            if old_task != None:
+            if old_task is not None:
                 logger.debug('use cached task')
                 return old_task
 

@@ -1,11 +1,12 @@
 # debian does not run with this dockerfile
 # FROM debian:jessie
 # FROM debian:buster
-# FROM ubuntu:xenial
-# ubuntu 18.04 is very slow so we stay at 16
-#FROM ubuntu:bionic
-# Ubuntu 20.04 LTS
+# focal: Ubuntu 20.04 LTS
+# => Python 3.8
 FROM ubuntu:focal
+# jammy: Ubuntu 22.04 LTS
+# => Python 3.10
+# FROM ubuntu:jammy
 
 MAINTAINER Ostfalia
 

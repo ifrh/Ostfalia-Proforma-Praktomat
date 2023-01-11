@@ -111,8 +111,8 @@ class Grader:
         return lcxml
 
     def __del__(self):
-        logger.debug("delete")
-        if self.solution != None:
+        # logger.debug("delete")
+        if self.solution is not None:
             self.solution.delete()
             self.solution = None
 

@@ -217,10 +217,13 @@ with open('unittest_results.xml', 'wb') as output:
                     # copy module folder into sandbox
                     self.copy_module_into_sandbox(module, pythonbin, test_dir)
                     # add further libs
-                    if (module == 'numpy'):
+                    if module == 'numpy':
                         self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
-                    if (module == 'PIL'):
+                    if module == 'PIL':
                         self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
+                    if module == 'matplotlib':
+                        # create writable .config/matplotlib folder in order to suppress warning
+                        os.makedirs(test_dir + '/.config/matplotlib')
 
         #        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
 #        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
