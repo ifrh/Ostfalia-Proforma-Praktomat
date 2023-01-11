@@ -29,6 +29,8 @@ For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy t
 into the `extra` folder and rename it to `setlX-2.7.jar`.
 
 
+For test specific information look [here](documentation/proforma/tasks.md).
+
 #### Submission types
 
 The following types of submission are supported:

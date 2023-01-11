@@ -26,3 +26,17 @@ pkg-config is available for locating gtest and gmock. A valid CMakeList.txt file
         ## Link runTests with libraries
         add_executable(runTests tests.cpp x.cpp)
         target_link_libraries(runTests ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES} pthread)
+
+
+Alternative CMakeList.txt file for gtest only:
+
+        cmake_minimum_required(VERSION 3.14)
+        project(runTests)
+ 
+        # Locate GTest
+        find_package(GTest REQUIRED)
+        include_directories(${GTEST_INCLUDE_DIRS})
+ 
+        # Link runTests with what we want to test and the GTest and pthread library
+        add_executable(runTests tests.cpp)
+        target_link_libraries(runTests ${GTEST_LIBRARIES} pthread)
