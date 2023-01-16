@@ -203,7 +203,7 @@ def grade_api_v2(request,):
 #        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
 
         grader = grade.Grader(proformatask, NAMESPACE)
-
+        logger.debug(NAMESPACES)
         submission_files, version_control = get_submission_files(root, request, NAMESPACES) # returns a dictionary (filename -> content)
 
         # run tests
@@ -478,8 +478,10 @@ def get_submission_files(root, request, NAMESPACES):
         else:
             # expect submission from version control system
             # => figure out which system
-            # print(NAMESPACES)
-            metadata_element = submission_element.find(".//praktomat:meta-data", NAMESPACES)
+            metadata_element = None
+            if "praktomat" in NAMESPACES:
+                metadata_element = submission_element.find(".//praktomat:meta-data", NAMESPACES)
+
             if metadata_element is not None:
                 git_element = metadata_element.find(".//praktomat:git", NAMESPACES)
                 if git_element is not None:
