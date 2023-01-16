@@ -224,6 +224,8 @@ with open('unittest_results.xml', 'wb') as output:
                     if module == 'matplotlib':
                         # create writable .config/matplotlib folder in order to suppress warning
                         os.makedirs(test_dir + '/.config/matplotlib')
+                        os.makedirs(test_dir + '/.cache/matplotlib')
+                        # os.makedirs(test_dir + '/matplotlib')
 
         #        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
 #        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
