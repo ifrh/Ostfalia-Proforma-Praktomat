@@ -1,4 +1,5 @@
  # 4.15.0
  
+ * Bugfix handling Proforma request (submission) version 2.1 (new subelement uri)
  * required version in cmake is 3.1
  
