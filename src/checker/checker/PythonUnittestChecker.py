@@ -226,6 +226,7 @@ with open('unittest_results.xml', 'wb') as output:
                         os.makedirs(test_dir + '/.config/matplotlib')
                         os.makedirs(test_dir + '/.cache/matplotlib')
                         # os.makedirs(test_dir + '/matplotlib')
+                        os.environ['MPLCONFIGDIR'] = '/tmp/'
 
         #        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
 #        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
