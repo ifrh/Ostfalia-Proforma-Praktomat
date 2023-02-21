@@ -1,3 +1,12 @@
+# 4.15.2
+
+* grant permission for Ostfalia JUnit addon
+
+
+# 4.15.1
+
+* Bugfix checking SVN with 2.1 request format
+
  # 4.15.0
  
  * Bugfix handling Proforma request (submission) version 2.1 (new subelement uri)

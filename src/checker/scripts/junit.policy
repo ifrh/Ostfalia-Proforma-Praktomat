@@ -16,7 +16,9 @@ grant {
 	permission java.io.FilePermission "spielDieZombie.txt", "write";
 	permission java.io.FilePermission "spielDieZombie2.txt", "write";
 
-
+    // Ostfalia JUnit addon
+	permission java.util.PropertyPermission "JUnitAddOn.TestCondition", "read";
+	permission java.lang.RuntimePermission "getenv.JUnitAddOn.TestCondition";
 
     // JUnit5 with RunListener
 	permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
