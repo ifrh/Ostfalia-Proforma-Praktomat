@@ -180,12 +180,23 @@ with open('unittest_results.xml', 'wb') as output:
             # module is single file
             copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py", test_dir + '/' + modulename + '.py')
         else:
-            # module is folder
-            createlib = "(mkdir \"" + test_dir + "/" + modulename + "\" && cd / " + \
-                              "&& tar -chf - \"usr/local/lib/" + pythonbin + "/dist-packages/" + modulename + "\") | " + \
-                              "(cd " + test_dir + " && tar -xf -)"
-            # print(createlib)
-            os.system(createlib)
+            if os.path.isdir('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename):
+                # module is folder
+                createlib = "(mkdir \"" + test_dir + "/" + modulename + "\" && cd / " + \
+                                  "&& tar -chf - \"usr/local/lib/" + pythonbin + "/dist-packages/" + modulename + "\") | " + \
+                                  "(cd " + test_dir + " && tar -xf -)"
+                # logger.debug(createlib)
+                rc = os.system(createlib)
+            else:
+                logger.error('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
+
+    def include_ffi_for_pandas(self, newdir):
+        # logger.debug('include ffi')
+        # hack (requirements.txt should be evaluated properly)
+        from pathlib import Path
+        for path in Path('/').rglob('libffi.so'):
+            # print(path)
+            copy_file(path, newdir)
 
     def prepare_sandbox(self, env):
         logger.debug('Prepare sandbox')
@@ -219,6 +230,13 @@ with open('unittest_results.xml', 'wb') as output:
                     # add further libs
                     if module == 'numpy':
                         self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
+                    if module == 'pandas':
+                        # pandas also requires pytz, numpy (even if not listed in requirements.txt)
+                        self.copy_module_into_sandbox('pytz', pythonbin, test_dir)
+                        self.include_ffi_for_pandas(test_dir + '/' + pythonbin)
+                        # self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
+                        # self.copy_module_into_sandbox('ctypes', pythonbin, test_dir)
+                        # self.copy_module_into_sandbox('_ctypes', pythonbin, test_dir)
                     if module == 'PIL':
                         self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
                     if module == 'matplotlib':
