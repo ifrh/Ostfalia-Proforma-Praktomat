@@ -190,7 +190,7 @@ with open('unittest_results.xml', 'wb') as output:
                 # logger.debug(createlib)
                 rc = os.system(createlib)
             else:
-                logger.error('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
+                raise Exception('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
 
     def include_shared_object(self, filename, newdir):
         # hack (requirements.txt should be evaluated properly)
