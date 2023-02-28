@@ -135,7 +135,7 @@ class ProFormAChecker(Checker):
                         content = f.read(4)
                         # check for magic number for ELF files
                         if content[0] == 0x7f and content[1] == 0x45 and content[2] == 0x4c and content[3] == 0x46:
-                            # logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
+                            logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
                             filelist.append(file)
 
         for file in filelist:
@@ -209,7 +209,7 @@ class ProFormAChecker(Checker):
     def run_command(self, cmd, env):
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
-        logger.debug("output: " + output)
+        logger.debug("output: <" + output + ">")
         logger.debug("exitcode: " + str(exitcode))
         if error != None and len(error) > 0:
             logger.debug("error: " + error)
