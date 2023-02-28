@@ -135,7 +135,7 @@ class ProFormAChecker(Checker):
                         content = f.read(4)
                         # check for magic number for ELF files
                         if content[0] == 0x7f and content[1] == 0x45 and content[2] == 0x4c and content[3] == 0x46:
-                            logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
+                            # logger.debug('found executable ' + file + ' with ' + str(oct(mode)))
                             filelist.append(file)
 
         for file in filelist:

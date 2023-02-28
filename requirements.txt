@@ -30,6 +30,7 @@ kiwisolver==1.4.4
 mpl-toolkits.clifford==0.0.3
 pandas==1.5.3
 openpyxl==3.1.1
+et-xmlfile==1.1.0
 # python-docx ???
 # json ??
 # six=1.16.0

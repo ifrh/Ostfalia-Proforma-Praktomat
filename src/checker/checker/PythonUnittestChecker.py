@@ -115,13 +115,13 @@ loader = unittest.TestLoader()
 start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
 # delete python files in order to prevent leaking testcode to student (part 2)
-#for dirpath, dirs, files in os.walk('.'):
-#    for file in files:
-#        if file.endswith('.py'):
-#            try:
-#                os.unlink(os.path.join(dirpath, file))
-#            except:
-#                pass
+for dirpath, dirs, files in os.walk('.'):
+    for file in files:
+        if file.endswith('.py'):
+            try:
+                os.unlink(os.path.join(dirpath, file))
+            except:
+                pass
 with open('unittest_results.xml', 'wb') as output:
     runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
     runner.run(suite)
@@ -143,8 +143,8 @@ with open('unittest_results.xml', 'wb') as output:
         logger.debug('run ' + str(cmd))
         # get result
         (result, output) = self.run_command(cmd, env)
-        logger.debug('result: ' + str(result))
-        logger.debug('output: ' + str(output))
+        # logger.debug('result: ' + str(result))
+        # logger.debug('output: ' + str(output))
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \
@@ -192,20 +192,19 @@ with open('unittest_results.xml', 'wb') as output:
             else:
                 logger.error('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
 
-    def include_ffi_for_pandas(self, filename, newdir):
+    def include_shared_object(self, filename, newdir):
         # hack (requirements.txt should be evaluated properly)
         from pathlib import Path
         found = False
         for path in Path('/').rglob(filename):
             # print(path)
             found = True
-            logger.debug(filename + ': ' + str(path))
-            logger.debug('include ' + filename + ' in ' + str(newdir))
-            copy_file(str(path), newdir, True)
-            os.environ['LD_LIBRARY_PATH'] = newdir
+            # logger.debug(filename + ': ' + str(path))
+            # logger.debug('include ' + filename + ' in ' + str(newdir))
+            copy_file(str(path), newdir + str(path))
 
         if not found:
-            raise Exception('libffi.so not found, needed for pandas')
+            raise Exception(filename + ' not found, needed for pandas')
 
     def prepare_sandbox(self, env):
         logger.debug('Prepare sandbox')
@@ -242,11 +241,11 @@ with open('unittest_results.xml', 'wb') as output:
                     if module == 'pandas':
                         # pandas also requires pytz, numpy (even if not listed in requirements.txt)
                         self.copy_module_into_sandbox('pytz', pythonbin, test_dir)
-                        self.include_ffi_for_pandas('libffi.so', test_dir)
-                        self.include_ffi_for_pandas('libffi.so.7', test_dir)
-                        # self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
-                        # self.copy_module_into_sandbox('ctypes', pythonbin, test_dir)
-                        # self.copy_module_into_sandbox('_ctypes', pythonbin, test_dir)
+                        self.copy_module_into_sandbox('openpyxl', pythonbin, test_dir)
+                        self.copy_module_into_sandbox('et_xmlfile', pythonbin, test_dir)
+                        self.include_shared_object('libffi.so', test_dir)
+                        self.include_shared_object('libffi.so.7', test_dir)
+                        self.include_shared_object('libbz2.so.1.0', test_dir)
                     if module == 'PIL':
                         self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
                     if module == 'matplotlib':
