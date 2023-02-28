@@ -1,3 +1,7 @@
+# 4.15.3
+
+* Python: more modules
+
 # 4.15.2
 
 * grant permission for Ostfalia JUnit addon
