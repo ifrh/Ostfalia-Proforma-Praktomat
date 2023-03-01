@@ -11,6 +11,7 @@ from checker.basemodels import CheckerResult, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
+from django.conf import settings
 
 import logging
 
@@ -87,9 +88,24 @@ class PythonUnittestChecker(ProFormAChecker):
         result_tree = transform(doc)
         return str(result_tree)
 
+
+    def create_env_from_template(self, env):
+        templ_dir = os.path.join(settings.UPLOAD_ROOT, self.get_template_path())
+        self._hasTemplate = False
+        print(templ_dir)
+        print(env.tmpdir())
+        if os.path.isdir(templ_dir):
+            # template environment exists => copy all files
+            os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
+            self._hasTemplate = True
+
     def run(self, env):
+        # if a template exists then use this as base
+        self.create_env_from_template(env)
+
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
+        exit(1)
         test_dir = env.tmpdir()
 
         # compile python code in order to prevent leaking testcode to student (part 1)
@@ -136,7 +152,10 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-        pythonbin = self.prepare_sandbox(env)
+        if not self._hasTemplate:
+            pythonbin = self.prepare_sandbox(env)
+        else:
+            pythonbin = '.venv/bin/python3'
 
         # run command
         cmd = ['./' + pythonbin, 'run_suite.py']

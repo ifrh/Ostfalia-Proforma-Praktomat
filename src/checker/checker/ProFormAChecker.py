@@ -44,6 +44,10 @@ class ProFormAChecker(Checker):
     NAMESPACES_V2_1 = 'urn:proforma:v2.1'
     xml_namespace = NAMESPACES_V2_1
 
+    def get_template_path(self):
+        """ Use this function as upload_to parameter for environment template . """
+        return 'Templates/Task_%s' % (self.task.pk)
+
     def get_file_names(self, env):
         # rxarg = re.compile(self.rxarg())
         return [name for (name, content) in env.sources()]

@@ -229,10 +229,6 @@ class Pythonunit_Test(Praktomat_Test_2_0):
     def __init__(self, inst, namespaces):
         super().__init__(inst, namespaces)
 
-    def get_template_path(self):
-        """ Use this function as upload_to parameter for file fields. """
-        return settings.UPLOAD_ROOT + '/Templates/Task_%s' % (self._checker.task.pk)
-
     def create_environment_template(self):
         """ create vitrual environment when requirements.txt exists """
         modulefile = self._checker.files.filter(filename='requirements.txt', path='')
@@ -247,13 +243,15 @@ class Pythonunit_Test(Praktomat_Test_2_0):
         import venv
         import subprocess
         logger.debug('requirements.txt => create environment')
-        # create virtual environment and install modules from requirements.txt
-        venv_dir = os.path.join(self.get_template_path(), ".venv")
+        # create virtual environment
+        venv_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path(), ".venv")
         logger.debug(venv_dir)
-        venv.create(self.get_template_path(), with_pip=True, symlinks=True)
+        venv.create(venv_dir, with_pip=True, symlinks=True)
+        # ... and install modules from requirements.txt
         path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(modulefile, modulefile.filename))
         logger.debug(path)
-        
+        subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir) # self.get_template_path())
+
         # os.system()
         # for file in self._checker.files.all():
         #    print(file.filename)
@@ -264,8 +262,6 @@ class Pythonunit_Test(Praktomat_Test_2_0):
         #    logger.debug('file: ' + file.file.path)
         #    file.run(env)
 
-        subprocess.run(["bin/pip", "install", "-r", path],
-                       cwd=self.get_template_path())
 
 class Task_2_00:
     # constructor
