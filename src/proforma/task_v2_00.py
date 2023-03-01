@@ -225,6 +225,34 @@ class Praktomat_Test_2_0:
         self._checker.save()
 
 
+class Pythonunit_Test(Praktomat_Test_2_0):
+    def __init__(self, inst, namespaces):
+        super().__init__(inst, namespaces)
+
+    def get_template_path(self):
+        """ Use this function as upload_to parameter for file fields. """
+        return settings.UPLOAD_ROOT + '/Templates/Task_%s' % (self._checker.task.pk)
+
+    def create_environment_template(self):
+        """ create vitrual environment when requirements.txt exists """
+        modulefile = self._checker.files.filter(filename='requirements.txt')
+        if len(modulefile) == 0:
+            logger.debug('no requirements.txt => no environment')
+            # todo: What must be done without requirements.txt
+            return
+
+        logger.debug('requirements.txt => create environment')
+        # import virtualenv
+        import os
+
+        venv_dir = os.path.join(self.get_template_path(), ".venv")
+        logger.debug(venv_dir)
+        # virtualenv.create_environment(venv_dir)
+        import venv
+        venv.create(self.get_template_path(), with_pip=True)
+        # os.system('python3 -m venv ' + venv_dir)
+        # os.system('python3 -m venv ' + venv_dir)
+
 
 class Task_2_00:
     # constructor
@@ -418,9 +446,10 @@ class Task_2_00:
         # get entrypoint, i.e. run command
         # inst.exec_command = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'Googletest entrypoint').strip()
 
-        x = Praktomat_Test_2_0(inst, self._ns)
+        x = Pythonunit_Test(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
+        x.create_environment_template()
         x.save()
 
     def _create_java_checkstyle_test(self, xmlTest):

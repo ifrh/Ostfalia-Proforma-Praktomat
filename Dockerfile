@@ -34,7 +34,7 @@ ENV LC_ALL ${LOCALE}
 
 
 RUN apt-get update && \
-    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo subversion git && \
+    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo subversion git && \
     rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 

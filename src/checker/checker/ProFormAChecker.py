@@ -209,7 +209,7 @@ class ProFormAChecker(Checker):
     def run_command(self, cmd, env):
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
-        logger.debug("output: <" + output + ">")
+        # logger.debug("output: <" + output + ">")
         logger.debug("exitcode: " + str(exitcode))
         if error != None and len(error) > 0:
             logger.debug("error: " + error)
