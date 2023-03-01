@@ -235,24 +235,37 @@ class Pythonunit_Test(Praktomat_Test_2_0):
 
     def create_environment_template(self):
         """ create vitrual environment when requirements.txt exists """
-        modulefile = self._checker.files.filter(filename='requirements.txt')
-        if len(modulefile) == 0:
+        modulefile = self._checker.files.filter(filename='requirements.txt', path='')
+        if len(modulefile) > 1:
+            raise Exception('more than one requirements.txt found')
+        modulefile = modulefile.first()
+        if modulefile is None:
             logger.debug('no requirements.txt => no environment')
             # todo: What must be done without requirements.txt
             return
 
+        import venv
+        import subprocess
         logger.debug('requirements.txt => create environment')
-        # import virtualenv
-        import os
-
+        # create virtual environment and install modules from requirements.txt
         venv_dir = os.path.join(self.get_template_path(), ".venv")
         logger.debug(venv_dir)
-        # virtualenv.create_environment(venv_dir)
-        import venv
-        venv.create(self.get_template_path(), with_pip=True)
-        # os.system('python3 -m venv ' + venv_dir)
-        # os.system('python3 -m venv ' + venv_dir)
+        venv.create(self.get_template_path(), with_pip=True, symlinks=True)
+        path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(modulefile, modulefile.filename))
+        logger.debug(path)
+        
+        # os.system()
+        # for file in self._checker.files.all():
+        #    print(file.filename)
+        #    print(file.path)
+        #    path = print(task.get_storage_path(self._checker, file.path + '/' + file.filename))
 
+        # for file in self.files.all():
+        #    logger.debug('file: ' + file.file.path)
+        #    file.run(env)
+
+        subprocess.run(["bin/pip", "install", "-r", path],
+                       cwd=self.get_template_path())
 
 class Task_2_00:
     # constructor
@@ -449,8 +462,8 @@ class Task_2_00:
         x = Pythonunit_Test(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
-        x.create_environment_template()
         x.save()
+        x.create_environment_template()
 
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
