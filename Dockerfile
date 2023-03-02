@@ -23,11 +23,8 @@ ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
 
 
-# do not use Python 3.7 because of incompatibility with eventlet
-# https://github.com/eventlet/eventlet/issues/592
 # do not use Python 3.8 because of expected incompatibility with Praktomat (safeexec-Popen with preexec_fn and threads)
 # https://docs.python.org/3/library/subprocess.html
-# install Python 3.6 (is not faster than 3.5) => stay at 3.5
 # RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && \
 #    apt-get update && apt install -y python3.6 && \
 #    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
@@ -69,7 +66,7 @@ RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletes
 # create group praktomat
 RUN groupadd -g 999 praktomat && \
 # add user praktomat (uid=999) \
-  useradd -g 999 -u 999 praktomat -s /bin/sh --no-create-home -c "Praktomat Demon" && \
+  useradd -g 999 -u 999 praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
   usermod -aG sudo praktomat && \
   echo "praktomat:$PASSWORD" | sudo chpasswd && \
 # add user tester (uid=1000) \
@@ -81,7 +78,7 @@ RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/b
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
-RUN mkdir /praktomat && chown 999:999 /praktomat
+# RUN mkdir /praktomat && chown 999:999 /praktomat
 WORKDIR /praktomat
 ADD --chown=999:999 requirements.txt /praktomat/
 RUN pip3 install --upgrade pip && \
