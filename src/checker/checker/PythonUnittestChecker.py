@@ -92,8 +92,8 @@ class PythonUnittestChecker(ProFormAChecker):
     def create_env_from_template(self, env):
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self.get_template_path())
         self._hasTemplate = False
-        print(templ_dir)
-        print(env.tmpdir())
+        # print(templ_dir)
+        # print(env.tmpdir())
         if os.path.isdir(templ_dir):
             # template environment exists => copy all files
             os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
@@ -105,12 +105,11 @@ class PythonUnittestChecker(ProFormAChecker):
 
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
-        exit(1)
         test_dir = env.tmpdir()
 
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], env.tmpdir(), unsafe=True)
+        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], test_dir, unsafe=True)
         if exitcode != 0:
             # could not compile.
             # TODO: run without compilation in order to generate better output???
@@ -118,7 +117,9 @@ class PythonUnittestChecker(ProFormAChecker):
             # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
             return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
 
-        pythonbin = os.readlink('/usr/bin/python3')
+        # exit(1)
+
+        # pythonbin = os.readlink('/usr/bin/python3')
 
         # create run script:
         with open(test_dir + '/run_suite.py', 'w') as file:
@@ -132,6 +133,8 @@ start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
 # delete python files in order to prevent leaking testcode to student (part 2)
 for dirpath, dirs, files in os.walk('.'):
+    if ".venv" in dirs:
+        dirs.remove(".venv")
     for file in files:
         if file.endswith('.py'):
             try:
@@ -153,17 +156,31 @@ with open('unittest_results.xml', 'wb') as output:
         #    return result
 
         if not self._hasTemplate:
-            pythonbin = self.prepare_sandbox(env)
+            pythonbin = self._prepare_sandbox(env)
+            cmd = ['./' + pythonbin, 'run_suite.py']
         else:
+            pythonbinold = os.readlink('/usr/bin/python3')
+            createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
+            os.system(createlib)
+            # copy module xmlrunner
+            # self._copy_module_into_sandbox('xmlrunner', pythonbinold, test_dir)
+            self.copy_shared_objects(env)
+            self._include_shared_object('libffi.so', test_dir)
+            self._include_shared_object('libffi.so.7', test_dir)
+            self._include_shared_object('libbz2.so.1.0', test_dir)
+            # cmd = ['source', './.venv/bin/activate', '&&',  pythonbin, 'run_suite.py']
             pythonbin = '.venv/bin/python3'
+            cmd = [pythonbin, 'run_suite.py']
 
         # run command
-        cmd = ['./' + pythonbin, 'run_suite.py']
         logger.debug('run ' + str(cmd))
         # get result
+        env.set_variable('VIRTUAL_ENV', '/.venv')
+        env.set_variable('PATH', '/.venv')
+        # os.getenv('PATH')
         (result, output) = self.run_command(cmd, env)
-        # logger.debug('result: ' + str(result))
-        # logger.debug('output: ' + str(output))
+        logger.debug('result: ' + str(result))
+        logger.debug('output: ' + str(output))
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \
@@ -195,7 +212,7 @@ with open('unittest_results.xml', 'wb') as output:
                 # raise Exception('Inconclusive test result (2)')
             return result
 
-    def copy_module_into_sandbox(self, modulename, pythonbin, test_dir):
+    def _copy_module_into_sandbox(self, modulename, pythonbin, test_dir):
         # avoid pip
         if os.path.isfile('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py"):
             # module is single file
@@ -211,7 +228,7 @@ with open('unittest_results.xml', 'wb') as output:
             else:
                 raise Exception('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
 
-    def include_shared_object(self, filename, newdir):
+    def _include_shared_object(self, filename, newdir):
         # hack (requirements.txt should be evaluated properly)
         from pathlib import Path
         found = False
@@ -225,7 +242,7 @@ with open('unittest_results.xml', 'wb') as output:
         if not found:
             raise Exception(filename + ' not found, needed for pandas')
 
-    def prepare_sandbox(self, env):
+    def _prepare_sandbox(self, env):
         logger.debug('Prepare sandbox')
         test_dir = env.tmpdir()
         # get python version
@@ -237,7 +254,7 @@ with open('unittest_results.xml', 'wb') as output:
         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + test_dir + " && tar -xf -)"
         os.system(createlib)
         # copy module xmlrunner
-        self.copy_module_into_sandbox('xmlrunner', pythonbin, test_dir)
+        self._copy_module_into_sandbox('xmlrunner', pythonbin, test_dir)
         # copy modules for numpy and matplotlib
         if os.path.isfile(test_dir + '/requirements.txt'):
             logger.debug('copy extra modules')
@@ -253,20 +270,20 @@ with open('unittest_results.xml', 'wb') as output:
                     if module == 'mpl-toolkits.clifford':
                         module = 'mpl_toolkits'
                     # copy module folder into sandbox
-                    self.copy_module_into_sandbox(module, pythonbin, test_dir)
+                    self._copy_module_into_sandbox(module, pythonbin, test_dir)
                     # add further libs
                     if module == 'numpy':
-                        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
+                        self._copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
                     if module == 'pandas':
                         # pandas also requires pytz, numpy (even if not listed in requirements.txt)
-                        self.copy_module_into_sandbox('pytz', pythonbin, test_dir)
-                        self.copy_module_into_sandbox('openpyxl', pythonbin, test_dir)
-                        self.copy_module_into_sandbox('et_xmlfile', pythonbin, test_dir)
-                        self.include_shared_object('libffi.so', test_dir)
-                        self.include_shared_object('libffi.so.7', test_dir)
-                        self.include_shared_object('libbz2.so.1.0', test_dir)
+                        self._copy_module_into_sandbox('pytz', pythonbin, test_dir)
+                        self._copy_module_into_sandbox('openpyxl', pythonbin, test_dir)
+                        self._copy_module_into_sandbox('et_xmlfile', pythonbin, test_dir)
+                        self._include_shared_object('libffi.so', test_dir)
+                        self._include_shared_object('libffi.so.7', test_dir)
+                        self._include_shared_object('libbz2.so.1.0', test_dir)
                     if module == 'PIL':
-                        self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
+                        self._copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
                     if module == 'matplotlib':
                         # create writable .config/matplotlib folder in order to suppress warning
                         os.makedirs(test_dir + '/.config/matplotlib')

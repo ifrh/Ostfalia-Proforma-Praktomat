@@ -246,11 +246,12 @@ class Pythonunit_Test(Praktomat_Test_2_0):
         # create virtual environment
         venv_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path(), ".venv")
         logger.debug(venv_dir)
-        venv.create(venv_dir, with_pip=True, symlinks=True)
+        venv.create(venv_dir, system_site_packages=False,with_pip=True, symlinks=False)
         # ... and install modules from requirements.txt
         path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(modulefile, modulefile.filename))
         logger.debug(path)
-        subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir) # self.get_template_path())
+        subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir)
+        subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
 
         # os.system()
         # for file in self._checker.files.all():

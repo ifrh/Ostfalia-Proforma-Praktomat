@@ -133,6 +133,7 @@ class CheckerEnvironment:
 
         # The solution
         self._solution = solution
+        self._variables = {}
 
     def solution(self):
         """ Returns the solution being checked """
@@ -163,8 +164,13 @@ class CheckerEnvironment:
         """ Sets the name of the executable program. """
         self._program = program
 
+    def set_variable(self, key, value):
+        """ Adds a new environment variable """
+        self._variables[key] = value
 
-
+    def variables(self):
+        """ Returns the list of environment variables """
+        return self._variables
 
 def truncated_log(log):
     """
