@@ -54,8 +54,12 @@ def execute_arglist(args, working_directory, environment_variables={},
 
     command = args[:]
 
-    environment = os.environ
+    # print(environment_variables)
+    # print(os.getenv('PATH'))
+    # do not modify environment for current process => use copy!!
+    environment = os.environ.copy()
     environment.update(environment_variables)
+    # print(os.getenv('PATH'))
     if fileseeklimit is not None:
         fileseeklimitbytes = fileseeklimit * 1024
 
