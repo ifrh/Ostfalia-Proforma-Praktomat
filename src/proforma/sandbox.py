@@ -119,7 +119,7 @@ class PythonSandboxInstance(SandboxInstance):
         mergeenv = CheckerEnvironment(studentenv.solution())
         logger.debug('merge dir is ' + mergeenv.tmpdir())
 
-        cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ':' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
+        cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
         print(cmd)
         os.system(cmd)
 
