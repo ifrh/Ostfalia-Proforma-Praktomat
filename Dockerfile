@@ -34,7 +34,8 @@ ENV LC_ALL ${LOCALE}
 # squashfs-tools is used for sandbox templates
 RUN apt-get update && \
     apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
-    subversion git squashfs-tools squashfuse fuse libffi-dev && \
+    subversion git \
+    fuse3 squashfs-tools squashfuse fuse-overlayfs libffi-dev && \
     rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
