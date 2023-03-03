@@ -7,11 +7,12 @@ from lxml import etree
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from checker.basemodels import CheckerResult, truncated_log
+from checker.basemodels import CheckerResult, truncated_log, CheckerEnvironment
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
 from django.conf import settings
+from proforma import sandbox
 
 import logging
 
@@ -89,18 +90,22 @@ class PythonUnittestChecker(ProFormAChecker):
         return str(result_tree)
 
 
-    def create_env_from_template(self, env):
-        templ_dir = os.path.join(settings.UPLOAD_ROOT, self.get_template_path())
-        self._hasTemplate = False
-        if os.path.isfile(templ_dir + '.sqfs'):
-            os.system('mkdir -p ' + templ_dir)
-            # template environment exists => copy all files
-            # os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
-            cmd = 'squashfuse ' + templ_dir + '.sqfs ' + templ_dir
-#            cmd = 'sudo mount -t squashfs ' + templ_dir + '.sqfs ' + templ_dir
-            print(cmd)
-            os.system(cmd)
-            self._hasTemplate = True
+#    def create_env_from_template(self, env):
+#        templ_dir = os.path.join(settings.UPLOAD_ROOT, self.get_template_path())
+#        self._hasTemplate = False
+#        if os.path.isfile(templ_dir + '.sqfs'):
+#            os.system('mkdir -p ' + templ_dir)
+#            # template environment exists => copy all files
+#            # os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
+#            cmd = 'squashfuse ' + templ_dir + '.sqfs ' + templ_dir
+##            cmd = 'sudo mount -t squashfs ' + templ_dir + '.sqfs ' + templ_dir
+#            print(cmd)
+#            os.system(cmd)
+
+# fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
+#            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
+
+#            self._hasTemplate = True
 
 
     def compile_test_code(self, env):
@@ -120,12 +125,19 @@ class PythonUnittestChecker(ProFormAChecker):
 
 
     def run(self, env):
+        logger.debug('main environment is in ' + env.tmpdir())
         # if a template exists then use this as base
-        self.create_env_from_template(env)
+        # self.create_env_from_template(env)
 
+        taskcodeEnv = CheckerEnvironment(env._solution)
         # copy files and unzip zip file if submission consists of just a zip file.
-        self.prepare_run(env)
+        self.prepare_run(taskcodeEnv)
+        logger.debug('task code is in ' + taskcodeEnv.tmpdir())
+
         test_dir = env.tmpdir()
+
+        run_sandbox = sandbox.PythonSandboxInstance(self)
+        run_sandbox.create(taskcodeEnv, env)
 
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
@@ -172,21 +184,21 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-        if not self._hasTemplate:
-            pythonbin = self._prepare_sandbox(env)
-            cmd = ['./' + pythonbin, 'run_suite.py']
-        else:
-            pythonbinold = os.readlink('/usr/bin/python3')
-            createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
-            os.system(createlib)
-            # copy module xmlrunner
-            self.copy_shared_objects(env)
-            self._include_shared_object('libffi.so', test_dir)
-            self._include_shared_object('libffi.so.7', test_dir)
-            self._include_shared_object('libbz2.so.1.0', test_dir)
-            # cmd = ['source', './.venv/bin/activate', '&&',  pythonbin, 'run_suite.py']
-            pythonbin = '.venv/bin/python3'
-            cmd = [pythonbin, 'run_suite.py']
+#        if not self._hasTemplate:
+#            pythonbin = self._prepare_sandbox(env)
+#            cmd = ['./' + pythonbin, 'run_suite.py']
+#        else:
+        pythonbinold = os.readlink('/usr/bin/python3')
+        createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
+        os.system(createlib)
+        # copy module xmlrunner
+        self.copy_shared_objects(env)
+        self._include_shared_object('libffi.so', test_dir)
+        self._include_shared_object('libffi.so.7', test_dir)
+        self._include_shared_object('libbz2.so.1.0', test_dir)
+        # cmd = ['source', './.venv/bin/activate', '&&',  pythonbin, 'run_suite.py']
+        pythonbin = '.venv/bin/python3'
+        cmd = [pythonbin, 'run_suite.py']
 
         # run command
         logger.debug('run ' + str(cmd))

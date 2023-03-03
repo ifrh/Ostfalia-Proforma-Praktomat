@@ -20,11 +20,11 @@
 # functions for importing ProFormA tasks into Praktomat database
 
 import os
-from datetime import datetime
 from . import task
 import venv
 import subprocess
 import shutil
+from utilities import file_operations
 
 from django.conf import settings
 
@@ -36,6 +36,24 @@ class SandboxTemplate:
     def __init__(self, praktomat_test):
         self._test = praktomat_test
         logger.debug(self._test._checker.proforma_id)
+
+    def compress(self, templ_dir):
+        # create compressed layer
+        logger.debug('create compressed layer')
+        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
+                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
+        if rc.__class__ == 'CompletedProcess':
+            logger.debug(rc.returncode)
+
+        # delete temporary folder
+        logger.debug('delete temp folder')
+        shutil.rmtree(templ_dir)
+
+        # prepare for later use
+        os.system('mkdir -p ' + templ_dir)
+        rc = subprocess.run(["squashfuse", templ_dir + '.sqfs', templ_dir])
+        if rc.__class__ == 'CompletedProcess':
+            logger.debug(rc.returncode)
 
 
 class PythonSandboxTemplate(SandboxTemplate):
@@ -70,29 +88,36 @@ class PythonSandboxTemplate(SandboxTemplate):
             if rc.__class__ == 'CompletedProcess':
                 logger.debug(rc.returncode)
 
-        # create compressed layer
-        logger.debug('create compressed layer')
-        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
-                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
+        self.compress(templ_dir)
 
-        # delete temporary folder
-        logger.debug('delete temp folder')
-        shutil.rmtree(templ_dir)
 
 class SandboxInstance:
-    def __init__(self):
-        self._task = Task.objects.create(title="test",
-                                         description="",
-                                         # submission_date=datetime.now(),
-                                         publication_date=datetime.now())
+    def __init__(self, proformAChecker):
+        self._checker = proformAChecker
 
-    def _getTask(self):
-        return self._task
-    object = property(_getTask)
+    # def _getTask(self):
+    #     return self._task
+    # object = property(_getTask)
 
     def delete(self):
-        self._task.delete()
-        self._task = None
+        pass
+
+
+class PythonSandboxInstance(SandboxInstance):
+    def __init__(self, proformAChecker):
+        super().__init__(proformAChecker)
+
+    def create(self, studentcodeEnv, mergeEnv):
+        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
+        if not os.path.isdir(templ_dir):
+            raise Exception('no sandbox template available: ' + templ_dir)
+
+        workdir = file_operations.create_tempfolder(settings.SANDBOX_DIR)
+        logger.debug('work dir is ' + workdir)
+        cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ':' + studentcodeEnv.tmpdir() + ',workdir=' + workdir + ' ' + mergeEnv.tmpdir()
+        print(cmd)
+        os.system(cmd)
+
+        # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
+        #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
 
