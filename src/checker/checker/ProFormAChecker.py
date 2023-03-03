@@ -124,10 +124,13 @@ class ProFormAChecker(Checker):
         return result                    
 
     # copy shared libaries for all executables in env.tmpdir
-    def copy_shared_objects(self, env):
+    def copy_shared_objects(self, destdir):
+        if destdir.__class__.__name__ == 'CheckerEnvironment':
+            destdir = destdir.tmpdir()
+
         executable = stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH
         filelist = []
-        for dirpath, dirs, files in os.walk(env.tmpdir()):
+        for dirpath, dirs, files in os.walk(destdir):
             for file in files:
                 file = os.path.join(dirpath, file)
                 st = os.stat(file)
@@ -147,15 +150,15 @@ class ProFormAChecker(Checker):
             # look for shared libraries
             try:
                 ltree = lddtree(file)
-                # ltree = lddtree(env.tmpdir() + '/' + file)
+                # ltree = lddtree(destdir + '/' + file)
                 # print(ltree)
                 for key, value in ltree['libs'].items():
                     if value['path'] is None:
                         continue
                     # logger.debug('=> ' + value['path'])
-                    os.makedirs(os.path.dirname(env.tmpdir() + '/' + value['path']), 0o755, True)
-                    shutil.copyfile(value['path'], env.tmpdir() + '/' + value['path'])
-                    os.chmod(env.tmpdir() + '/' + value['path'], 0o755)
+                    os.makedirs(os.path.dirname(destdir + '/' + value['path']), 0o755, True)
+                    shutil.copyfile(value['path'], destdir + '/' + value['path'])
+                    os.chmod(destdir + '/' + value['path'], 0o755)
             except Exception as inst:
                 logger.exception('could not find shared objects ')
                 print(inst)

@@ -24,8 +24,8 @@ from . import task
 import venv
 import subprocess
 import shutil
-from utilities import file_operations
 from checker.basemodels import CheckerEnvironment
+from utilities.file_operations import copy_file
 
 from django.conf import settings
 
@@ -61,6 +61,20 @@ class PythonSandboxTemplate(SandboxTemplate):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
 
+    def _include_shared_object(self, filename, newdir):
+        from pathlib import Path
+        found = False
+        for path in Path('/').rglob(filename):
+            found = True
+            logger.debug(newdir)
+            logger.debug(str(path))
+            logger.debug(newdir + str(path))
+            copy_file(str(path), newdir + str(path))
+            return
+
+        if not found:
+            raise Exception(filename + ' not found for testing')
+
     def create(self):
         requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) > 1:
@@ -89,6 +103,24 @@ class PythonSandboxTemplate(SandboxTemplate):
             if rc.__class__ == 'CompletedProcess':
                 logger.debug(rc.returncode)
 
+        pythonbin = os.readlink('/usr/bin/python3')
+        logger.debug('python is ' + pythonbin)  # expect python3.x
+        # copy python interpreter into sandbox
+        logger.debug('copy /usr/bin/' + pythonbin + ' => ' + templ_dir + '/' + pythonbin)
+        copy_file('/usr/bin/' + pythonbin, templ_dir + '/' + pythonbin)
+        # copy python libs
+        createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
+        logger.debug(createlib)
+        os.system(createlib)
+
+        logger.debug('copy shared libraries from os')
+        self._include_shared_object('libffi.so', templ_dir)
+        self._include_shared_object('libffi.so.7', templ_dir)
+        self._include_shared_object('libbz2.so.1.0', templ_dir)
+
+        logger.debug('copy all shared libraries needed for python to work')
+        self._test._checker.copy_shared_objects(templ_dir)
+
         self.compress(templ_dir)
 
 
@@ -113,10 +145,11 @@ class PythonSandboxInstance(SandboxInstance):
         if not os.path.isdir(templ_dir):
             raise Exception('no sandbox template available: ' + templ_dir)
 
-        workdir = file_operations.create_tempfolder(settings.SANDBOX_DIR)
-        logger.debug('work dir is ' + workdir)
-
         mergeenv = CheckerEnvironment(studentenv.solution())
+        workdir = mergeenv.tmpdir() + '/work'
+        os.system('mkdir -p ' + workdir)
+        logger.debug('workdir is ' + workdir)
+
         logger.debug('merge dir is ' + mergeenv.tmpdir())
 
         cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()

@@ -93,12 +93,12 @@ class PythonUnittestChecker(ProFormAChecker):
         """ compile test code in order to remove it before testing """
         import compileall
         for dirpath, dirs, files in os.walk(env.tmpdir()):
-            # print(dirpath)
-            # print(dirs)
-            if ".venv" in dirs:
-                dirs.remove(".venv")
+            print(dirpath)
+            print(dirs)
+            dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr"], dirs)
+            print(dirs)
             for folder in dirs:
-                # print(folder)
+                print(folder)
                 success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), force=True)
                 if not success:
                     logger.error('could not compile ' + folder)
@@ -146,15 +146,17 @@ loader = unittest.TestLoader()
 start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
 # delete python files in order to prevent leaking testcode to student (part 2)
+# TODO
 for dirpath, dirs, files in os.walk('.'):
-    if ".venv" in dirs:
-        dirs.remove(".venv")
-    for file in files:
-        if file.endswith('.py'):
-            try:
-                os.unlink(os.path.join(dirpath, file))
-            except:
-                pass
+    dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr"], dirs)
+    for folder in dirs:
+        for dirpath, dirs, files in os.walk(folder):
+            for file in files:
+                if file.endswith('.py'):
+                    try:
+                        os.unlink(os.path.join(dirpath, file))
+                    except:
+                        pass
 with open('unittest_results.xml', 'wb') as output:
     runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
     runner.run(suite)
@@ -169,15 +171,16 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-        pythonbinold = os.readlink('/usr/bin/python3')
-        createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
-        os.system(createlib)
+#        pythonbinold = os.readlink('/usr/bin/python3')
+#        createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
+#        os.system(createlib)
         # copy module xmlrunner
-        self.copy_shared_objects(runenv)
-        self._include_shared_object('libffi.so', test_dir)
-        self._include_shared_object('libffi.so.7', test_dir)
-        self._include_shared_object('libbz2.so.1.0', test_dir)
+#        self.copy_shared_objects(runenv)
+#        self._include_shared_object('libffi.so', test_dir)
+#        self._include_shared_object('libffi.so.7', test_dir)
+#        self._include_shared_object('libbz2.so.1.0', test_dir)
         # cmd = ['source', './.venv/bin/activate', '&&',  pythonbin, 'run_suite.py']
+
         pythonbin = '.venv/bin/python3'
         cmd = [pythonbin, 'run_suite.py']
 
