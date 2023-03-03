@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <sched.h>
@@ -42,7 +43,7 @@ int main(int argc, char **argv) {
     pid_t sid = getsid(0);
     pid_t pid = getpid();
     if (sid != pid) {
-        if (setsid() < 0) {
+        if (setsid() < 0 && errno != EPERM) {
             perror("setsid");
             return 1;
         }

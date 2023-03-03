@@ -129,12 +129,25 @@ RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
 # RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
 
+# latest fuse-overlayfs
+# TODO: Use fixed VERSION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# git clone https://github.com/containers/fuse-overlayfs.git && \
+RUN apt-get update && apt-get install -y libfuse3-dev automake unzip && \
+    wget https://github.com/containers/fuse-overlayfs/archive/refs/tags/v1.10.zip && \
+    unzip v1.10.zip && \
+    cd fuse-overlayfs-1.10 && sh ./autogen.sh && ./configure && make && mv /usr/bin/fuse-overlayfs /usr/bin/fuse-overlayfs.old && \
+    mv fuse-overlayfs /usr/bin/fuse-overlayfs
+
+
 # clean packages??? Does it make sense?
 RUN apt-get clean
 RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* && apt-get autoremove -y
 
+
 # change user
 USER praktomat
+
+
 # run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
 
