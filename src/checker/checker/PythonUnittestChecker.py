@@ -89,25 +89,6 @@ class PythonUnittestChecker(ProFormAChecker):
         result_tree = transform(doc)
         return str(result_tree)
 
-
-#    def create_env_from_template(self, env):
-#        templ_dir = os.path.join(settings.UPLOAD_ROOT, self.get_template_path())
-#        self._hasTemplate = False
-#        if os.path.isfile(templ_dir + '.sqfs'):
-#            os.system('mkdir -p ' + templ_dir)
-#            # template environment exists => copy all files
-#            # os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
-#            cmd = 'squashfuse ' + templ_dir + '.sqfs ' + templ_dir
-##            cmd = 'sudo mount -t squashfs ' + templ_dir + '.sqfs ' + templ_dir
-#            print(cmd)
-#            os.system(cmd)
-
-# fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
-#            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
-
-#            self._hasTemplate = True
-
-
     def compile_test_code(self, env):
         """ compile test code in order to remove it before testing """
         import compileall
@@ -123,25 +104,29 @@ class PythonUnittestChecker(ProFormAChecker):
                     logger.error('could not compile ' + folder)
             break
 
+    def run(self, studentenv):
+        """ run testcase """
+        # Precondition:
+        # env already contains student's submission
+        logger.debug('main environment is in ' + studentenv.tmpdir())
 
-    def run(self, env):
-        logger.debug('main environment is in ' + env.tmpdir())
-        # if a template exists then use this as base
-        # self.create_env_from_template(env)
+        # code layer will contain testcode
+        # codelayer = CheckerEnvironment(env._solution)
+        # copy task files and unzip zip file if submission consists of just a zip file.
+        self.prepare_run(studentenv)
+        logger.debug('task code is in ' + studentenv.tmpdir())
+        os.system('ls -al ' +  studentenv.tmpdir())
 
-        taskcodeEnv = CheckerEnvironment(env._solution)
-        # copy files and unzip zip file if submission consists of just a zip file.
-        self.prepare_run(taskcodeEnv)
-        logger.debug('task code is in ' + taskcodeEnv.tmpdir())
-
-        test_dir = env.tmpdir()
 
         run_sandbox = sandbox.PythonSandboxInstance(self)
-        run_sandbox.create(taskcodeEnv, env)
+        runenv = run_sandbox.create(studentenv)
+        os.system('ls -al ' +  runenv.tmpdir())
+
+        test_dir = runenv.tmpdir()
 
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
-        self.compile_test_code(env)
+        self.compile_test_code(runenv)
 #        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], test_dir, unsafe=True)
 #        if exitcode != 0:
 #            # could not compile.
@@ -184,15 +169,11 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-#        if not self._hasTemplate:
-#            pythonbin = self._prepare_sandbox(env)
-#            cmd = ['./' + pythonbin, 'run_suite.py']
-#        else:
         pythonbinold = os.readlink('/usr/bin/python3')
         createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
         os.system(createlib)
         # copy module xmlrunner
-        self.copy_shared_objects(env)
+        self.copy_shared_objects(runenv)
         self._include_shared_object('libffi.so', test_dir)
         self._include_shared_object('libffi.so.7', test_dir)
         self._include_shared_object('libbz2.so.1.0', test_dir)
@@ -203,9 +184,9 @@ with open('unittest_results.xml', 'wb') as output:
         # run command
         logger.debug('run ' + str(cmd))
         # get result
-        env.set_variable('VIRTUAL_ENV', '/.venv')
-        env.set_variable('PATH', '/.venv')
-        (result, output) = self.run_command(cmd, env)
+        runenv.set_variable('VIRTUAL_ENV', '/.venv')
+        runenv.set_variable('PATH', '/.venv')
+        (result, output) = self.run_command(cmd, runenv)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
 

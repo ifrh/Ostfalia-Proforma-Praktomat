@@ -25,6 +25,7 @@ import venv
 import subprocess
 import shutil
 from utilities import file_operations
+from checker.basemodels import CheckerEnvironment
 
 from django.conf import settings
 
@@ -107,17 +108,22 @@ class PythonSandboxInstance(SandboxInstance):
     def __init__(self, proformAChecker):
         super().__init__(proformAChecker)
 
-    def create(self, studentcodeEnv, mergeEnv):
+    def create(self, studentenv):
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
         if not os.path.isdir(templ_dir):
             raise Exception('no sandbox template available: ' + templ_dir)
 
         workdir = file_operations.create_tempfolder(settings.SANDBOX_DIR)
         logger.debug('work dir is ' + workdir)
-        cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ':' + studentcodeEnv.tmpdir() + ',workdir=' + workdir + ' ' + mergeEnv.tmpdir()
+
+        mergeenv = CheckerEnvironment(studentenv.solution())
+        logger.debug('merge dir is ' + mergeenv.tmpdir())
+
+        cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ':' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
         print(cmd)
         os.system(cmd)
 
         # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
         #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
 
+        return mergeenv
