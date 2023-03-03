@@ -19,18 +19,18 @@ psycopg2-binary==2.9.3
 # for python unittests
 unittest-xml-reporting==3.2.0
 
-matplotlib==3.5.3
-numpy==1.23.5
-packaging==21.3
-Pillow==9.3.0
-pyparsing==3.0.9
-cycler==0.11.0
-python-dateutil==2.8.2
-kiwisolver==1.4.4
-mpl-toolkits.clifford==0.0.3
-pandas==1.5.3
-openpyxl==3.1.1
-et-xmlfile==1.1.0
+# matplotlib==3.5.3
+# numpy==1.23.5
+# packaging==21.3
+# Pillow==9.3.0
+# pyparsing==3.0.9
+# cycler==0.11.0
+# python-dateutil==2.8.2
+# kiwisolver==1.4.4
+# mpl-toolkits.clifford==0.0.3
+# pandas==1.5.3
+# openpyxl==3.1.1
+# et-xmlfile==1.1.0
 # python-docx ???
 # json ??
 # six=1.16.0

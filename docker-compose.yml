@@ -19,6 +19,8 @@ services:
     # - "5432:5432"
      
   praktomat:
+    devices:
+    - "/dev/fuse"
     cap_add:
     # - ALL
     - SYS_ADMIN # for calling unshare in test process

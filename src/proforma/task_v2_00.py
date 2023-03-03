@@ -242,16 +242,32 @@ class Pythonunit_Test(Praktomat_Test_2_0):
 
         import venv
         import subprocess
+        import shutil
         logger.debug('requirements.txt => create environment')
         # create virtual environment
-        venv_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path(), ".venv")
+        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
+        venv_dir = os.path.join(templ_dir, ".venv")
         logger.debug(venv_dir)
         venv.create(venv_dir, system_site_packages=False,with_pip=True, symlinks=False)
         # ... and install modules from requirements.txt
         path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(modulefile, modulefile.filename))
         logger.debug(path)
-        subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir)
-        subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
+        rc = subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir)
+        if rc.__class__ == 'CompletedProcess':
+            logger.debug(rc.returncode)
+        rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
+        if rc.__class__ == 'CompletedProcess':
+            logger.debug(rc.returncode)
+        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
+                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
+        if rc.__class__ == 'CompletedProcess':
+            logger.debug(rc.returncode)
+
+        shutil.rmtree(templ_dir)
+    #        rc = subprocess.run(["mksquashfs", self._checker.get_template_path(), self._checker.get_template_path() + '.sqfs'],
+#                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
+#        if rc.__class__ == 'CompletedProcess':
+#            logger.debug(rc.returncode)
 
         # os.system()
         # for file in self._checker.files.all():

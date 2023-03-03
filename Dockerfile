@@ -30,8 +30,11 @@ ENV LC_ALL ${LOCALE}
 #    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 
+# libffi-dev is used for python unittests with pandas (avoid extra RUN command)
+# squashfs-tools is used for sandbox templates
 RUN apt-get update && \
-    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo subversion git && \
+    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
+    subversion git squashfs-tools squashfuse fuse libffi-dev && \
     rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
@@ -53,8 +56,7 @@ RUN apt-get update && \
 RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx && rm -rf /var/lib/apt/lists/*
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
-# libffi-dev is used for python unittests with pandas (avoid extra RUN command)
-RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config libffi-dev && \
+RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
     mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install .
 
 # ADD UNIX USERS
@@ -74,7 +76,7 @@ RUN groupadd -g 999 praktomat && \
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
-RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/bin/python3" >> /etc/sudoers && \
+RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 

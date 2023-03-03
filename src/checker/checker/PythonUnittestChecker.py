@@ -92,12 +92,32 @@ class PythonUnittestChecker(ProFormAChecker):
     def create_env_from_template(self, env):
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self.get_template_path())
         self._hasTemplate = False
-        # print(templ_dir)
-        # print(env.tmpdir())
-        if os.path.isdir(templ_dir):
+        if os.path.isfile(templ_dir + '.sqfs'):
+            os.system('mkdir -p ' + templ_dir)
             # template environment exists => copy all files
-            os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
+            # os.system('cp -r ' + templ_dir + '/.venv ' + env.tmpdir())
+            cmd = 'squashfuse ' + templ_dir + '.sqfs ' + templ_dir
+#            cmd = 'sudo mount -t squashfs ' + templ_dir + '.sqfs ' + templ_dir
+            print(cmd)
+            os.system(cmd)
             self._hasTemplate = True
+
+
+    def compile_test_code(self, env):
+        """ compile test code in order to remove it before testing """
+        import compileall
+        for dirpath, dirs, files in os.walk(env.tmpdir()):
+            # print(dirpath)
+            # print(dirs)
+            if ".venv" in dirs:
+                dirs.remove(".venv")
+            for folder in dirs:
+                # print(folder)
+                success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), force=True)
+                if not success:
+                    logger.error('could not compile ' + folder)
+            break
+
 
     def run(self, env):
         # if a template exists then use this as base
@@ -109,17 +129,14 @@ class PythonUnittestChecker(ProFormAChecker):
 
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], test_dir, unsafe=True)
-        if exitcode != 0:
-            # could not compile.
-            # TODO: run without compilation in order to generate better output???
-            regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
-            # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
-            return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
-
-        # exit(1)
-
-        # pythonbin = os.readlink('/usr/bin/python3')
+        self.compile_test_code(env)
+#        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], test_dir, unsafe=True)
+#        if exitcode != 0:
+#            # could not compile.
+#            # TODO: run without compilation in order to generate better output???
+#            regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
+#            # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+#            return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
 
         # create run script:
         with open(test_dir + '/run_suite.py', 'w') as file:
@@ -163,7 +180,6 @@ with open('unittest_results.xml', 'wb') as output:
             createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
             os.system(createlib)
             # copy module xmlrunner
-            # self._copy_module_into_sandbox('xmlrunner', pythonbinold, test_dir)
             self.copy_shared_objects(env)
             self._include_shared_object('libffi.so', test_dir)
             self._include_shared_object('libffi.so.7', test_dir)
@@ -177,7 +193,6 @@ with open('unittest_results.xml', 'wb') as output:
         # get result
         env.set_variable('VIRTUAL_ENV', '/.venv')
         env.set_variable('PATH', '/.venv')
-        # os.getenv('PATH')
         (result, output) = self.run_command(cmd, env)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
@@ -213,7 +228,6 @@ with open('unittest_results.xml', 'wb') as output:
             return result
 
     def _copy_module_into_sandbox(self, modulename, pythonbin, test_dir):
-        # avoid pip
         if os.path.isfile('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py"):
             # module is single file
             copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py", test_dir + '/' + modulename + '.py')
@@ -229,20 +243,17 @@ with open('unittest_results.xml', 'wb') as output:
                 raise Exception('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
 
     def _include_shared_object(self, filename, newdir):
-        # hack (requirements.txt should be evaluated properly)
         from pathlib import Path
         found = False
         for path in Path('/').rglob(filename):
-            # print(path)
             found = True
-            # logger.debug(filename + ': ' + str(path))
-            # logger.debug('include ' + filename + ' in ' + str(newdir))
             copy_file(str(path), newdir + str(path))
 
         if not found:
-            raise Exception(filename + ' not found, needed for pandas')
+            raise Exception(filename + ' not found for testing')
 
     def _prepare_sandbox(self, env):
+        # prepare sandbox without pip
         logger.debug('Prepare sandbox')
         test_dir = env.tmpdir()
         # get python version
