@@ -37,6 +37,7 @@ from os.path import dirname
 from . import task
 from tasks.models import Task
 from django.conf import settings
+from . import sandbox
 
 import logging
 
@@ -223,61 +224,6 @@ class Praktomat_Test_2_0:
 
     def save(self):
         self._checker.save()
-
-
-class Pythonunit_Test(Praktomat_Test_2_0):
-    def __init__(self, inst, namespaces):
-        super().__init__(inst, namespaces)
-
-    def create_environment_template(self):
-        """ create vitrual environment when requirements.txt exists """
-        modulefile = self._checker.files.filter(filename='requirements.txt', path='')
-        if len(modulefile) > 1:
-            raise Exception('more than one requirements.txt found')
-        modulefile = modulefile.first()
-        if modulefile is None:
-            logger.debug('no requirements.txt => no environment')
-            # todo: What must be done without requirements.txt
-            return
-
-        import venv
-        import subprocess
-        import shutil
-        logger.debug('requirements.txt => create environment')
-        # create virtual environment
-        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
-        venv_dir = os.path.join(templ_dir, ".venv")
-        logger.debug(venv_dir)
-        venv.create(venv_dir, system_site_packages=False,with_pip=True, symlinks=False)
-        # ... and install modules from requirements.txt
-        path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(modulefile, modulefile.filename))
-        logger.debug(path)
-        rc = subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir)
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
-        rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
-        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
-                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
-
-        shutil.rmtree(templ_dir)
-    #        rc = subprocess.run(["mksquashfs", self._checker.get_template_path(), self._checker.get_template_path() + '.sqfs'],
-#                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
-#        if rc.__class__ == 'CompletedProcess':
-#            logger.debug(rc.returncode)
-
-        # os.system()
-        # for file in self._checker.files.all():
-        #    print(file.filename)
-        #    print(file.path)
-        #    path = print(task.get_storage_path(self._checker, file.path + '/' + file.filename))
-
-        # for file in self.files.all():
-        #    logger.debug('file: ' + file.file.path)
-        #    file.run(env)
 
 
 class Task_2_00:
@@ -472,11 +418,12 @@ class Task_2_00:
         # get entrypoint, i.e. run command
         # inst.exec_command = get_required_xml_element_text(unittest, "unit_1.1:entry-point", checker_ns, 'Googletest entrypoint').strip()
 
-        x = Pythonunit_Test(inst, self._ns)
+        x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
         x.save()
-        x.create_environment_template()
+        template = sandbox.PythonSandboxTemplate(x)
+        template.create()
 
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
