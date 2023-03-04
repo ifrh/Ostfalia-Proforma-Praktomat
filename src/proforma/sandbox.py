@@ -154,6 +154,9 @@ class PythonSandboxInstance(SandboxInstance):
         super().__init__(proformAChecker)
 
     def _create_from_squashfs(self, templ_dir, studentenv):
+        if not os.path.isdir(templ_dir):
+            raise Exception('no sandbox template available: ' + templ_dir)
+
         mergeenv = CheckerEnvironment(studentenv.solution())
         workdir = mergeenv.tmpdir() + '/work'
         os.system('mkdir -p ' + workdir)
@@ -174,12 +177,16 @@ class PythonSandboxInstance(SandboxInstance):
         cmd = "cd " + studentenv.tmpdir() + " && tar -xf " + templ_dir + ".tar "
         logger.debug(cmd)
         os.system(cmd)
-
         return studentenv
 
     def create(self, studentenv):
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
-        if not os.path.isdir(templ_dir):
-            raise Exception('no sandbox template available: ' + templ_dir)
-        return self._create_from_archive(templ_dir, studentenv)
+        rc =  self._create_from_archive(templ_dir, studentenv)
+
+        # allow tester to write into sandbox
+        cmd = "chmod g+w " + studentenv.tmpdir()
+        logger.debug(cmd)
+        os.system(cmd)
+
+        return rc
 

@@ -170,16 +170,6 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-#        pythonbinold = os.readlink('/usr/bin/python3')
-#        createlib = "(cd / && tar -chf - usr/lib/" + pythonbinold + ") | (cd " + test_dir + " && tar -xf -)"
-#        os.system(createlib)
-        # copy module xmlrunner
-#        self.copy_shared_objects(runenv)
-#        self._include_shared_object('libffi.so', test_dir)
-#        self._include_shared_object('libffi.so.7', test_dir)
-#        self._include_shared_object('libbz2.so.1.0', test_dir)
-        # cmd = ['source', './.venv/bin/activate', '&&',  pythonbin, 'run_suite.py']
-
         pythonbin = '.venv/bin/python3'
         cmd = [pythonbin, 'run_suite.py']
 
@@ -222,99 +212,4 @@ with open('unittest_results.xml', 'wb') as output:
                 # raise Exception('Inconclusive test result (2)')
             return result
 
-    def _copy_module_into_sandbox(self, modulename, pythonbin, test_dir):
-        if os.path.isfile('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py"):
-            # module is single file
-            copy_file('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename + ".py", test_dir + '/' + modulename + '.py')
-        else:
-            if os.path.isdir('/usr/local/lib/' + pythonbin + "/dist-packages/" + modulename):
-                # module is folder
-                createlib = "(mkdir \"" + test_dir + "/" + modulename + "\" && cd / " + \
-                                  "&& tar -chf - \"usr/local/lib/" + pythonbin + "/dist-packages/" + modulename + "\") | " + \
-                                  "(cd " + test_dir + " && tar -xf -)"
-                # logger.debug(createlib)
-                rc = os.system(createlib)
-            else:
-                raise Exception('cannot find python module ' + modulename + ' in /usr/local/lib/' + pythonbin + '/dist-packages/')
-
-    def _include_shared_object(self, filename, newdir):
-        from pathlib import Path
-        found = False
-        for path in Path('/').rglob(filename):
-            found = True
-            copy_file(str(path), newdir + str(path))
-
-        if not found:
-            raise Exception(filename + ' not found for testing')
-
-    def _prepare_sandbox(self, env):
-        # prepare sandbox without pip
-        logger.debug('Prepare sandbox')
-        test_dir = env.tmpdir()
-        # get python version
-        pythonbin = os.readlink('/usr/bin/python3')
-        logger.debug('python is ' + pythonbin)  # expect python3.x
-        # copy python interpreter into sandbox
-        copy_file('/usr/bin/' + pythonbin, test_dir + '/' + pythonbin)
-        # copy python libs
-        createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + test_dir + " && tar -xf -)"
-        os.system(createlib)
-        # copy module xmlrunner
-        self._copy_module_into_sandbox('xmlrunner', pythonbin, test_dir)
-        # copy modules for numpy and matplotlib
-        if os.path.isfile(test_dir + '/requirements.txt'):
-            logger.debug('copy extra modules')
-            with open(test_dir + '/requirements.txt') as f:
-                for module in f.readlines():
-                    module = module.strip()
-                    if not module:
-                        continue # skip empty lines
-                    # logger.debug(module)
-                    # some module names do not match folder name
-                    if module == 'python-dateutil':
-                        module = 'dateutil'
-                    if module == 'mpl-toolkits.clifford':
-                        module = 'mpl_toolkits'
-                    # copy module folder into sandbox
-                    self._copy_module_into_sandbox(module, pythonbin, test_dir)
-                    # add further libs
-                    if module == 'numpy':
-                        self._copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
-                    if module == 'pandas':
-                        # pandas also requires pytz, numpy (even if not listed in requirements.txt)
-                        self._copy_module_into_sandbox('pytz', pythonbin, test_dir)
-                        self._copy_module_into_sandbox('openpyxl', pythonbin, test_dir)
-                        self._copy_module_into_sandbox('et_xmlfile', pythonbin, test_dir)
-                        self._include_shared_object('libffi.so', test_dir)
-                        self._include_shared_object('libffi.so.7', test_dir)
-                        self._include_shared_object('libbz2.so.1.0', test_dir)
-                    if module == 'PIL':
-                        self._copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
-                    if module == 'matplotlib':
-                        # create writable .config/matplotlib folder in order to suppress warning
-                        os.makedirs(test_dir + '/.config/matplotlib')
-                        os.makedirs(test_dir + '/.cache/matplotlib')
-                        # os.makedirs(test_dir + '/matplotlib')
-                        os.environ['MPLCONFIGDIR'] = '/tmp/'
-
-        #        self.copy_module_into_sandbox('numpy', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('numpy.libs', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('matplotlib', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('packaging', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('PIL', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('Pillow.libs', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('pyparsing', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('dateutil', pythonbin, test_dir)
-#        self.copy_module_into_sandbox('kiwisolver', pythonbin, test_dir)
- #       self.copy_module_into_sandbox('mpl_toolkits', pythonbin, test_dir)
- #       self.copy_module_into_sandbox('cycler', pythonbin, test_dir)
- #       self.copy_module_into_sandbox('six', pythonbin, test_dir)
-
-#        createlib = "(mkdir " + test_dir + "/xmlrunner && cd / " + \
-#                          "&& tar -chf - usr/local/lib/" + pythonbin + "/dist-packages/xmlrunner) | " + \
-#                          "(cd " + test_dir + " && tar -xf -)"
-#        os.system(createlib)
-        # copy shared objects needed
-        self.copy_shared_objects(env)
-        return pythonbin
 
