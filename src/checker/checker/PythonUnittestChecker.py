@@ -95,11 +95,11 @@ class PythonUnittestChecker(ProFormAChecker):
         for dirpath, dirs, files in os.walk(env.tmpdir()):
             print(dirpath)
             print(dirs)
-            dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr"], dirs)
-            print(dirs)
+            dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
+            # print(dirs)
             for folder in dirs:
-                print(folder)
-                success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), force=True)
+                print("compile " + folder)
+                success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True)
                 if not success:
                     logger.error('could not compile ' + folder)
             break
@@ -115,7 +115,7 @@ class PythonUnittestChecker(ProFormAChecker):
         # copy task files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(studentenv)
         logger.debug('task code is in ' + studentenv.tmpdir())
-        os.system('ls -al ' +  studentenv.tmpdir())
+        # os.system('ls -al ' +  studentenv.tmpdir())
 
 
         run_sandbox = sandbox.PythonSandboxInstance(self)
@@ -146,9 +146,8 @@ loader = unittest.TestLoader()
 start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
 # delete python files in order to prevent leaking testcode to student (part 2)
-# TODO
 for dirpath, dirs, files in os.walk('.'):
-    dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr"], dirs)
+    dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
     for folder in dirs:
         for dirpath, dirs, files in os.walk(folder):
             for file in files:

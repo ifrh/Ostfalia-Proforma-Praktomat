@@ -38,7 +38,7 @@ class SandboxTemplate:
         self._test = praktomat_test
         logger.debug(self._test._checker.proforma_id)
 
-    def compress(self, templ_dir):
+    def compress_to_squashfs(self, templ_dir):
         # create compressed layer
         logger.debug('create compressed layer')
         rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
@@ -55,6 +55,18 @@ class SandboxTemplate:
         rc = subprocess.run(["squashfuse", templ_dir + '.sqfs', templ_dir])
         if rc.__class__ == 'CompletedProcess':
             logger.debug(rc.returncode)
+
+    def compress_to_archive(self, templ_dir):
+        cmd = "cd " + templ_dir + " && tar -chzf " + templ_dir + ".tar ."
+        print(cmd)
+        os.system(cmd)
+
+#        rc = subprocess.run(["tar", "-ch", "-f=" + templ_dir + '.tar', templ_dir])
+#        if rc.__class__ == 'CompletedProcess':
+#            logger.debug(rc.returncode)
+        # delete temporary folder
+        logger.debug('delete temp folder')
+        shutil.rmtree(templ_dir)
 
 
 class PythonSandboxTemplate(SandboxTemplate):
@@ -121,7 +133,8 @@ class PythonSandboxTemplate(SandboxTemplate):
         logger.debug('copy all shared libraries needed for python to work')
         self._test._checker.copy_shared_objects(templ_dir)
 
-        self.compress(templ_dir)
+        # self.compress_to_squashfs(templ_dir)
+        self.compress_to_archive(templ_dir)
 
 
 class SandboxInstance:
@@ -140,11 +153,7 @@ class PythonSandboxInstance(SandboxInstance):
     def __init__(self, proformAChecker):
         super().__init__(proformAChecker)
 
-    def create(self, studentenv):
-        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
-        if not os.path.isdir(templ_dir):
-            raise Exception('no sandbox template available: ' + templ_dir)
-
+    def _create_from_squashfs(self, templ_dir, studentenv):
         mergeenv = CheckerEnvironment(studentenv.solution())
         workdir = mergeenv.tmpdir() + '/work'
         os.system('mkdir -p ' + workdir)
@@ -160,3 +169,17 @@ class PythonSandboxInstance(SandboxInstance):
         #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
 
         return mergeenv
+
+    def _create_from_archive(self, templ_dir, studentenv):
+        cmd = "cd " + studentenv.tmpdir() + " && tar -xf " + templ_dir + ".tar "
+        logger.debug(cmd)
+        os.system(cmd)
+
+        return studentenv
+
+    def create(self, studentenv):
+        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
+        if not os.path.isdir(templ_dir):
+            raise Exception('no sandbox template available: ' + templ_dir)
+        return self._create_from_archive(templ_dir, studentenv)
+
