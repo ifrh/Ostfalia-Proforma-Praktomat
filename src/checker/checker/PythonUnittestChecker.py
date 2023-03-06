@@ -178,6 +178,10 @@ with open('unittest_results.xml', 'wb') as output:
         # get result
         runenv.set_variable('VIRTUAL_ENV', '/.venv')
         runenv.set_variable('PATH', '/.venv')
+        os.system('mkdir -p ' + test_dir + '/.matplotlib')
+        runenv.set_variable('MPLCONFIGDIR', '/.matplotlib')
+
+
         (result, output) = self.run_command(cmd, runenv)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
