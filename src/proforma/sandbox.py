@@ -114,7 +114,7 @@ class PythonSandboxTemplate(SandboxTemplate):
         if requirements_txt is not None:
             logger.debug('install requirements')
             path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
-            rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
+            # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
             env = {}
             env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
             rc = subprocess.run(["bin/python", "bin/pip", "install", "-r", path], cwd=os.path.join(templ_dir, '.venv'), env=env)
@@ -139,6 +139,12 @@ class PythonSandboxTemplate(SandboxTemplate):
         logger.debug('copy all shared libraries needed for python to work')
         self._test._checker.copy_shared_objects(templ_dir)
 
+        # compile python code (smaller)
+        import compileall
+        success = compileall.compile_dir(templ_dir, quiet=True)
+        # delete all python source code
+        os.system('cd ' + templ_dir + ' && rm -rf *.py')
+
         # self.compress_to_squashfs(templ_dir)
         self.compress_to_archive(templ_dir)
 
@@ -157,6 +163,13 @@ class PythonSandboxTemplate(SandboxTemplate):
             rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
             if rc.__class__ == 'CompletedProcess':
                 logger.debug(rc.returncode)
+
+            # compile python code (smaller)
+            import compileall
+            success = compileall.compile_dir(venv_dir, quiet=True)
+            # delete all python source code
+            os.system('cd ' + venv_dir + ' && rm -rf *.py')
+
             self.compress_to_archive(python_dir)
 
         logger.debug('reuse python env')
