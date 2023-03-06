@@ -46,7 +46,7 @@ class ProFormAChecker(Checker):
 
     def get_template_path(self):
         """ Use this function as upload_to parameter for environment template . """
-        return 'Templates/Task_%s' % (self.task.pk)
+        return 'Templates/Task_%s/%s' % (self.task.pk, self.proforma_id)
 
     def get_file_names(self, env):
         # rxarg = re.compile(self.rxarg())
