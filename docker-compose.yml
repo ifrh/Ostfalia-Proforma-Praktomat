@@ -24,6 +24,7 @@ services:
     cap_add:
     # - ALL
     - SYS_ADMIN # for calling unshare in test process
+    - SYS_CHROOT # for calling chroot in test process with layers
     build:
         context: .
         args:

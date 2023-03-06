@@ -33,6 +33,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+use_squashfs = False
+
 class SandboxTemplate:
     def __init__(self, praktomat_test):
         self._test = praktomat_test
@@ -51,7 +53,7 @@ class SandboxTemplate:
             logger.debug(rc.returncode)
 
         # delete temporary folder
-        logger.debug('delete temp folder')
+        logger.debug('delete temp folder ' + templ_dir)
         shutil.rmtree(templ_dir)
 
         # prepare for later use
@@ -145,8 +147,10 @@ class PythonSandboxTemplate(SandboxTemplate):
         # delete all python source code
         os.system('cd ' + templ_dir + ' && rm -rf *.py')
 
-        # self.compress_to_squashfs(templ_dir)
-        self.compress_to_archive(templ_dir)
+        if use_squashfs:
+            self.compress_to_squashfs(templ_dir)
+        else:
+            self.compress_to_archive(templ_dir)
 
     def _create_venv(self):
         # create virtual environment for reuse
@@ -209,6 +213,7 @@ class PythonSandboxInstance(SandboxInstance):
         super().__init__(proformAChecker)
 
     def _create_from_squashfs(self, templ_dir, studentenv):
+        self._type = self.SQUASHFS
         if not os.path.isdir(templ_dir):
             raise Exception('no sandbox template available: ' + templ_dir)
 
@@ -231,7 +236,10 @@ class PythonSandboxInstance(SandboxInstance):
 
     def create(self, studentenv):
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
-        rc =  self._create_from_archive(templ_dir, studentenv)
+        if use_squashfs:
+            rc =  self._create_from_squashfs(templ_dir, studentenv)
+        else:
+            rc =  self._create_from_archive(templ_dir, studentenv)
 
         # allow tester to write into sandbox
         cmd = "chmod g+w " + studentenv.tmpdir()

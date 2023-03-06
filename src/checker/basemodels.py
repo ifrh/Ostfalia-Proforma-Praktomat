@@ -117,11 +117,15 @@ class Checker(models.Model):
 class CheckerEnvironment:
     """ The environment for running a checker. """
 
-    def __init__(self, solution):
+    def __init__(self, solution, tmpdir = None):
         """ Constructor: Creates a standard environment. """
         # Temporary build directory
         sandbox = settings.SANDBOX_DIR
-        self._tmpdir = file_operations.create_tempfolder(sandbox)
+        if tmpdir is None:
+            self._tmpdir = file_operations.create_tempfolder(sandbox)
+        else:
+            self._tmpdir = tmpdir
+
         # Sources as [(name, content)...]
         self._sources = []
         for file in solution.solutionfile_set.all().order_by('file'):

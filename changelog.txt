@@ -1,6 +1,6 @@
-# 4.15.3
+# 4.16.0
 
-* Python: more modules
+* Python: full pip support
 
 # 4.15.2
 
