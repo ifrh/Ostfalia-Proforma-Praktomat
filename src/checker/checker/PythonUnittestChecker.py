@@ -93,8 +93,8 @@ class PythonUnittestChecker(ProFormAChecker):
         """ compile test code in order to remove it before testing """
         import compileall
         for dirpath, dirs, files in os.walk(env.tmpdir()):
-            print(dirpath)
-            print(dirs)
+            # print(dirpath)
+            # print(dirs)
             dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
             # print(dirs)
             for folder in dirs:
@@ -120,7 +120,7 @@ class PythonUnittestChecker(ProFormAChecker):
 
         run_sandbox = sandbox.PythonSandboxInstance(self)
         runenv = run_sandbox.create(studentenv)
-        os.system('ls -al ' +  runenv.tmpdir())
+        # os.system('ls -al ' +  runenv.tmpdir())
 
         test_dir = runenv.tmpdir()
 

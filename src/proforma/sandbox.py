@@ -38,6 +38,10 @@ class SandboxTemplate:
         self._test = praktomat_test
         logger.debug(self._test._checker.proforma_id)
 
+    def get_template_path(self):
+        """ return root of all templates. """
+        return 'Templates'
+
     def compress_to_squashfs(self, templ_dir):
         # create compressed layer
         logger.debug('create compressed layer')
@@ -69,9 +73,16 @@ class SandboxTemplate:
         shutil.rmtree(templ_dir)
 
 
+
+
+
 class PythonSandboxTemplate(SandboxTemplate):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
+
+    def get_python_path(self):
+        """ return root of all templates. """
+        return 'Templates/Python'
 
     def _include_shared_object(self, filename, newdir):
         from pathlib import Path
@@ -91,35 +102,30 @@ class PythonSandboxTemplate(SandboxTemplate):
         requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
-        requirements_txt = requirements_txt.first()
+        if len(requirements_txt) == 0:
+            requirements_txt = None
+        else:
+            requirements_txt = requirements_txt.first()
 
-        # create virtual environment
-
-        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
-        venv_dir = os.path.join(templ_dir, ".venv")
-        logger.debug('create venv in ' + venv_dir)
-        venv.create(venv_dir, system_site_packages=False,with_pip=True, symlinks=False)
-
-        # install xmlrunner
-        logger.debug('install xmlrunner')
-        rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
+        templ_dir = self._create_venv()
+        logger.debug('Template dir is ' + templ_dir)
 
         # install modules from requirements.txt if available
         if requirements_txt is not None:
             logger.debug('install requirements')
             path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
-            logger.debug(path)
-            rc = subprocess.run(["bin/pip", "install", "-r", path], cwd=venv_dir)
+            rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
+            env = {}
+            env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
+            rc = subprocess.run(["bin/python", "bin/pip", "install", "-r", path], cwd=os.path.join(templ_dir, '.venv'), env=env)
             if rc.__class__ == 'CompletedProcess':
                 logger.debug(rc.returncode)
 
         pythonbin = os.readlink('/usr/bin/python3')
         logger.debug('python is ' + pythonbin)  # expect python3.x
         # copy python interpreter into sandbox
-        logger.debug('copy /usr/bin/' + pythonbin + ' => ' + templ_dir + '/' + pythonbin)
-        copy_file('/usr/bin/' + pythonbin, templ_dir + '/' + pythonbin)
+        # logger.debug('copy /usr/bin/' + pythonbin + ' => ' + templ_dir + '/' + pythonbin)
+        # copy_file('/usr/bin/' + pythonbin, templ_dir + '/' + pythonbin)
         # copy python libs
         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
         logger.debug(createlib)
@@ -136,6 +142,31 @@ class PythonSandboxTemplate(SandboxTemplate):
         # self.compress_to_squashfs(templ_dir)
         self.compress_to_archive(templ_dir)
 
+    def _create_venv(self):
+        # create virtual environment for reuse
+        python_dir = os.path.join(settings.UPLOAD_ROOT, self.get_python_path())
+
+        if not os.path.isfile(python_dir + '.tar'):
+            venv_dir = os.path.join(python_dir, ".venv")
+            # create python environment in separate folder in order to be able to reuse it
+            logger.debug('create venv for reuse in ' + venv_dir)
+
+            venv.create(venv_dir, system_site_packages=False, with_pip=True, symlinks=False)
+            # install xmlrunner
+            logger.debug('install xmlrunner')
+            rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
+            if rc.__class__ == 'CompletedProcess':
+                logger.debug(rc.returncode)
+            self.compress_to_archive(python_dir)
+
+        logger.debug('reuse python env')
+        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
+        cmd = "mkdir -p " + templ_dir + " && cd " + templ_dir + " && tar -xf " + python_dir + ".tar "
+        logger.debug(cmd)
+        os.system(cmd)
+
+        return templ_dir
+
 
 class SandboxInstance:
     def __init__(self, proformAChecker):
@@ -144,9 +175,20 @@ class SandboxInstance:
     # def _getTask(self):
     #     return self._task
     # object = property(_getTask)
+    ARCHIVE = 1
+    SQUASHFS = 2
+
+    def _create_from_archive(self, templ_dir, studentenv):
+        self._type = self.ARCHIVE
+        self._destfolder = studentenv.tmpdir()
+        cmd = "cd " + studentenv.tmpdir() + " && tar -xf " + templ_dir + ".tar "
+        logger.debug(cmd)
+        os.system(cmd)
+        return studentenv
 
     def delete(self):
         pass
+
 
 
 class PythonSandboxInstance(SandboxInstance):
@@ -173,11 +215,6 @@ class PythonSandboxInstance(SandboxInstance):
 
         return mergeenv
 
-    def _create_from_archive(self, templ_dir, studentenv):
-        cmd = "cd " + studentenv.tmpdir() + " && tar -xf " + templ_dir + ".tar "
-        logger.debug(cmd)
-        os.system(cmd)
-        return studentenv
 
     def create(self, studentenv):
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
@@ -190,3 +227,11 @@ class PythonSandboxInstance(SandboxInstance):
 
         return rc
 
+    def __del__(self):
+        if self._type == self.ARCHIVE:
+            logger.debug('cleanup sandbox')
+            cmd = 'cd ' + self._destfolder + ' && rm -rf *.pyc && rm -rf .venv'
+            logger.debug(cmd)
+            os.system(cmd)
+
+        super().delete()
