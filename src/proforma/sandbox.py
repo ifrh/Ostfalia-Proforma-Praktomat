@@ -33,12 +33,29 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-use_squashfs = False
+# overlay in container with native kernel overlay only works
+# when container is run in privileged mode which we want to avoid.
+# Therefore fuse filesystem is used.
+use_overlay = False
+use_squash_fs = False
 
 class SandboxTemplate:
     def __init__(self, praktomat_test):
         self._test = praktomat_test
         logger.debug(self._test._checker.proforma_id)
+
+    def execute_command(command):
+        logger.debug(command)
+        cmdList = command.split()
+        # logger.debug(cmdList)
+        rc = subprocess.run(cmdList, shell=False, check=True)
+        if rc.__class__ == 'CompletedProcess':
+            logger.debug(rc.returncode)
+        else:
+            logger.debug(rc.__class__)
+
+
+
 
     def get_template_path(self):
         """ return root of all templates. """
@@ -47,6 +64,8 @@ class SandboxTemplate:
     def compress_to_squashfs(self, templ_dir):
         # create compressed layer
         logger.debug('create compressed layer')
+        os.system('ls -al ' +  templ_dir)
+        # SandboxTemplate.execute_command("mksquashfs " + templ_dir + " " + templ_dir + '.sqfs')
         rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
                             cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
         if rc.__class__ == 'CompletedProcess':
@@ -57,10 +76,9 @@ class SandboxTemplate:
         shutil.rmtree(templ_dir)
 
         # prepare for later use
-        os.system('mkdir -p ' + templ_dir)
-        rc = subprocess.run(["squashfuse", templ_dir + '.sqfs', templ_dir])
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
+        SandboxTemplate.execute_command('mkdir -p ' + templ_dir)
+        SandboxTemplate.execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + templ_dir)
+        os.system('ls -al ' +  templ_dir)
 
     def compress_to_archive(self, templ_dir):
         cmd = "cd " + templ_dir + " && tar -chzf " + templ_dir + ".tar ."
@@ -147,8 +165,12 @@ class PythonSandboxTemplate(SandboxTemplate):
         # delete all python source code
         os.system('cd ' + templ_dir + ' && rm -rf *.py')
 
-        if use_squashfs:
-            self.compress_to_squashfs(templ_dir)
+        if use_overlay:
+            if use_squash_fs:
+                self.compress_to_squashfs(templ_dir)
+            else:
+                # simply do nothing
+                pass
         else:
             self.compress_to_archive(templ_dir)
 
@@ -193,7 +215,7 @@ class SandboxInstance:
     #     return self._task
     # object = property(_getTask)
     ARCHIVE = 1
-    SQUASHFS = 2
+    OVERLAY = 2
 
     def _create_from_archive(self, templ_dir, studentenv):
         self._type = self.ARCHIVE
@@ -212,22 +234,21 @@ class PythonSandboxInstance(SandboxInstance):
     def __init__(self, proformAChecker):
         super().__init__(proformAChecker)
 
-    def _create_from_squashfs(self, templ_dir, studentenv):
-        self._type = self.SQUASHFS
+    def _create_from_overlay(self, templ_dir, studentenv):
+        self._type = self.OVERLAY
         if not os.path.isdir(templ_dir):
             raise Exception('no sandbox template available: ' + templ_dir)
 
         mergeenv = CheckerEnvironment(studentenv.solution())
-        workdir = mergeenv.tmpdir() + '/work'
-        os.system('mkdir -p ' + workdir)
-        logger.debug('workdir is ' + workdir)
+        # workdir = mergeenv.tmpdir() + '/work'
+        # os.system('mkdir -p ' + workdir)
+        # logger.debug('workdir is ' + workdir)
 
         logger.debug('merge dir is ' + mergeenv.tmpdir())
 
-        cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
-        print(cmd)
-        os.system(cmd)
-
+        # cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
+        cmd = "unionfs-fuse -o cow,relaxed_permissions,allow_other " + ' ' + studentenv.tmpdir() + '=RW:' + templ_dir + '=RO ' + mergeenv.tmpdir()
+        SandboxTemplate.execute_command(cmd)
         # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
         #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
 
@@ -235,16 +256,16 @@ class PythonSandboxInstance(SandboxInstance):
 
 
     def create(self, studentenv):
+
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
-        if use_squashfs:
-            rc =  self._create_from_squashfs(templ_dir, studentenv)
+        if use_overlay:
+            rc =  self._create_from_overlay(templ_dir, studentenv)
         else:
             rc =  self._create_from_archive(templ_dir, studentenv)
-
-        # allow tester to write into sandbox
-        cmd = "chmod g+w " + studentenv.tmpdir()
-        logger.debug(cmd)
-        os.system(cmd)
+            # allow tester to write into sandbox (after creation)
+            cmd = "chmod g+w " + studentenv.tmpdir()
+            logger.debug(cmd)
+            os.system(cmd)
 
         return rc
 

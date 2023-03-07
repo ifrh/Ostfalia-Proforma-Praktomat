@@ -132,12 +132,15 @@ RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g prakto
 # latest fuse-overlayfs
 # TODO: Use fixed VERSION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # git clone https://github.com/containers/fuse-overlayfs.git && \
-RUN apt-get update && apt-get install -y libfuse3-dev automake unzip && \
-    wget https://github.com/containers/fuse-overlayfs/archive/refs/tags/v1.10.zip && \
-    unzip v1.10.zip && \
-    cd fuse-overlayfs-1.10 && sh ./autogen.sh && ./configure && make && mv /usr/bin/fuse-overlayfs /usr/bin/fuse-overlayfs.old && \
-    mv fuse-overlayfs /usr/bin/fuse-overlayfs
+# RUN apt-get update && apt-get install -y libfuse3-dev automake unzip && \
+#    wget https://github.com/containers/fuse-overlayfs/archive/refs/tags/v1.9.zip && \
+#    unzip v1.9.zip && \
+#    cd fuse-overlayfs-1.9 && sh ./autogen.sh && ./configure && make && mv /usr/bin/fuse-overlayfs /usr/bin/fuse-overlayfs.old && \
+#    mv fuse-overlayfs /usr/bin/fuse-overlayfs
 
+# user_allow_other is needed in or der to allow praktomat user to set option allow_other on mount
+RUN apt-get update && apt-get install -y unionfs-fuse && \
+    sed -i -e 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
 
 # clean packages??? Does it make sense?
 RUN apt-get clean
