@@ -186,7 +186,7 @@ with open('unittest_results.xml', 'wb') as output:
         (result, output) = self.run_command(cmd, runenv)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
-        # os.system('ls -al ' +  runenv.tmpdir())
+        # os.system('cat /proc/mounts')
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \

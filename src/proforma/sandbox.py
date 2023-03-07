@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # overlay in container with native kernel overlay only works
 # when container is run in privileged mode which we want to avoid.
 # Therefore fuse filesystem is used.
-use_overlay = False
+use_overlay = True
 use_squash_fs = False
 
 class SandboxTemplate:
@@ -161,9 +161,20 @@ class PythonSandboxTemplate(SandboxTemplate):
 
         # compile python code (smaller)
         import compileall
+        import glob
+        logger.debug('compile')
         success = compileall.compile_dir(templ_dir, quiet=True)
         # delete all python source code
-        os.system('cd ' + templ_dir + ' && rm -rf *.py')
+#        logger.debug('delete py')
+#        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
+#            if 'encodings' not in filePath and 'codecs' not in filePath:
+#                print(filePath)
+#                try:
+#                    os.remove(filePath)
+#                except:
+#                    logger.error("Error while deleting file : ", filePath)
+#            else:
+#                print('**' + filePath)
 
         if use_overlay:
             if use_squash_fs:
@@ -245,6 +256,7 @@ class PythonSandboxInstance(SandboxInstance):
         # logger.debug('workdir is ' + workdir)
 
         logger.debug('merge dir is ' + mergeenv.tmpdir())
+        self._destfolder = mergeenv.tmpdir()
 
         # cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
         cmd = "unionfs-fuse -o cow,relaxed_permissions,allow_other " + ' ' + studentenv.tmpdir() + '=RW:' + templ_dir + '=RO ' + mergeenv.tmpdir()
@@ -270,7 +282,12 @@ class PythonSandboxInstance(SandboxInstance):
         return rc
 
     def __del__(self):
-        if self._type == self.ARCHIVE:
+        if use_overlay:
+            logger.debug('cleanup sandbox')
+            cmd = 'fusermount -u  ' + self._destfolder
+            logger.debug(cmd)
+            os.system(cmd)
+        else:
             logger.debug('cleanup sandbox')
             cmd = 'cd ' + self._destfolder + ' && rm -rf *.pyc && rm -rf .venv'
             logger.debug(cmd)
