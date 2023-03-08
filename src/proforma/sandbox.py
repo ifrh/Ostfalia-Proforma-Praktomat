@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 # overlay in container with native kernel overlay only works
 # when container is run in privileged mode which we want to avoid.
 # Therefore fuse filesystem is used.
-use_overlay = False
-use_squash_fs = False
+use_overlay = True
+use_squash_fs = True
 
 class SandboxTemplate:
     def __init__(self, praktomat_test):
@@ -54,19 +54,16 @@ class SandboxTemplate:
         logger.debug('create compressed layer')
         execute_command('ls -al ' +  templ_dir)
         # SandboxTemplate.execute_command("mksquashfs " + templ_dir + " " + templ_dir + '.sqfs')
-        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
-                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
+        execute_command("mksquashfs " + templ_dir + ' ' + templ_dir + '.sqfs',
+                        cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
+#        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
+#                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
+#        if rc.__class__ == 'CompletedProcess':
+#            logger.debug(rc.returncode)
 
         # delete temporary folder
         logger.debug('delete temp folder ' + templ_dir)
         shutil.rmtree(templ_dir)
-
-        # prepare for later use
-        execute_command('mkdir -p ' + templ_dir)
-        execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + templ_dir)
-        execute_command('ls -al ' +  templ_dir)
 
     def compress_to_archive(self, templ_dir):
         cmd = "tar -chzf " + templ_dir + ".tar ."
@@ -238,8 +235,20 @@ class PythonSandboxInstance(SandboxInstance):
 
     def _create_from_overlay(self, templ_dir, studentenv):
         self._type = self.OVERLAY
-        if not os.path.isdir(templ_dir):
-            raise Exception('no sandbox template available: ' + templ_dir)
+
+        # prepare for later use
+        if use_squash_fs:
+            if not os.path.isfile(templ_dir + '.sqfs' ):
+                raise Exception('no sandbox template available: ' + templ_dir + '.sqfs')
+            my_templ_env = CheckerEnvironment(studentenv.solution())
+            self.my_templ_dir = my_templ_env.tmpdir()
+            # execute_command('mkdir -p ' + templ_dir)
+            execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + self.my_templ_dir)
+            execute_command('ls -al ' +  self.my_templ_dir)
+            templ_dir = self.my_templ_dir
+        else:
+            if not os.path.isdir(templ_dir):
+                raise Exception('no sandbox template available: ' + templ_dir)
 
         mergeenv = CheckerEnvironment(studentenv.solution())
         # workdir = mergeenv.tmpdir() + '/work'
@@ -275,7 +284,9 @@ class PythonSandboxInstance(SandboxInstance):
             logger.debug('cleanup sandbox')
             execute_command('fusermount -u  ' + self._destfolder)
             execute_command('rm -rf  ' + self._destfolder)
-
+            if use_squash_fs:
+                # unmount squashfs template
+                execute_command('umount ' + self.my_templ_dir)
         else:
             logger.debug('cleanup sandbox')
             execute_command('rm -rf *.pyc', self._destfolder)
