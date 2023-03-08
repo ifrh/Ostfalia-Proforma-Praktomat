@@ -24,7 +24,11 @@ services:
     cap_add:
     # - ALL
     - SYS_ADMIN # for calling unshare in test process
-    - SYS_CHROOT # for calling chroot in test process with layers
+    # - SYS_CHROOT # for calling chroot in test process with layers
+    security_opt:
+      # if AppAmor is installed then we need to disable it for this container in
+      # order to work with FUSE
+      - apparmor:unconfined
     build:
         context: .
         args:
