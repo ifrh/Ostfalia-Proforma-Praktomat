@@ -99,7 +99,7 @@ class PythonUnittestChecker(ProFormAChecker):
             dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
             # print(dirs)
             for folder in dirs:
-                # print("compile " + folder)
+                print("**** compile " + folder)
                 success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True)
                 if not success:
                     logger.error('could not compile ' + folder)

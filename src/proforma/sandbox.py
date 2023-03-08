@@ -37,8 +37,9 @@ logger = logging.getLogger(__name__)
 # overlay in container with native kernel overlay only works
 # when container is run in privileged mode which we want to avoid.
 # Therefore fuse filesystem is used.
-use_overlay = True
-use_squash_fs = True
+use_overlay    = True
+use_squash_fs  = True
+compile_python = False
 
 class SandboxTemplate:
     def __init__(self, praktomat_test):
@@ -52,14 +53,9 @@ class SandboxTemplate:
     def compress_to_squashfs(self, templ_dir):
         # create compressed layer
         logger.debug('create compressed layer')
-        execute_command('ls -al ' +  templ_dir)
-        # SandboxTemplate.execute_command("mksquashfs " + templ_dir + " " + templ_dir + '.sqfs')
+        # execute_command('ls -al ' +  templ_dir)
         execute_command("mksquashfs " + templ_dir + ' ' + templ_dir + '.sqfs',
                         cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
-#        rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
-#                            cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
-#        if rc.__class__ == 'CompletedProcess':
-#            logger.debug(rc.returncode)
 
         # delete temporary folder
         logger.debug('delete temp folder ' + templ_dir)
@@ -67,18 +63,10 @@ class SandboxTemplate:
 
     def compress_to_archive(self, templ_dir):
         cmd = "tar -chzf " + templ_dir + ".tar ."
-#        cmd = "cd " + templ_dir + " && tar -chzf " + templ_dir + ".tar ."
         execute_command(cmd, templ_dir)
-
-#        rc = subprocess.run(["tar", "-ch", "-f=" + templ_dir + '.tar', templ_dir])
-#        if rc.__class__ == 'CompletedProcess':
-#            logger.debug(rc.returncode)
         # delete temporary folder
         logger.debug('delete temp folder')
         shutil.rmtree(templ_dir)
-
-
-
 
 
 class PythonSandboxTemplate(SandboxTemplate):
@@ -128,9 +116,6 @@ class PythonSandboxTemplate(SandboxTemplate):
 
         pythonbin = os.readlink('/usr/bin/python3')
         logger.debug('python is ' + pythonbin)  # expect python3.x
-        # copy python interpreter into sandbox
-        # logger.debug('copy /usr/bin/' + pythonbin + ' => ' + templ_dir + '/' + pythonbin)
-        # copy_file('/usr/bin/' + pythonbin, templ_dir + '/' + pythonbin)
         # copy python libs
         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
         execute_command(createlib, shell=True)
@@ -144,10 +129,12 @@ class PythonSandboxTemplate(SandboxTemplate):
         self._test._checker.copy_shared_objects(templ_dir)
 
         # compile python code (smaller)
-        import compileall
-        import glob
-        logger.debug('compile')
-        success = compileall.compile_dir(templ_dir, quiet=True)
+        if compile_python:
+            import compileall
+            import glob
+            logger.debug('**** compile')
+            success = compileall.compile_dir(templ_dir, quiet=True)
+
         # delete all python source code
 #        logger.debug('delete py')
 #        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
@@ -186,8 +173,11 @@ class PythonSandboxTemplate(SandboxTemplate):
                 logger.debug(rc.returncode)
 
             # compile python code (smaller)
-            import compileall
-            success = compileall.compile_dir(venv_dir, quiet=True)
+            if compile_python:
+                import compileall
+                logger.debug('**** compile')
+                success = compileall.compile_dir(venv_dir, quiet=True)
+
             # delete all python source code
             # logger.debug('delete py in python venv')
             # import glob
@@ -211,10 +201,6 @@ class PythonSandboxTemplate(SandboxTemplate):
 class SandboxInstance:
     def __init__(self, proformAChecker):
         self._checker = proformAChecker
-
-    # def _getTask(self):
-    #     return self._task
-    # object = property(_getTask)
     ARCHIVE = 1
     OVERLAY = 2
 
@@ -242,9 +228,8 @@ class PythonSandboxInstance(SandboxInstance):
                 raise Exception('no sandbox template available: ' + templ_dir + '.sqfs')
             my_templ_env = CheckerEnvironment(studentenv.solution())
             self.my_templ_dir = my_templ_env.tmpdir()
-            # execute_command('mkdir -p ' + templ_dir)
             execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + self.my_templ_dir)
-            execute_command('ls -al ' +  self.my_templ_dir)
+            # execute_command('ls -al ' +  self.my_templ_dir)
             templ_dir = self.my_templ_dir
         else:
             if not os.path.isdir(templ_dir):
