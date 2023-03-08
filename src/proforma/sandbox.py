@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # overlay in container with native kernel overlay only works
 # when container is run in privileged mode which we want to avoid.
 # Therefore fuse filesystem is used.
-use_overlay = True
+use_overlay = False
 use_squash_fs = False
 
 class SandboxTemplate:
@@ -224,8 +224,7 @@ class SandboxInstance:
     def _create_from_archive(self, templ_dir, studentenv):
         self._type = self.ARCHIVE
         self._destfolder = studentenv.tmpdir()
-        cmd = "cd " + studentenv.tmpdir() + " && tar -xf " + templ_dir + ".tar "
-        execute_command(cmd)
+        execute_command("tar -xf " + templ_dir + ".tar", studentenv.tmpdir())
         return studentenv
 
     def delete(self):
@@ -279,6 +278,7 @@ class PythonSandboxInstance(SandboxInstance):
 
         else:
             logger.debug('cleanup sandbox')
-            execute_command('cd ' + self._destfolder + ' && rm -rf *.pyc && rm -rf .venv')
+            execute_command('rm -rf *.pyc', self._destfolder)
+            execute_command('rm -rf .venv', self._destfolder)
 
         super().delete()
