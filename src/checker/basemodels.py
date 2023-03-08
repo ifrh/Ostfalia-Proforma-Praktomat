@@ -18,6 +18,7 @@ from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 from utilities import encoding, file_operations
 from utilities.deleting_file_field import DeletingFileField
+from utilities.safeexec import execute_command
 
 from functools import partial
 from multiprocessing import Pool
@@ -433,10 +434,10 @@ def delete_sandbox(dir):
             if os.path.isdir(path):
                 # use rm -rf instead of rmdir in order to delete more files :-)
                 # logger.debug('rm -rf ')
-                result = os.system("sudo -E -u tester rm -rf " + path)
+                result = execute_command("sudo -E -u tester rm -rf " + path)
             else:
                 # logger.debug('rm')
-                result = os.system("sudo -E -u tester rm " + path)
+                result = execute_command("sudo -E -u tester rm " + path)
             # exitcode = os.waitstatus_to_exitcode(result)
             if result != 0:
                 logger.error('Cannot delete file or path ' + path)

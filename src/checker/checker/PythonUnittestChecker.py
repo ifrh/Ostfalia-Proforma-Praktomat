@@ -13,6 +13,7 @@ from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
 from django.conf import settings
 from proforma import sandbox
+from utilities.safeexec import execute_command
 
 import logging
 
@@ -115,13 +116,13 @@ class PythonUnittestChecker(ProFormAChecker):
         # copy task files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(studentenv)
         logger.debug('task code is in ' + studentenv.tmpdir())
-        # os.system('ls -al ' +  studentenv.tmpdir())
+        # execute_command('ls -al ' +  studentenv.tmpdir())
 
 
         run_sandbox = sandbox.PythonSandboxInstance(self)
         runenv = run_sandbox.create(studentenv)
-        # os.system('ls -al ' +  runenv.tmpdir())
-        # os.system('ls -al ' +  runenv.tmpdir() + '/..')
+        # execute_command('ls -al ' +  runenv.tmpdir())
+        # execute_command('ls -al ' +  runenv.tmpdir() + '/..')
 
         test_dir = runenv.tmpdir()
 
@@ -179,14 +180,14 @@ with open('unittest_results.xml', 'wb') as output:
         # get result
         runenv.set_variable('VIRTUAL_ENV', '/.venv')
         runenv.set_variable('PATH', '/.venv')
-        os.system('mkdir -p ' + test_dir + '/.matplotlib')
+        execute_command('mkdir -p ' + test_dir + '/.matplotlib')
         runenv.set_variable('MPLCONFIGDIR', '/.matplotlib')
 
 
         (result, output) = self.run_command(cmd, runenv)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
-        # os.system('cat /proc/mounts')
+        # execute_command('cat /proc/mounts')
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \

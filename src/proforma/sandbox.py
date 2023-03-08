@@ -26,6 +26,7 @@ import subprocess
 import shutil
 from checker.basemodels import CheckerEnvironment
 from utilities.file_operations import copy_file
+from utilities.safeexec import execute_command
 
 from django.conf import settings
 
@@ -44,19 +45,6 @@ class SandboxTemplate:
         self._test = praktomat_test
         logger.debug(self._test._checker.proforma_id)
 
-    def execute_command(command):
-        logger.debug(command)
-        cmdList = command.split()
-        # logger.debug(cmdList)
-        rc = subprocess.run(cmdList, shell=False, check=True)
-        if rc.__class__ == 'CompletedProcess':
-            logger.debug(rc.returncode)
-        else:
-            logger.debug(rc.__class__)
-
-
-
-
     def get_template_path(self):
         """ return root of all templates. """
         return 'Templates'
@@ -64,7 +52,7 @@ class SandboxTemplate:
     def compress_to_squashfs(self, templ_dir):
         # create compressed layer
         logger.debug('create compressed layer')
-        os.system('ls -al ' +  templ_dir)
+        execute_command('ls -al ' +  templ_dir)
         # SandboxTemplate.execute_command("mksquashfs " + templ_dir + " " + templ_dir + '.sqfs')
         rc = subprocess.run(["mksquashfs", templ_dir, templ_dir + '.sqfs'],
                             cwd=os.path.join(settings.UPLOAD_ROOT, 'Templates'))
@@ -76,14 +64,14 @@ class SandboxTemplate:
         shutil.rmtree(templ_dir)
 
         # prepare for later use
-        SandboxTemplate.execute_command('mkdir -p ' + templ_dir)
-        SandboxTemplate.execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + templ_dir)
-        os.system('ls -al ' +  templ_dir)
+        execute_command('mkdir -p ' + templ_dir)
+        execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + templ_dir)
+        execute_command('ls -al ' +  templ_dir)
 
     def compress_to_archive(self, templ_dir):
-        cmd = "cd " + templ_dir + " && tar -chzf " + templ_dir + ".tar ."
-        print(cmd)
-        os.system(cmd)
+        cmd = "tar -chzf " + templ_dir + ".tar ."
+#        cmd = "cd " + templ_dir + " && tar -chzf " + templ_dir + ".tar ."
+        execute_command(cmd, templ_dir)
 
 #        rc = subprocess.run(["tar", "-ch", "-f=" + templ_dir + '.tar', templ_dir])
 #        if rc.__class__ == 'CompletedProcess':
@@ -148,8 +136,7 @@ class PythonSandboxTemplate(SandboxTemplate):
         # copy_file('/usr/bin/' + pythonbin, templ_dir + '/' + pythonbin)
         # copy python libs
         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
-        logger.debug(createlib)
-        os.system(createlib)
+        execute_command(createlib, shell=True)
 
         logger.debug('copy shared libraries from os')
         self._include_shared_object('libffi.so', templ_dir)
@@ -205,15 +192,21 @@ class PythonSandboxTemplate(SandboxTemplate):
             import compileall
             success = compileall.compile_dir(venv_dir, quiet=True)
             # delete all python source code
-            os.system('cd ' + venv_dir + ' && rm -rf *.py')
+            # logger.debug('delete py in python venv')
+            # import glob
+            #for filePath in glob.glob(venv_dir + '/**/*.py', recursive=True):
+            #    print(filePath)
+            #    try:
+            #        os.remove(filePath)
+            #    except:
+            #        logger.error("Error while deleting file : ", filePath)
 
             self.compress_to_archive(python_dir)
 
         logger.debug('reuse python env')
         templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
-        cmd = "mkdir -p " + templ_dir + " && cd " + templ_dir + " && tar -xf " + python_dir + ".tar "
-        logger.debug(cmd)
-        os.system(cmd)
+        execute_command("mkdir -p " + templ_dir)
+        execute_command("tar -xf " + python_dir + ".tar ", templ_dir)
 
         return templ_dir
 
@@ -232,8 +225,7 @@ class SandboxInstance:
         self._type = self.ARCHIVE
         self._destfolder = studentenv.tmpdir()
         cmd = "cd " + studentenv.tmpdir() + " && tar -xf " + templ_dir + ".tar "
-        logger.debug(cmd)
-        os.system(cmd)
+        execute_command(cmd)
         return studentenv
 
     def delete(self):
@@ -252,7 +244,7 @@ class PythonSandboxInstance(SandboxInstance):
 
         mergeenv = CheckerEnvironment(studentenv.solution())
         # workdir = mergeenv.tmpdir() + '/work'
-        # os.system('mkdir -p ' + workdir)
+        # execute_command('mkdir -p ' + workdir)
         # logger.debug('workdir is ' + workdir)
 
         logger.debug('merge dir is ' + mergeenv.tmpdir())
@@ -260,7 +252,7 @@ class PythonSandboxInstance(SandboxInstance):
 
         # cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
         cmd = "unionfs-fuse -o cow,relaxed_permissions,allow_other " + ' ' + studentenv.tmpdir() + '=RW:' + templ_dir + '=RO ' + mergeenv.tmpdir()
-        SandboxTemplate.execute_command(cmd)
+        execute_command(cmd)
         # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
         #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
 
@@ -275,22 +267,18 @@ class PythonSandboxInstance(SandboxInstance):
         else:
             rc =  self._create_from_archive(templ_dir, studentenv)
             # allow tester to write into sandbox (after creation)
-            cmd = "chmod g+w " + studentenv.tmpdir()
-            logger.debug(cmd)
-            os.system(cmd)
+            execute_command("chmod g+w " + studentenv.tmpdir())
 
         return rc
 
     def __del__(self):
         if use_overlay:
             logger.debug('cleanup sandbox')
-            cmd = 'fusermount -u  ' + self._destfolder
-            logger.debug(cmd)
-            os.system(cmd)
+            execute_command('fusermount -u  ' + self._destfolder)
+            execute_command('rm -rf  ' + self._destfolder)
+
         else:
             logger.debug('cleanup sandbox')
-            cmd = 'cd ' + self._destfolder + ' && rm -rf *.pyc && rm -rf .venv'
-            logger.debug(cmd)
-            os.system(cmd)
+            execute_command('cd ' + self._destfolder + ' && rm -rf *.pyc && rm -rf .venv')
 
         super().delete()

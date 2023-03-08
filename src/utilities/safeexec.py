@@ -171,3 +171,25 @@ def execute_arglist(args, working_directory, environment_variables={},
 
     # proforma: remove invalid xml char
     return [escape_xml_invalid_chars(output.decode('utf-8')), error, process.returncode, timed_out, oom_ed]
+
+
+
+def execute_command(command, cwd=None, shell=False):
+    """ simple wrapper for subprocess.run for running non-safe commands """
+    if not shell:
+        if type(command) != list:
+            logger.debug(command)
+            command = command.split()
+        else:
+            logger.debug(' '.join(command))
+
+    # execute
+    rc = subprocess.run(command, shell=shell, check=True, cwd=cwd)
+    if type(rc).__name__ == 'CompletedProcess':
+        if rc.returncode != 0:
+            logger.debug(rc.returncode)
+            raise Exception('command failed: ' + ' '.join(command))
+        return rc.returncode
+    else:
+        logger.debug(rc.__class__)
+        raise Exception('do not know how to handle return code ' + type(rc).__name__)
