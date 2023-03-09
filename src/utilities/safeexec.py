@@ -174,7 +174,7 @@ def execute_arglist(args, working_directory, environment_variables={},
 
 
 
-def execute_command(command, cwd=None, shell=False):
+def execute_command(command, cwd=None, shell=False, env=None):
     """ simple wrapper for subprocess.run for running non-safe commands """
     if not shell:
         if type(command) != list:
@@ -184,12 +184,14 @@ def execute_command(command, cwd=None, shell=False):
             logger.debug(' '.join(command))
 
     # execute
-    rc = subprocess.run(command, shell=shell, check=True, cwd=cwd)
-    if type(rc).__name__ == 'CompletedProcess':
-        if rc.returncode != 0:
-            logger.debug(rc.returncode)
-            raise Exception('command failed: ' + ' '.join(command))
-        return rc.returncode
-    else:
+    rc = subprocess.run(command, shell=shell, check=True, cwd=cwd, env=env)
+    if type(rc).__name__ != 'CompletedProcess':
         logger.debug(rc.__class__)
         raise Exception('do not know how to handle return code ' + type(rc).__name__)
+
+    if rc.returncode == 0:
+        # everything is fine
+        return rc.returncode
+
+    logger.debug(rc.returncode)
+    raise Exception('command failed: ' + ' '.join(command))
