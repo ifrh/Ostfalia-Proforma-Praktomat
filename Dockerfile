@@ -35,7 +35,7 @@ ENV LC_ALL ${LOCALE}
 RUN apt-get update && \
     apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
     subversion git \
-    fuse3 squashfs-tools squashfuse fuse-overlayfs libffi-dev && \
+    libffi-dev && \
     rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
 
@@ -129,6 +129,14 @@ RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
 # RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
 
+
+# install fuse for sandbox templates
+# install tree and strace for debugging :-)
+# user_allow_other is needed in or der to allow praktomat user to set option allow_other on mount
+RUN apt-get update && apt-get install -y fuse3 unionfs-fuse squashfs-tools squashfuse fuse-overlayfs \
+    tree strace && \
+    sed -i -e 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
+
 # latest fuse-overlayfs
 # TODO: Use fixed VERSION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # git clone https://github.com/containers/fuse-overlayfs.git && \
@@ -138,9 +146,6 @@ RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g prakto
 #    cd fuse-overlayfs-1.9 && sh ./autogen.sh && ./configure && make && mv /usr/bin/fuse-overlayfs /usr/bin/fuse-overlayfs.old && \
 #    mv fuse-overlayfs /usr/bin/fuse-overlayfs
 
-# user_allow_other is needed in or der to allow praktomat user to set option allow_other on mount
-RUN apt-get update && apt-get install -y unionfs-fuse && \
-    sed -i -e 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
 
 # clean packages??? Does it make sense?
 RUN apt-get clean
