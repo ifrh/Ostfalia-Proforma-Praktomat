@@ -100,16 +100,13 @@ class PythonUnittestChecker(ProFormAChecker):
             # print(dirs)
             for folder in dirs:
                 print("**** compile " + folder)
-                success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True)
-                if not success:
+                if not compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True):
                     logger.error('could not compile ' + folder)
 
             for file in files:
                 print("**** compile " + file)
-                success = compileall.compile_file(os.path.join(env.tmpdir(), file), quiet=True)
-                if not success:
-                    logger.error('could not compile ' + file)
-
+                if not compileall.compile_file(os.path.join(env.tmpdir(), file), quiet=True):
+                        logger.error('could not compile ' + file)
             break
 
     def run(self, studentenv):
