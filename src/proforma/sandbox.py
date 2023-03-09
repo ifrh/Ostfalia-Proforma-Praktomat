@@ -26,7 +26,7 @@ import subprocess
 import shutil
 from checker.basemodels import CheckerEnvironment
 from utilities.file_operations import copy_file
-from utilities.safeexec import execute_command
+from utilities.safeexec import execute_command, execute_arglist
 
 from django.conf import settings
 
@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 # overlay in container with native kernel overlay only works
 # when container is run in privileged mode which we want to avoid.
 # Therefore fuse filesystem is used.
-use_overlay    = True
-use_squash_fs  = True
+use_overlay    = False
+use_squash_fs  = False
 compile_python = False
 
 class SandboxTemplate:
@@ -49,6 +49,16 @@ class SandboxTemplate:
     def get_template_path(self):
         """ return root of all templates. """
         return 'Templates'
+
+    def template_exists(self, path):
+        if use_overlay:
+            if use_squash_fs:
+                return os.path.isfile(path + '.sqfs')
+            else:
+                # simply do nothing
+                return os.path.isdir(path)
+        else:
+            return os.path.isfile(path + '.tar')
 
     def compress_to_squashfs(self, templ_dir):
         # create compressed layer
@@ -68,15 +78,6 @@ class SandboxTemplate:
         logger.debug('delete temp folder')
         shutil.rmtree(templ_dir)
 
-
-class PythonSandboxTemplate(SandboxTemplate):
-    def __init__(self, praktomat_test):
-        super().__init__(praktomat_test)
-
-    def get_python_path(self):
-        """ return root of all templates. """
-        return 'Templates/Python'
-
     def _include_shared_object(self, filename, newdir):
         from pathlib import Path
         found = False
@@ -91,28 +92,71 @@ class PythonSandboxTemplate(SandboxTemplate):
         if not found:
             raise Exception(filename + ' not found for testing')
 
+
+class PythonSandboxTemplate(SandboxTemplate):
+    def __init__(self, praktomat_test):
+        super().__init__(praktomat_test)
+
+    def get_hash(requirements_txt):
+        """ create simple hash for requirements.txt content """
+        import hashlib
+        with open(requirements_txt, 'r') as f:
+            # read strip lines
+            modules = [line.strip() for line in f.readlines()]
+            # skip empty lines
+            modules = list(filter(lambda line: len(line) > 0, modules))
+            # I do not know if the order matters so I do not sort the modules!
+            # Otherwise a wrong order can never be corrected.
+            # modules.sort()
+            print('Modules: ' + '\n'.join(modules))
+            md5 = hashlib.md5('\n'.join(modules).encode('utf-8')).hexdigest()
+            return md5
+
+        return None
+
+    def get_python_path():
+        """ return root of all templates. """
+        return 'Templates/Python'
+
     def create(self):
         requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
         if len(requirements_txt) == 0:
             requirements_txt = None
+            requirements_path = None
         else:
             requirements_txt = requirements_txt.first()
+            requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
-        templ_dir = self._create_venv()
+        templ_path = PythonSandboxTemplate.get_python_template_path(requirements_path)
+        if self.template_exists(templ_path):
+            # already exists => return
+            return
+
+        templ_dir = self._create_venv(templ_path)
         logger.debug('Template dir is ' + templ_dir)
 
         # install modules from requirements.txt if available
         if requirements_txt is not None:
+            hash = PythonSandboxTemplate.get_hash(requirements_path)
+            print(hash)
             logger.debug('install requirements')
-            path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
             # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
             env = {}
             env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
-            rc = subprocess.run(["bin/python", "bin/pip", "install", "-r", path], cwd=os.path.join(templ_dir, '.venv'), env=env)
-            if rc.__class__ == 'CompletedProcess':
-                logger.debug(rc.returncode)
+            execute_command("bin/python bin/pip install -r " + requirements_path,
+                            cwd=os.path.join(templ_dir, '.venv'), env=env)
+
+#            (output, error, exitcode, timed_out, oom_ed) = \
+#                execute_arglist(["bin/python", "bin/pip", "install", "-r", requirements_path],
+#                                working_directory=os.path.join(templ_dir, '.venv'),
+#                                 environment_variables=env, unsafe=True)
+#            logger.debug(output)
+#            logger.debug(error)
+#            if exitcode != 0:
+#                raise Exception('Cannot install requirements.txt: \n\n' + output)
+
 
         pythonbin = os.readlink('/usr/bin/python3')
         logger.debug('python is ' + pythonbin)  # expect python3.x
@@ -124,11 +168,12 @@ class PythonSandboxTemplate(SandboxTemplate):
         self._include_shared_object('libffi.so', templ_dir)
         self._include_shared_object('libffi.so.7', templ_dir)
         self._include_shared_object('libbz2.so.1.0', templ_dir)
+        self._include_shared_object('libsqlite3.so.0', templ_dir)
 
         logger.debug('copy all shared libraries needed for python to work')
         self._test._checker.copy_shared_objects(templ_dir)
 
-        # compile python code (smaller)
+        # compile python code (smaller???)
         if compile_python:
             import compileall
             import glob
@@ -156,9 +201,22 @@ class PythonSandboxTemplate(SandboxTemplate):
         else:
             self.compress_to_archive(templ_dir)
 
-    def _create_venv(self):
+    def get_python_template_path(requirements_path):
+        """ returns the template pathname for the given requirements.txt """
+        hash = None
+        if requirements_path is not None:
+            hash = PythonSandboxTemplate.get_hash(requirements_path)
+
+        if hash is not None:
+            return os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), hash)
+        else:
+            return os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), '0')
+
+
+
+    def _create_venv(self, templ_dir):
         # create virtual environment for reuse
-        python_dir = os.path.join(settings.UPLOAD_ROOT, self.get_python_path())
+        python_dir = os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), 'Python')
 
         if not os.path.isfile(python_dir + '.tar'):
             venv_dir = os.path.join(python_dir, ".venv")
@@ -169,8 +227,8 @@ class PythonSandboxTemplate(SandboxTemplate):
             # install xmlrunner
             logger.debug('install xmlrunner')
             rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
-            if rc.__class__ == 'CompletedProcess':
-                logger.debug(rc.returncode)
+            if rc.returncode != 0:
+                raise Exception('cannot install unittest-xml-reporting')
 
             # compile python code (smaller)
             if compile_python:
@@ -191,7 +249,7 @@ class PythonSandboxTemplate(SandboxTemplate):
             self.compress_to_archive(python_dir)
 
         logger.debug('reuse python env')
-        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
+        # templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
         execute_command("mkdir -p " + templ_dir)
         execute_command("tar -xf " + python_dir + ".tar ", templ_dir)
 
@@ -208,16 +266,9 @@ class SandboxInstance:
         self._type = self.ARCHIVE
         self._destfolder = studentenv.tmpdir()
         execute_command("tar -xf " + templ_dir + ".tar", studentenv.tmpdir())
+        # allow tester to write into sandbox (after creation)
+        execute_command("chmod g+w " + studentenv.tmpdir())
         return studentenv
-
-    def delete(self):
-        pass
-
-
-
-class PythonSandboxInstance(SandboxInstance):
-    def __init__(self, proformAChecker):
-        super().__init__(proformAChecker)
 
     def _create_from_overlay(self, templ_dir, studentenv):
         self._type = self.OVERLAY
@@ -251,16 +302,37 @@ class PythonSandboxInstance(SandboxInstance):
 
         return mergeenv
 
+    def delete(self):
+        pass
+
+
+
+class PythonSandboxInstance(SandboxInstance):
+    def __init__(self, proformAChecker):
+        super().__init__(proformAChecker)
 
     def create(self, studentenv):
+        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+        if len(requirements_txt) > 1:
+            raise Exception('more than one requirements.txt found')
+        if len(requirements_txt) == 0:
+            requirements_txt = None
+            path = None
+        else:
+            requirements_txt = requirements_txt.first()
+            path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
-        templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
+        templ_dir = PythonSandboxTemplate.get_python_template_path(path)
         if use_overlay:
             rc =  self._create_from_overlay(templ_dir, studentenv)
         else:
             rc =  self._create_from_archive(templ_dir, studentenv)
-            # allow tester to write into sandbox (after creation)
-            execute_command("chmod g+w " + studentenv.tmpdir())
+
+#        if requirements_txt is not None:
+#            # for debugging
+#            logger.debug(rc.tmpdir() + '/.venv/bin')
+#            execute_command('ls -al', rc.tmpdir() + '/.venv/bin')
+#            execute_command('python pip -list', rc.tmpdir() + '/.venv/bin')
 
         return rc
 
