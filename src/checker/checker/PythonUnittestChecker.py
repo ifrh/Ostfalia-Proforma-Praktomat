@@ -103,6 +103,13 @@ class PythonUnittestChecker(ProFormAChecker):
                 success = compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True)
                 if not success:
                     logger.error('could not compile ' + folder)
+
+            for file in files:
+                print("**** compile " + file)
+                success = compileall.compile_file(os.path.join(env.tmpdir(), file), quiet=True)
+                if not success:
+                    logger.error('could not compile ' + file)
+
             break
 
     def run(self, studentenv):
@@ -151,13 +158,28 @@ suite = loader.discover(start_dir, "*test*.py")
 for dirpath, dirs, files in os.walk('.'):
     dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
     for folder in dirs:
+        # print(folder)
         for dirpath, dirs, files in os.walk(folder):
             for file in files:
                 if file.endswith('.py'):
                     try:
+                        # print(os.path.join(dirpath, file))
                         os.unlink(os.path.join(dirpath, file))
                     except:
                         pass
+    break
+                        
+for dirpath, dirs, files in os.walk('.'):
+    for file in files:
+        # print(file)
+        if file.endswith('.py'):
+            try:
+                # print(os.path.join(dirpath, file))            
+                os.unlink(os.path.join(dirpath, file))
+            except:
+                pass
+    break                        
+                        
 with open('unittest_results.xml', 'wb') as output:
     runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
     runner.run(suite)
