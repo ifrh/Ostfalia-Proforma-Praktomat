@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 # overlay in container with native kernel overlay only works
 # when container is run in privileged mode which we want to avoid.
 # Therefore fuse filesystem is used.
-use_overlay    = False
-use_squash_fs  = False
+use_overlay    = True
+use_squash_fs  = True
 compile_python = False
 
 class SandboxTemplate:

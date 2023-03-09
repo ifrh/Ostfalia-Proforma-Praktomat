@@ -172,18 +172,14 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-        pythonbin = '.venv/bin/python3'
-        cmd = [pythonbin, 'run_suite.py']
-
-        # run command
-        logger.debug('run ' + str(cmd))
-        # get result
+        # run test
+        cmd = ['.venv/bin/python3', 'run_suite.py']
+        # set environment variables
         runenv.set_variable('VIRTUAL_ENV', '/.venv')
         runenv.set_variable('PATH', '/.venv')
+        logger.debug('run ' + str(cmd))
         execute_command('mkdir -p ' + test_dir + '/.matplotlib')
         runenv.set_variable('MPLCONFIGDIR', '/.matplotlib')
-
-
         (result, output) = self.run_command(cmd, runenv)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
