@@ -5,14 +5,12 @@ import traceback
 
 from lxml import etree
 
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
 from checker.basemodels import CheckerResult, truncated_log, CheckerEnvironment
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
 from django.conf import settings
-from proforma import sandbox
+from proforma import python_sandbox
 from utilities.safeexec import execute_command
 
 import logging
@@ -146,7 +144,7 @@ class PythonUnittestChecker(ProFormAChecker):
         # execute_command('ls -al ' +  studentenv.tmpdir())
 
 
-        run_sandbox = sandbox.PythonSandboxInstance(self)
+        run_sandbox = python_sandbox.PythonSandboxInstance(self)
         runenv = run_sandbox.create(studentenv)
         # execute_command('ls -al ' +  runenv.tmpdir())
         # execute_command('ls -al ' +  runenv.tmpdir() + '/..')
