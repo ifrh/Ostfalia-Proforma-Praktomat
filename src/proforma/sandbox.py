@@ -88,17 +88,24 @@ class SandboxInstance:
             return self._create_from_archive(self._templ_dir, self._studentenv)
 
     def __del__(self):
-        if self._type == self.OVERLAY:
-            logger.debug('cleanup sandbox')
-            execute_command('fusermount -u  ' + self._destfolder)
-            execute_command('rm -rf  ' + self._destfolder)
-            if use_squash_fs:
-                # unmount squashfs template
-                execute_command('umount ' + self.my_templ_dir)
-        else:
-            logger.debug('cleanup sandbox')
-            execute_command('rm -rf *.pyc', self._destfolder)
-            execute_command('rm -rf .venv', self._destfolder)
+        if self._destfolder is None:
+            return
+
+        try:
+            if self._type == self.OVERLAY:
+                logger.debug('cleanup sandbox')
+                execute_command('fusermount -u  ' + self._destfolder)
+                execute_command('rm -rf  ' + self._destfolder)
+                if use_squash_fs:
+                    # unmount squashfs template
+                    execute_command('umount ' + self.my_templ_dir)
+            else:
+                logger.debug('cleanup sandbox')
+                execute_command('rm -rf *.pyc', self._destfolder)
+                execute_command('rm -rf .venv', self._destfolder)
+        except:
+            # ignore errors
+            pass
 
 
 class SandboxTemplate:
