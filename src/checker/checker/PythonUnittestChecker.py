@@ -97,7 +97,7 @@ class PythonUnittestChecker(ProFormAChecker):
             dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
             # print(dirs)
             for folder in dirs:
-                print("**** compile " + folder)
+                logger.debug("compile " + folder)
                 # if not compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True):
                 #    logger.error('could not compile ' + folder)
                 [output, error, exitcode, timed_out, oom_ed] = \
@@ -110,7 +110,7 @@ class PythonUnittestChecker(ProFormAChecker):
                     return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
 
             for file in files:
-                print("**** compile " + file)
+                logger.debug("compile " + file)
                 [output, error, exitcode, timed_out, oom_ed] = \
                     execute_arglist(['python3', '-m', 'compileall', file], env.tmpdir(), unsafe=True)
                 if exitcode != 0:

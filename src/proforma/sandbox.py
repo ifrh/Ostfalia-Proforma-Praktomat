@@ -44,6 +44,7 @@ class SandboxInstance:
     def __init__(self, templ_dir, studentenv):
         self._templ_dir = templ_dir
         self._studentenv = studentenv
+        self._destfolder = None
 
     def _create_from_archive(self, templ_dir, studentenv):
         self._type = self.ARCHIVE
@@ -128,6 +129,10 @@ class SandboxTemplate:
             return os.path.isfile(path + '.tar')
 
     def _compress_to_squashfs(self, templ_dir):
+        if os.path.isfile(templ_dir + '.sqfs'):
+            logger.error('squashfs file already exists, try and delete with recreate')
+            os.unlink(templ_dir + '.sqfs')
+
         # create compressed layer
         logger.debug('create compressed layer')
         # execute_command('ls -al ' +  templ_dir)
