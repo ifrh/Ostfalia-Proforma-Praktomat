@@ -41,6 +41,68 @@ use_overlay    = True
 use_squash_fs  = True
 compile_python = False
 
+class SandboxInstance:
+    def __init__(self, proformAChecker):
+        self._checker = proformAChecker
+    ARCHIVE = 1
+    OVERLAY = 2
+
+    def _create_from_archive(self, templ_dir, studentenv):
+        self._type = self.ARCHIVE
+        self._destfolder = studentenv.tmpdir()
+        execute_command("tar -xf " + templ_dir + ".tar", studentenv.tmpdir())
+        # allow tester to write into sandbox (after creation)
+        execute_command("chmod g+w " + studentenv.tmpdir())
+        return studentenv
+
+    def _create_from_overlay(self, templ_dir, studentenv):
+        self._type = self.OVERLAY
+
+        # prepare for later use
+        if use_squash_fs:
+            if not os.path.isfile(templ_dir + '.sqfs' ):
+                raise Exception('no sandbox template available: ' + templ_dir + '.sqfs')
+            my_templ_env = CheckerEnvironment(studentenv.solution())
+            self.my_templ_dir = my_templ_env.tmpdir()
+            execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + self.my_templ_dir)
+            # execute_command('ls -al ' +  self.my_templ_dir)
+            templ_dir = self.my_templ_dir
+        else:
+            if not os.path.isdir(templ_dir):
+                raise Exception('no sandbox template available: ' + templ_dir)
+
+        mergeenv = CheckerEnvironment(studentenv.solution())
+
+        logger.debug('merge dir is ' + mergeenv.tmpdir())
+        self._destfolder = mergeenv.tmpdir()
+
+        cmd = "unionfs-fuse -o cow,relaxed_permissions,allow_other " + ' ' + studentenv.tmpdir() + '=RW:' + templ_dir + '=RO ' + mergeenv.tmpdir()
+        execute_command(cmd)
+        # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
+        #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
+
+        return mergeenv
+
+    def create(self, templ_dir, studentenv):
+        if use_overlay:
+            return self._create_from_overlay(templ_dir, studentenv)
+        else:
+            return self._create_from_archive(templ_dir, studentenv)
+
+    def __del__(self):
+        if self._type == self.OVERLAY:
+            logger.debug('cleanup sandbox')
+            execute_command('fusermount -u  ' + self._destfolder)
+            execute_command('rm -rf  ' + self._destfolder)
+            if use_squash_fs:
+                # unmount squashfs template
+                execute_command('umount ' + self.my_templ_dir)
+        else:
+            logger.debug('cleanup sandbox')
+            execute_command('rm -rf *.pyc', self._destfolder)
+            execute_command('rm -rf .venv', self._destfolder)
+
+
 class SandboxTemplate:
     def __init__(self, praktomat_test):
         self._test = praktomat_test
@@ -264,66 +326,7 @@ class PythonSandboxTemplate(SandboxTemplate):
         return templ_dir
 
 
-class SandboxInstance:
-    def __init__(self, proformAChecker):
-        self._checker = proformAChecker
-    ARCHIVE = 1
-    OVERLAY = 2
 
-    def _create_from_archive(self, templ_dir, studentenv):
-        self._type = self.ARCHIVE
-        self._destfolder = studentenv.tmpdir()
-        execute_command("tar -xf " + templ_dir + ".tar", studentenv.tmpdir())
-        # allow tester to write into sandbox (after creation)
-        execute_command("chmod g+w " + studentenv.tmpdir())
-        return studentenv
-
-    def _create_from_overlay(self, templ_dir, studentenv):
-        self._type = self.OVERLAY
-
-        # prepare for later use
-        if use_squash_fs:
-            if not os.path.isfile(templ_dir + '.sqfs' ):
-                raise Exception('no sandbox template available: ' + templ_dir + '.sqfs')
-            my_templ_env = CheckerEnvironment(studentenv.solution())
-            self.my_templ_dir = my_templ_env.tmpdir()
-            execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + self.my_templ_dir)
-            # execute_command('ls -al ' +  self.my_templ_dir)
-            templ_dir = self.my_templ_dir
-        else:
-            if not os.path.isdir(templ_dir):
-                raise Exception('no sandbox template available: ' + templ_dir)
-
-        mergeenv = CheckerEnvironment(studentenv.solution())
-
-        logger.debug('merge dir is ' + mergeenv.tmpdir())
-        self._destfolder = mergeenv.tmpdir()
-
-        cmd = "unionfs-fuse -o cow,relaxed_permissions,allow_other " + ' ' + studentenv.tmpdir() + '=RW:' + templ_dir + '=RO ' + mergeenv.tmpdir()
-        execute_command(cmd)
-        # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
-        #            cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir' + =up,workdir=workdir merged
-
-        return mergeenv
-
-    def create(self, templ_dir, studentenv):
-        if use_overlay:
-            return self._create_from_overlay(templ_dir, studentenv)
-        else:
-            return self._create_from_archive(templ_dir, studentenv)
-
-    def __del__(self):
-        if self._type == self.OVERLAY:
-            logger.debug('cleanup sandbox')
-            execute_command('fusermount -u  ' + self._destfolder)
-            execute_command('rm -rf  ' + self._destfolder)
-            if use_squash_fs:
-                # unmount squashfs template
-                execute_command('umount ' + self.my_templ_dir)
-        else:
-            logger.debug('cleanup sandbox')
-            execute_command('rm -rf *.pyc', self._destfolder)
-            execute_command('rm -rf .venv', self._destfolder)
 
 
 
