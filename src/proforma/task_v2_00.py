@@ -421,8 +421,13 @@ class Task_2_00:
         x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
-        x.save()
         template = sandbox.PythonSandboxTemplate(x)
+        template.check_preconditions()
+        x.save()
+        # Check preconditions for template
+#        requirements_txt = inst.files.filter(filename='requirements.txt', path='')
+#        if len(requirements_txt) > 1:
+#            raise Exception('more than one requirements.txt found')
         template.create()
 
     def _create_java_checkstyle_test(self, xmlTest):

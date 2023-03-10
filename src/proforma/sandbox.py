@@ -118,10 +118,14 @@ class PythonSandboxTemplate(SandboxTemplate):
         """ return root of all templates. """
         return 'Templates/Python'
 
-    def create(self):
+    def check_preconditions(self):
         requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
+
+    def create(self):
+        self.check_preconditions()
+        requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) == 0:
             requirements_txt = None
             requirements_path = None
@@ -145,17 +149,17 @@ class PythonSandboxTemplate(SandboxTemplate):
             # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
             env = {}
             env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
-            execute_command("bin/python bin/pip install -r " + requirements_path,
-                            cwd=os.path.join(templ_dir, '.venv'), env=env)
+#            execute_command("bin/python bin/pip install -r " + requirements_path,
+#                            cwd=os.path.join(templ_dir, '.venv'), env=env)
 
-#            (output, error, exitcode, timed_out, oom_ed) = \
-#                execute_arglist(["bin/python", "bin/pip", "install", "-r", requirements_path],
-#                                working_directory=os.path.join(templ_dir, '.venv'),
-#                                 environment_variables=env, unsafe=True)
-#            logger.debug(output)
-#            logger.debug(error)
-#            if exitcode != 0:
-#                raise Exception('Cannot install requirements.txt: \n\n' + output)
+            (output, error, exitcode, timed_out, oom_ed) = \
+                execute_arglist(["bin/python", "bin/pip", "install", "-r", requirements_path],
+                                working_directory=os.path.join(templ_dir, '.venv'),
+                                 environment_variables=env, unsafe=True)
+            logger.debug(output)
+            logger.debug(error)
+            if exitcode != 0:
+                raise Exception('Cannot install requirements.txt: \n\n' + output)
 
 
         pythonbin = os.readlink('/usr/bin/python3')
