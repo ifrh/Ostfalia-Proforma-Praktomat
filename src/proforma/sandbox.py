@@ -41,8 +41,9 @@ class SandboxInstance:
     ARCHIVE = 1
     OVERLAY = 2
 
-    def __init__(self, proformAChecker):
-        self._checker = proformAChecker
+    def __init__(self, templ_dir, studentenv):
+        self._templ_dir = templ_dir
+        self._studentenv = studentenv
 
     def _create_from_archive(self, templ_dir, studentenv):
         self._type = self.ARCHIVE
@@ -80,11 +81,11 @@ class SandboxInstance:
 
         return mergeenv
 
-    def create(self, templ_dir, studentenv):
+    def create(self):
         if use_overlay:
-            return self._create_from_overlay(templ_dir, studentenv)
+            return self._create_from_overlay(self._templ_dir, self._studentenv)
         else:
-            return self._create_from_archive(templ_dir, studentenv)
+            return self._create_from_archive(self._templ_dir, self._studentenv)
 
     def __del__(self):
         if self._type == self.OVERLAY:
@@ -101,9 +102,9 @@ class SandboxInstance:
 
 
 class SandboxTemplate:
-    def __init__(self, praktomat_test):
-        self._test = praktomat_test
-        logger.debug(self._test._checker.proforma_id)
+    def __init__(self, checker):
+        self._checker = checker
+        logger.debug(self._checker.proforma_id)
 
     def get_template_path(self):
         """ return root of all templates. """

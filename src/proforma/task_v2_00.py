@@ -421,7 +421,7 @@ class Task_2_00:
         x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
-        template = python_sandbox.PythonSandboxTemplate(x)
+        template = python_sandbox.PythonSandboxTemplate(inst)
         template.check_preconditions()
         x.save()
         # Check preconditions for template

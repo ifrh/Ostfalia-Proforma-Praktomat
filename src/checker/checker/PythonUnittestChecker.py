@@ -144,8 +144,9 @@ class PythonUnittestChecker(ProFormAChecker):
         # execute_command('ls -al ' +  studentenv.tmpdir())
 
 
-        run_sandbox = python_sandbox.PythonSandboxInstance(self)
-        runenv = run_sandbox.create(studentenv)
+        template = python_sandbox.PythonSandboxTemplate(self)
+        sandbox = template.get_instance(studentenv)
+        runenv = sandbox.create()
         # execute_command('ls -al ' +  runenv.tmpdir())
         # execute_command('ls -al ' +  runenv.tmpdir() + '/..')
 
@@ -154,7 +155,7 @@ class PythonUnittestChecker(ProFormAChecker):
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
         result  = self.compile_test_code(runenv)
-        if result != None:
+        if result is not None:
             return result
 #        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], test_dir, unsafe=True)
 #        if exitcode != 0:

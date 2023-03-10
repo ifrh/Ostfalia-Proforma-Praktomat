@@ -35,26 +35,10 @@ logger = logging.getLogger(__name__)
 compile_python = False
 
 
-class PythonSandboxInstance(sandbox.SandboxInstance):
-    """ sandbox instance for python tests """
-    def __init__(self, proformAChecker):
-        super().__init__(proformAChecker)
-
-    def create(self, studentenv):
-        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
-        if len(requirements_txt) > 1:
-            raise Exception('more than one requirements.txt found')
-        if len(requirements_txt) == 0:
-            requirements_txt = None
-            path = None
-        else:
-            requirements_txt = requirements_txt.first()
-            path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
-
-        templ_dir = PythonSandboxTemplate.get_python_template_path(path)
-        return super().create(templ_dir, studentenv)
-
-
+#class PythonSandboxInstance(sandbox.SandboxInstance):
+#    """ sandbox instance for python tests """
+#    def __init__(self):
+#        super().__init__()
 
 
 class PythonSandboxTemplate(sandbox.SandboxTemplate):
@@ -82,13 +66,13 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         return 'Templates/Python'
 
     def check_preconditions(self):
-        requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
+        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
 
     def create(self):
         self.check_preconditions()
-        requirements_txt = self._test._checker.files.filter(filename='requirements.txt', path='')
+        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) == 0:
             requirements_txt = None
             requirements_path = None
@@ -96,7 +80,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             requirements_txt = requirements_txt.first()
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
-        templ_path = PythonSandboxTemplate.get_python_template_path(requirements_path)
+        templ_path = self.get_python_template_path()
         if self.template_exists(templ_path):
             # already exists => return
             return
@@ -139,7 +123,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             self._include_shared_object('libsqlite3.so.0', templ_dir)
 
             logger.debug('copy all shared libraries needed for python to work')
-            self._test._checker.copy_shared_objects(templ_dir)
+            self._checker.copy_shared_objects(templ_dir)
 
             # compile python code (smaller???)
             if compile_python:
@@ -167,8 +151,18 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             raise
 
 
-    def get_python_template_path(requirements_path):
+    def get_python_template_path(self):
         """ returns the template pathname for the given requirements.txt """
+        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+        if len(requirements_txt) > 1:
+            raise Exception('more than one requirements.txt found')
+        if len(requirements_txt) == 0:
+            requirements_txt = None
+            requirements_path = None
+        else:
+            requirements_txt = requirements_txt.first()
+            requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
+
         hash = None
         if requirements_path is not None:
             hash = PythonSandboxTemplate.get_hash(requirements_path)
@@ -215,16 +209,21 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             self._compress_to_archive(python_dir)
 
         logger.debug('reuse python env')
-        # templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
+        # templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
         execute_command("mkdir -p " + templ_dir)
         execute_command("tar -xf " + python_dir + ".tar ", templ_dir)
 
         return templ_dir
 
-    def get_instance(self, proformAChecker, studentenv):
+    def get_instance(self, studentenv):
         """ return an instance created from this template """
-        instance = PythonSandboxInstance(proformAChecker)
-        return instance.create(studentenv)
+        templ_dir = self.get_python_template_path()
+        if not self.template_exists(templ_dir):
+            logger.debug('Template does not exist => (re)create')
+            self.create()
+
+        instance = sandbox.SandboxInstance(templ_dir, studentenv)
+        return instance
 
 
 
