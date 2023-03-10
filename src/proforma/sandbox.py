@@ -60,7 +60,7 @@ class SandboxTemplate:
         else:
             return os.path.isfile(path + '.tar')
 
-    def compress_to_squashfs(self, templ_dir):
+    def _compress_to_squashfs(self, templ_dir):
         # create compressed layer
         logger.debug('create compressed layer')
         # execute_command('ls -al ' +  templ_dir)
@@ -71,7 +71,7 @@ class SandboxTemplate:
         logger.debug('delete temp folder ' + templ_dir)
         shutil.rmtree(templ_dir)
 
-    def compress_to_archive(self, templ_dir):
+    def _compress_to_archive(self, templ_dir):
         cmd = "tar -chzf " + templ_dir + ".tar ."
         execute_command(cmd, templ_dir)
         # delete temporary folder
@@ -112,8 +112,6 @@ class PythonSandboxTemplate(SandboxTemplate):
             md5 = hashlib.md5('\n'.join(modules).encode('utf-8')).hexdigest()
             return md5
 
-        return None
-
     def get_python_path():
         """ return root of all templates. """
         return 'Templates/Python'
@@ -141,69 +139,75 @@ class PythonSandboxTemplate(SandboxTemplate):
         templ_dir = self._create_venv(templ_path)
         logger.debug('Template dir is ' + templ_dir)
 
-        # install modules from requirements.txt if available
-        if requirements_txt is not None:
-            hash = PythonSandboxTemplate.get_hash(requirements_path)
-            print(hash)
-            logger.debug('install requirements')
-            # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
-            env = {}
-            env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
-#            execute_command("bin/python bin/pip install -r " + requirements_path,
-#                            cwd=os.path.join(templ_dir, '.venv'), env=env)
+        try:
+            # install modules from requirements.txt if available
+            if requirements_txt is not None:
+                hash = PythonSandboxTemplate.get_hash(requirements_path)
+                print(hash)
+                logger.debug('install requirements')
+                # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
+                env = {}
+                env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
+    #            execute_command("bin/python bin/pip install -r " + requirements_path,
+    #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
 
-            (output, error, exitcode, timed_out, oom_ed) = \
-                execute_arglist(["bin/python", "bin/pip", "install", "-r", requirements_path],
-                                working_directory=os.path.join(templ_dir, '.venv'),
-                                 environment_variables=env, unsafe=True)
-            logger.debug(output)
-            logger.debug(error)
-            if exitcode != 0:
-                raise Exception('Cannot install requirements.txt: \n\n' + output)
+                (output, error, exitcode, timed_out, oom_ed) = \
+                    execute_arglist(["bin/python", "bin/pip", "install", "-r", requirements_path],
+                                    working_directory=os.path.join(templ_dir, '.venv'),
+                                     environment_variables=env, unsafe=True)
+                logger.debug(output)
+                logger.debug(error)
+                if exitcode != 0:
+                    raise Exception('Cannot install requirements.txt: \n\n' + output)
 
 
-        pythonbin = os.readlink('/usr/bin/python3')
-        logger.debug('python is ' + pythonbin)  # expect python3.x
-        # copy python libs
-        createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
-        execute_command(createlib, shell=True)
+            pythonbin = os.readlink('/usr/bin/python3')
+            logger.debug('python is ' + pythonbin)  # expect python3.x
+            # copy python libs
+            createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
+            execute_command(createlib, shell=True)
 
-        logger.debug('copy shared libraries from os')
-        self._include_shared_object('libffi.so', templ_dir)
-        self._include_shared_object('libffi.so.7', templ_dir)
-        self._include_shared_object('libbz2.so.1.0', templ_dir)
-        self._include_shared_object('libsqlite3.so.0', templ_dir)
+            logger.debug('copy shared libraries from os')
+            self._include_shared_object('libffi.so', templ_dir)
+            self._include_shared_object('libffi.so.7', templ_dir)
+            self._include_shared_object('libbz2.so.1.0', templ_dir)
+            self._include_shared_object('libsqlite3.so.0', templ_dir)
 
-        logger.debug('copy all shared libraries needed for python to work')
-        self._test._checker.copy_shared_objects(templ_dir)
+            logger.debug('copy all shared libraries needed for python to work')
+            self._test._checker.copy_shared_objects(templ_dir)
 
-        # compile python code (smaller???)
-        if compile_python:
-            import compileall
-            import glob
-            logger.debug('**** compile')
-            success = compileall.compile_dir(templ_dir, quiet=True)
+            # compile python code (smaller???)
+            if compile_python:
+                import compileall
+                import glob
+                logger.debug('**** compile')
+                success = compileall.compile_dir(templ_dir, quiet=True)
 
-        # delete all python source code
-#        logger.debug('delete py')
-#        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
-#            if 'encodings' not in filePath and 'codecs' not in filePath:
-#                print(filePath)
-#                try:
-#                    os.remove(filePath)
-#                except:
-#                    logger.error("Error while deleting file : ", filePath)
-#            else:
-#                print('**' + filePath)
+            # delete all python source code
+    #        logger.debug('delete py')
+    #        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
+    #            if 'encodings' not in filePath and 'codecs' not in filePath:
+    #                print(filePath)
+    #                try:
+    #                    os.remove(filePath)
+    #                except:
+    #                    logger.error("Error while deleting file : ", filePath)
+    #            else:
+    #                print('**' + filePath)
 
-        if use_overlay:
-            if use_squash_fs:
-                self.compress_to_squashfs(templ_dir)
+            if use_overlay:
+                if use_squash_fs:
+                    self._compress_to_squashfs(templ_dir)
+                else:
+                    # simply do nothing
+                    pass
             else:
-                # simply do nothing
-                pass
-        else:
-            self.compress_to_archive(templ_dir)
+                self._compress_to_archive(templ_dir)
+        except:
+            # try and delete complete templ_dir
+            shutil.rmtree(templ_dir, ignore_errors=True)
+            raise
+
 
     def get_python_template_path(requirements_path):
         """ returns the template pathname for the given requirements.txt """
@@ -250,7 +254,7 @@ class PythonSandboxTemplate(SandboxTemplate):
             #    except:
             #        logger.error("Error while deleting file : ", filePath)
 
-            self.compress_to_archive(python_dir)
+            self._compress_to_archive(python_dir)
 
         logger.debug('reuse python env')
         # templ_dir = os.path.join(settings.UPLOAD_ROOT, self._test._checker.get_template_path())
@@ -291,14 +295,10 @@ class SandboxInstance:
                 raise Exception('no sandbox template available: ' + templ_dir)
 
         mergeenv = CheckerEnvironment(studentenv.solution())
-        # workdir = mergeenv.tmpdir() + '/work'
-        # execute_command('mkdir -p ' + workdir)
-        # logger.debug('workdir is ' + workdir)
 
         logger.debug('merge dir is ' + mergeenv.tmpdir())
         self._destfolder = mergeenv.tmpdir()
 
-        # cmd = 'fuse-overlayfs -o lowerdir=' + templ_dir + ',upperdir=' + studentenv.tmpdir() + ',workdir=' + workdir + ' ' + mergeenv.tmpdir()
         cmd = "unionfs-fuse -o cow,relaxed_permissions,allow_other " + ' ' + studentenv.tmpdir() + '=RW:' + templ_dir + '=RO ' + mergeenv.tmpdir()
         execute_command(cmd)
         # fuse-overlayfs -o lowerdir=/work/lower,upperdir/work/upper,workdir=/work/work /work/merge
@@ -306,8 +306,24 @@ class SandboxInstance:
 
         return mergeenv
 
-    def delete(self):
-        pass
+    def create(self, templ_dir, studentenv):
+        if use_overlay:
+            return self._create_from_overlay(templ_dir, studentenv)
+        else:
+            return self._create_from_archive(templ_dir, studentenv)
+
+    def __del__(self):
+        if self._type == self.OVERLAY:
+            logger.debug('cleanup sandbox')
+            execute_command('fusermount -u  ' + self._destfolder)
+            execute_command('rm -rf  ' + self._destfolder)
+            if use_squash_fs:
+                # unmount squashfs template
+                execute_command('umount ' + self.my_templ_dir)
+        else:
+            logger.debug('cleanup sandbox')
+            execute_command('rm -rf *.pyc', self._destfolder)
+            execute_command('rm -rf .venv', self._destfolder)
 
 
 
@@ -327,30 +343,5 @@ class PythonSandboxInstance(SandboxInstance):
             path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
         templ_dir = PythonSandboxTemplate.get_python_template_path(path)
-        if use_overlay:
-            rc =  self._create_from_overlay(templ_dir, studentenv)
-        else:
-            rc =  self._create_from_archive(templ_dir, studentenv)
+        return super().create(templ_dir, studentenv)
 
-#        if requirements_txt is not None:
-#            # for debugging
-#            logger.debug(rc.tmpdir() + '/.venv/bin')
-#            execute_command('ls -al', rc.tmpdir() + '/.venv/bin')
-#            execute_command('python pip -list', rc.tmpdir() + '/.venv/bin')
-
-        return rc
-
-    def __del__(self):
-        if use_overlay:
-            logger.debug('cleanup sandbox')
-            execute_command('fusermount -u  ' + self._destfolder)
-            execute_command('rm -rf  ' + self._destfolder)
-            if use_squash_fs:
-                # unmount squashfs template
-                execute_command('umount ' + self.my_templ_dir)
-        else:
-            logger.debug('cleanup sandbox')
-            execute_command('rm -rf *.pyc', self._destfolder)
-            execute_command('rm -rf .venv', self._destfolder)
-
-        super().delete()
