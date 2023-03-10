@@ -100,14 +100,37 @@ class PythonUnittestChecker(ProFormAChecker):
             # print(dirs)
             for folder in dirs:
                 print("**** compile " + folder)
-                if not compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True):
-                    logger.error('could not compile ' + folder)
+                # if not compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True):
+                #    logger.error('could not compile ' + folder)
+                [output, error, exitcode, timed_out, oom_ed] = \
+                    execute_arglist(['python3', '-m', 'compileall', folder], env.tmpdir(), unsafe=True)
+                if exitcode != 0:
+                    # could not compile.
+                    # TODO: run without compilation in order to generate better output???
+                    regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
+                    # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+                    return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
 
             for file in files:
                 print("**** compile " + file)
-                if not compileall.compile_file(os.path.join(env.tmpdir(), file), quiet=True):
-                        logger.error('could not compile ' + file)
+                [output, error, exitcode, timed_out, oom_ed] = \
+                    execute_arglist(['python3', '-m', 'compileall', file], env.tmpdir(), unsafe=True)
+                if exitcode != 0:
+                    # could not compile.
+                    # TODO: run without compilation in order to generate better output???
+                    regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
+                    # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+                    return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
+
+#                if not compileall.compile_file(os.path.join(env.tmpdir(), file), quiet=True):
+#                        logger.error('could not compile ' + file)
+
+            # only upper level => break
             break
+            return None
+
+
+
 
     def run(self, studentenv):
         """ run testcase """
@@ -132,7 +155,9 @@ class PythonUnittestChecker(ProFormAChecker):
 
         # compile python code in order to prevent leaking testcode to student (part 1)
         logger.debug('compile python')
-        self.compile_test_code(runenv)
+        result  = self.compile_test_code(runenv)
+        if result != None:
+            return result
 #        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['python3', '-m', 'compileall'], test_dir, unsafe=True)
 #        if exitcode != 0:
 #            # could not compile.
