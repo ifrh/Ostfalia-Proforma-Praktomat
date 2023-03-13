@@ -34,7 +34,7 @@ ENV LC_ALL ${LOCALE}
 # squashfs-tools is used for sandbox templates
 RUN apt-get update && \
     apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
-    subversion git \
+    subversion git unzip \
     libffi-dev && \
     rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
@@ -58,13 +58,11 @@ RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx && rm -rf /var/l
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
 RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
-    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install .
+    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . && \
+    rm -rf /var/lib/apt/lists/*
 
 # ADD UNIX USERS
 ################
-
-# install sudo
-# RUN apt-get update && apt-get -y install sudo
 
 # create group praktomat
 RUN groupadd -g 999 praktomat && \
@@ -113,7 +111,7 @@ ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/c
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar /praktomat/lib/
 # JUnit4 runtime libraries
 ADD https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.jar /praktomat/lib/
-RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && apt-get install unzip -y && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib
+RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib
 # JUnit 5
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar /praktomat/lib/
 
@@ -122,39 +120,25 @@ RUN pip3 list && python3 --version && java -version
 # set permissions
 RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
 
-# install debugging tools
-# RUN apt-get -y install strace less nano
-
 # compile and install restrict.c
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
-# RUN cd /praktomat/src && make restrict && sudo chown root ./restrict && sudo chmod u+s ./restrict
-
 
 # install fuse for sandbox templates
-# install tree and strace for debugging :-)
 # user_allow_other is needed in or der to allow praktomat user to set option allow_other on mount
-RUN apt-get update && apt-get install -y fuse3 unionfs-fuse squashfs-tools squashfuse fuse-overlayfs \
-    tree strace && \
+RUN apt-get update && apt-get install -y fuse3 unionfs-fuse squashfs-tools squashfuse fuse-overlayfs && \
+    rm -rf /var/lib/apt/lists/* && \
     sed -i -e 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
+# install tree and strace for debugging :-)
+#    tree strace less nano && \
 
-# latest fuse-overlayfs
-# TODO: Use fixed VERSION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# git clone https://github.com/containers/fuse-overlayfs.git && \
 # RUN apt-get update && apt-get install -y libfuse3-dev automake unzip && \
 #    wget https://github.com/containers/fuse-overlayfs/archive/refs/tags/v1.9.zip && \
 #    unzip v1.9.zip && \
 #    cd fuse-overlayfs-1.9 && sh ./autogen.sh && ./configure && make && mv /usr/bin/fuse-overlayfs /usr/bin/fuse-overlayfs.old && \
 #    mv fuse-overlayfs /usr/bin/fuse-overlayfs
 
-
-# clean packages??? Does it make sense?
-RUN apt-get clean
-RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* && apt-get autoremove -y
-
-
 # change user
 USER praktomat
-
 
 # run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
