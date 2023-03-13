@@ -16,13 +16,14 @@ but you can follow the Dockerfile.
 
 The following programming languages and test frameworks are provided with the ProFormA interface.
 
-| Language     |             Test Frameworks             |
-| :---:        |:---------------------------------------:|         
-| Java 17      | JUnit 4.12/5, Checkstyle 8.23/8.29/10.1 |
-| C++          |         Googletest, Make/CMake          |
-| C            |      Googletest, CUnit, Make/CMake      |
-| Python 3.8   |     Unittest (Doctest preparation)      |
-| SetlX        |        Simple test, Syntax Check        |
+| Language     |               Test Frameworks                |
+| :---:        |:--------------------------------------------:|         
+| Java 17      |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1    |
+| C++          |            Googletest, Make/CMake            |
+| C            |        Googletest, CUnit, Make/CMake         |
+| Python 3.8   | Unittest with Pip <br/>(Doctest preparation) |
+|              |                                              |
+| SetlX        |          Simple test, Syntax Check           |
 
 
 For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy the `setlx-2.7.x.jar` 
