@@ -165,6 +165,7 @@ class SandboxTemplate:
             raise Exception(filename + ' not found for testing')
 
     def _commit(self, templ_dir):
+        """ freeze sandbox """
         if use_overlay:
             if use_squash_fs:
                 self._compress_to_squashfs(templ_dir)

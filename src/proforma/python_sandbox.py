@@ -86,7 +86,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             return
 
         templ_dir = self._create_venv(templ_path)
-        logger.debug('Template dir is ' + templ_dir)
+        logger.info('Create Python template ' + templ_dir)
 
         try:
             # install modules from requirements.txt if available
@@ -222,6 +222,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             logger.debug('Template does not exist => (re)create')
             self.create()
 
+        logger.info('Use Python template ' + templ_dir)
         instance = sandbox.SandboxInstance(templ_dir, studentenv)
         return instance
 
