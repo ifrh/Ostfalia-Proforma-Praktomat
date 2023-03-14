@@ -56,7 +56,7 @@ services:
 
     # number of workers = 2* cumber of CPU cores + 1
     #command: python3 ./manage-docker.py runserver 0.0.0.0:8010
-    command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
+    command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet --timeout=120
     ###command: /bin/su -c "exec gunicorn wsgi --bind 0.0.0.0:8010 --workers=1 --worker-class=eventlet" praktomat
     #command: gunicorn wsgi:praktomat --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
 
