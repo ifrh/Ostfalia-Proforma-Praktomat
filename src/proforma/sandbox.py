@@ -62,10 +62,10 @@ class SandboxInstance:
             if not os.path.isfile(templ_dir + '.sqfs' ):
                 raise Exception('no sandbox template available: ' + templ_dir + '.sqfs')
             my_templ_env = CheckerEnvironment(studentenv.solution())
-            self.my_templ_dir = my_templ_env.tmpdir()
-            execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + self.my_templ_dir)
+            self._my_templ_dir = my_templ_env.tmpdir()
+            execute_command("squashfuse -o  allow_other " + templ_dir + '.sqfs ' + self._my_templ_dir)
             # execute_command('ls -al ' +  self.my_templ_dir)
-            templ_dir = self.my_templ_dir
+            templ_dir = self._my_templ_dir
         else:
             if not os.path.isdir(templ_dir):
                 raise Exception('no sandbox template available: ' + templ_dir)
@@ -98,7 +98,8 @@ class SandboxInstance:
                 execute_command('fusermount -u  ' + self._destfolder)
                 if use_squash_fs:
                     # unmount squashfs template
-                    execute_command('umount ' + self.my_templ_dir)
+                    execute_command('umount ' + self._my_templ_dir)
+                    execute_command('rm -rf  ' + self._my_templ_dir)
                 execute_command('rm -rf  ' + self._destfolder)
             else:
                 logger.debug('cleanup sandbox')
