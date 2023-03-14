@@ -93,7 +93,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             if requirements_txt is not None:
                 hash = PythonSandboxTemplate.get_hash(requirements_path)
                 print(hash)
-                logger.debug('install requirements')
+                logger.info('install requirements')
                 # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
                 env = {}
                 env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
@@ -110,6 +110,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                     raise Exception('Cannot install requirements.txt: \n\n' + output)
 
 
+            logger.info('copy python libraries from OS')
             pythonbin = os.readlink('/usr/bin/python3')
             logger.debug('python is ' + pythonbin)  # expect python3.x
             # copy python libs
