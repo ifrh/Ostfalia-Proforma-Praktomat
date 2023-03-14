@@ -95,18 +95,6 @@ The SetlX library is not installed automatically.
 It can be downloaded from https://randoom.org/Software/SetlX/. 
 The jar file must be copied into the `extra` subfolder and renamed to `setlX-2.7.jar`. 
 
-##### Optional: Adding further Python modules
-
-Python can be supplemented with further Python modules.
-
-To do this, the required modules must be added in the `requirements.txt` file.
-If necessary, the file `src/checker/checker/PythonUnittestChecker.py` must be 
-updated if the module name is not identical to the path name on the disk.
-`numpy`, `matplotlib` and `PIL` are already prepared this way.
-
-Note: The Python tasks must also include a `requirements.txt` file in the test. 
-The required module names must be entered there.
-
 #### Create Docker Containers
 
 In order to build and start the docker composition simply run 
