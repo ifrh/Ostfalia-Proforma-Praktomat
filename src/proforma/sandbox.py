@@ -96,10 +96,10 @@ class SandboxInstance:
             if self._type == self.OVERLAY:
                 logger.debug('cleanup sandbox')
                 execute_command('fusermount -u  ' + self._destfolder)
-                execute_command('rm -rf  ' + self._destfolder)
                 if use_squash_fs:
                     # unmount squashfs template
                     execute_command('umount ' + self.my_templ_dir)
+                execute_command('rm -rf  ' + self._destfolder)
             else:
                 logger.debug('cleanup sandbox')
                 execute_command('rm -rf *.pyc', self._destfolder)
