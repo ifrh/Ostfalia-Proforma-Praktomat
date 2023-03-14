@@ -1,6 +1,28 @@
 # Python
 
+## Python Unittests: 
+
+The tests run in a virtual Python environment, in which Python packages can be installed by
+simply adding a requirements.txt to the task.
+
+The environment is set up the first time a test case is run. Usually this is when the task creator 
+tries submitting a model solution.
+
+Since some of the packages have to be downloaded from the Internet and then installed,
+this setup may take longer than the grading timeout in Moodle.
+In general, however, the setup should be completed despite an error message due to a timeout.
+So please just try again.
+
+Most Python packages will run without any further action. However, it cannot be ruled out that
+individual packages require additional packages from the operating system.
+
+Limits:
+
 Inner classes with tests in Python unit tests will not be tested (Problem of Python Unittest framework)
+
+## Python Doctest: 
+
+Does not support creating a virtual environemnt by adding a requirements.txt.
 
 # Googletest
 
