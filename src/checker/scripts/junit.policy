@@ -46,7 +46,8 @@ grant {
 grant codeBase "file:/praktomat/extra/Junit4RunListener.jar" {
 	// for stripping the stacktrace
 	permission java.lang.RuntimePermission "accessClassInPackage.sun.nio.fs";
-
+	// for handling exit cleanup
+	permission java.lang.RuntimePermission "shutdownHooks";
 };
 
 grant codeBase "file:/praktomat/lib/junit-4.12.jar" {

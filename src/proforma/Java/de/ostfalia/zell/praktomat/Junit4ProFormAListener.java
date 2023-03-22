@@ -37,7 +37,7 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 // support for Ostfalia JunitAddOn without needing to import classes from there:
-//declare a new annotation named TestDescription
+// declare a new annotation named TestDescription
 @Retention(RetentionPolicy.RUNTIME)
 @interface TestDescription {
 	String value();
@@ -64,20 +64,59 @@ public class Junit4ProFormAListener extends RunListener {
     private int counter = 0;
     Element score;
     Element feedbackList;
-    Element studentFeedback;    
+    Element studentFeedback;
+    
+    static PrintStream originalOut = null;
+    static PrintStream originalErr = null;    	
+    static boolean finishedProperly = false;    	
+    static boolean exitFromFramework = false;    	
+    static Junit4ProFormAListener singleton = null;    	
+
     
     private boolean failureOutsideTest = false;    
     
 
     public Junit4ProFormAListener() throws UnsupportedEncodingException {
+    	Junit4ProFormAListener.originalOut = System.out;
+    	Junit4ProFormAListener.originalErr = System.err;      	
+        // System.out.println("capture output");
+    	
     	writer = System.out;
         // redirect stdout and stderr and force UTF-8 output
-        baos = new ByteArrayOutputStream();        
+        baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos, true, "UTF-8"));           
-        System.setErr(new PrintStream(baos, true, "UTF-8"));         	
-
+        System.setErr(new PrintStream(baos, true, "UTF-8"));
     }
 
+	public static void cleanup() {
+		// reset redirection    	
+        
+        if (Junit4ProFormAListener.finishedProperly) {
+            System.setOut(Junit4ProFormAListener.originalOut);           
+            System.setErr(Junit4ProFormAListener.originalErr);
+            // System.out.println("ok");           	
+        } else {
+        	// Handle exit
+        	String consoleOutput = singleton.baos.toString();
+        	consoleOutput = consoleOutput.trim();
+        	if (consoleOutput.length() > 0) {
+        		// avoid having a lot of extra text because of redirecting stdout/stderr
+        		if (consoleOutput.length() > singleton.stdoutLeft) {
+    				consoleOutput = singleton.multiByteSubstr(consoleOutput, singleton.stdoutLeft) + "... [truncated]";
+        		}
+        	}
+        	singleton.baos.reset();           
+            System.setOut(Junit4ProFormAListener.originalOut);           
+            System.setErr(Junit4ProFormAListener.originalErr);
+			if (!Junit4ProFormAListener.exitFromFramework) {
+	            System.out.println("Testcase did not finish properly (do not call exit!), last output is:");        		        	        				
+			}
+            
+            System.out.println(consoleOutput);        		        	        
+        }
+	}    
+
+    
     public Junit4ProFormAListener(PrintStream writer) {
         this.writer = writer;
     }
@@ -156,7 +195,7 @@ public class Junit4ProFormAListener extends RunListener {
 	        getWriter().print(e.getMessageAndLocation());    				
 		}
 
-        
+    	Junit4ProFormAListener.finishedProperly = true;          
 //        printHeader(result.getRunTime());
     }
 
@@ -302,7 +341,7 @@ public class Junit4ProFormAListener extends RunListener {
     	else {
             score.appendChild(doc.createTextNode("0.0"));            		
             studentFeedback.setAttribute("level", "error");
-    	}
+    	}  	
     }
     
     private StackTraceElement[]  stripStackTrace(StackTraceElement[] elements) { 
@@ -522,7 +561,7 @@ public class Junit4ProFormAListener extends RunListener {
         return NumberFormat.getInstance().format((double) runTime / 1000);
     }
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnsupportedEncodingException {
         if (args.length == 0) {
         	System.err.println("Invalid argument number. Usage: program testclass (without extension)");
         	// sample:
@@ -531,38 +570,47 @@ public class Junit4ProFormAListener extends RunListener {
         	// de.ostfalia.zell.isPalindromTask.PalindromTest
 	        System.exit(1);			 			
         }
-        PrintStream originalOut = System.out;
-        PrintStream originalErr = System.err;
+        // PrintStream originalOut = System.out;
+        // PrintStream originalErr = System.err;
         
-		JUnitCore core= new JUnitCore();
-		Junit4ProFormAListener listener = null;
-				
-		try {
-			listener = new Junit4ProFormAListener();
-			core.addListener(listener);
-			listener.setTestclassname(args[0]);
-			
+//        Thread printingHook = new Thread(() -> System.out.println("In the middle of a shutdown"));
+//        Runtime.getRuntime().addShutdownHook(printingHook);        
+        
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() { try {
+				// listener.close();
+            	Junit4ProFormAListener.cleanup();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} }
+        });       
+        
+		JUnitCore core= new JUnitCore();			
+		Junit4ProFormAListener.singleton = new Junit4ProFormAListener();
+ 			
+		try {        
+			core.addListener(Junit4ProFormAListener.singleton);
+			Junit4ProFormAListener.singleton.setTestclassname(args[0]);			
 			core.run(Class.forName(args[0]));
-		} catch (ClassNotFoundException e) {
-			// reset redirection
-	        System.setOut(originalOut);           
-	        System.setErr(originalErr);    
-	        
+		} catch (ClassNotFoundException e) {        
 			System.err.println("JUnit entry point not found: " + e.getMessage());
+			Junit4ProFormAListener.exitFromFramework = true;
 	    	//System.out.println("Usage: program testclass (without extension)");
 	        System.exit(1);			 			
-		} catch (Exception e) {
-			// reset redirection
-	        System.setOut(originalOut);           
-	        System.setErr(originalErr);    
-	        
+		} catch (Exception e) {	        
+			System.out.println("An Exception occurred");
 			System.err.println(e.getMessage());
+			Junit4ProFormAListener.exitFromFramework = true;
 	        System.exit(1);				
 		}
 		
-		if (listener != null && listener.failureOutsideTest) 
-	        System.exit(1);
+		if (Junit4ProFormAListener.singleton != null && Junit4ProFormAListener.singleton.failureOutsideTest) {
+			Junit4ProFormAListener.exitFromFramework = true;
+	        System.exit(1);			
+		}
 		
         System.exit(0);			
-	}    
+	}
+
 }

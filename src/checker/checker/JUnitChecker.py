@@ -15,6 +15,8 @@ from solutions.models import Solution
 
 from checker.compiler.JavaBuilder import JavaBuilder
 import logging
+import os
+
 logger = logging.getLogger(__name__)
 
 RXFAIL       = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|ABBRUCH DURCH ZEITUEBERSCHREITUNG|Could not find class|Killed|failures)(.*)$",    re.MULTILINE)
@@ -134,7 +136,7 @@ class JUnitChecker(ProFormAChecker):
                runner, self.class_name]
         return cmd, use_run_listener
 
-    def remove_depricated_warning(text):
+    def remove_deprecated_warning(text):
         warning1 = "WARNING: A command line option has enabled the Security Manager"
         warning2 = "WARNING: The Security Manager is deprecated and will be removed in a future release"
 
@@ -187,6 +189,9 @@ class JUnitChecker(ProFormAChecker):
         environ['JAVA'] = settings.JVM
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
         environ['POLICY'] = os.path.join(script_dir, "junit.policy")
+        print(environ)
+        if not os.path.isfile(environ['POLICY']):
+            raise Exception('cannot find policy file ' + os.path.isfile(environ['POLICY']))
 
         if self.junit_version == 'junit5':
             # JUNIT5
@@ -201,8 +206,8 @@ class JUnitChecker(ProFormAChecker):
                             fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
 
         # Remove deprecated warning for Java 17 and security manager
-        output = JUnitChecker.remove_depricated_warning(output)
-        # logger.debug('JUNIT output:' + str(output))
+        output = JUnitChecker.remove_deprecated_warning(output)
+        logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))
         logger.debug('JUNIT exitcode:' + str(exitcode))
 

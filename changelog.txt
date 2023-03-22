@@ -1,3 +1,7 @@
+# 4.16.1
+
+* Java: Handle exit in test code/student code
+
 # 4.16.0
 
 * Python: pip support
