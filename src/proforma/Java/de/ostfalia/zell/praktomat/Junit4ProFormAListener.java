@@ -12,7 +12,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 
@@ -109,7 +108,8 @@ public class Junit4ProFormAListener extends RunListener {
             System.setOut(Junit4ProFormAListener.originalOut);           
             System.setErr(Junit4ProFormAListener.originalErr);
 			if (!Junit4ProFormAListener.exitFromFramework) {
-	            System.out.println("Testcase did not finish properly (do not call exit!), last output is:");        		        	        				
+	            System.out.println("The test run quit unexpectedly.");        		        	        				
+	            System.out.println("This might happen due to an 'exit' call in the code. ");        		        	        				
 			}
             
             System.out.println(consoleOutput);        		        	        
