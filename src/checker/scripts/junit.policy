@@ -70,6 +70,8 @@ grant codeBase "file:/praktomat/extra/Junit5RunListener.jar" {
 	permission java.lang.RuntimePermission "getStackTrace";
 */
 
+	// for handling exit cleanup
+	permission java.lang.RuntimePermission "shutdownHooks";
 };
 
 // JUnit5-Jar

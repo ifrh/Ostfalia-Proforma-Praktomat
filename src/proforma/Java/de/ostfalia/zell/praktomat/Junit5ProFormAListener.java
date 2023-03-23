@@ -7,9 +7,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 //import java.util.logging.Level;
 import java.io.StringWriter;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.text.NumberFormat;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -58,9 +55,49 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 	private int stdoutLeft = maxStdoutLen;    
     
     private Exception exception = null;
+    static PrintStream originalOut = null;
+    static PrintStream originalErr = null;    	
+    static boolean finishedProperly = false;    	
+    static boolean exitFromFramework = false;  
+    // The one and only instance
+    static Junit5ProFormAListener singleton = null;    	
     
     private boolean failureOutsideTest = false;
    
+	public static void cleanup() {
+		// reset redirection
+		if (Junit5ProFormAListener.originalOut == null) {
+			// not initialized properly
+			return;
+		}
+        
+        if (Junit5ProFormAListener.finishedProperly) {
+            System.setOut(Junit5ProFormAListener.originalOut);           
+            System.setErr(Junit5ProFormAListener.originalErr);
+            // System.out.println("ok");           	
+        } else {
+        	// Handle exit
+        	if (singleton != null) {
+            	String consoleOutput = singleton.baos.toString();
+            	consoleOutput = consoleOutput.trim();
+            	if (consoleOutput.length() > 0) {
+            		// avoid having a lot of extra text because of redirecting stdout/stderr
+            		if (consoleOutput.length() > singleton.stdoutLeft) {
+        				consoleOutput = consoleOutput.substring(0, singleton.stdoutLeft) + "... [truncated]";
+            		}
+            	}
+            	singleton.baos.reset();                   		
+	            System.setOut(Junit5ProFormAListener.originalOut);                   		
+	    		System.setErr(Junit5ProFormAListener.originalErr);
+				if (!Junit5ProFormAListener.exitFromFramework) {
+		            System.out.println("The test run quit unexpectedly.");        		        	        				
+		            System.out.println("This might happen due to an 'exit' call in the code. ");        		        	        				
+				}
+	            
+	            System.out.println(consoleOutput);        		        	        
+        	}
+        }
+	}    
 
     private String cleanXmlUtf8Char(String text) {
 		// replace invalid UTF-16/XML char by '[?]' 
@@ -413,7 +450,6 @@ public class Junit5ProFormAListener implements TestExecutionListener {
     }
 
     
-    
     private void createFeedback(String title, String content, boolean teacher) {
     	Element xmlFeedback = null;
     	if (teacher)
@@ -444,15 +480,25 @@ public class Junit5ProFormAListener implements TestExecutionListener {
         	// de.ostfalia.zell.isPalindromTask.PalindromTest
 	        System.exit(1);			 			
         }
-        PrintStream originalOut = System.out;
-        PrintStream originalErr = System.err;
-
+        
+        // Remember streams        
+        Junit5ProFormAListener.originalOut = System.out;
+        Junit5ProFormAListener.originalErr = System.err;     
+    	
+       
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() { try {
+            	Junit5ProFormAListener.cleanup();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} }
+        });       
 				
 		try {
-			Junit5ProFormAListener listener = new Junit5ProFormAListener(args[0]);	        
+			singleton = new Junit5ProFormAListener(args[0]);	        
 			LauncherConfig launcherConfig = LauncherConfig.builder()
 				    .enableTestExecutionListenerAutoRegistration(false)		    
-				    .addTestExecutionListeners(listener)
+				    .addTestExecutionListeners(Junit5ProFormAListener.singleton)
 				    // we disable the default mechanism for engine detection 
 				    // because of use of the security manager
 				    .enableTestEngineAutoRegistration(false)
@@ -465,22 +511,21 @@ public class Junit5ProFormAListener implements TestExecutionListener {
 			    .selectors(selectClass(args[0]))
 			    .build();			
 			launcher.execute(request);	 	
-			if (listener.exception != null) {
-				System.err.println(listener.exception.getMessage());
+			if (singleton.exception != null) {
+				System.err.println(singleton.exception.getMessage());
 		        System.exit(1);						
 			}
-			if (listener.failureOutsideTest) 
+			if (singleton.failureOutsideTest) {
+				Junit5ProFormAListener.exitFromFramework = true;			
 		        System.exit(1);					
-		} catch (Exception e) {
-			// reset redirection
-	        System.setOut(originalOut);           
-	        System.setErr(originalErr);    
-	        
+			}
+		} catch (Exception e) {	        
 			System.err.println(e.getMessage());
+			Junit5ProFormAListener.exitFromFramework = true;
 	        System.exit(1);				
 		}
 		
-		
+		Junit5ProFormAListener.finishedProperly = true;
         System.exit(0);			
 	}
 
