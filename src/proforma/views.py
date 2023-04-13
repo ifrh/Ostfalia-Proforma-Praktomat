@@ -47,6 +47,10 @@ def grade_api_v2(request):
 
 
 @csrf_exempt  # disable csrf-cookie
+def upload_v2(request):
+    return api_v2.upload_v2(request)
+
+@csrf_exempt  # disable csrf-cookie
 def grade_api_lon_capa(request):
     return api_lon_capa.grade_api_lon_capa(request)
 

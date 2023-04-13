@@ -29,7 +29,7 @@ from lxml import etree
 
 
 
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files import File
 from django.template.loader import render_to_string
@@ -99,6 +99,57 @@ class Git(VersionControlSystem):
         super().__init__('Git', uri, commit)
 
 
+def upload_v2(request,):
+    """
+    upload_v2
+    rtype: upload_v2
+    """
+
+#    import datetime
+#    import time
+
+#    def event_stream():
+#        for x in range(3):
+#            time.sleep(2)
+#            response = 'data: The server time is: %s\n\n' % datetime.datetime.now()
+#            logger.debug(response + '\r\n')
+#            yield response
+
+
+    logger.debug("new upload request")
+
+    try:
+        return StreamingHttpResponse(import_task(request, True), content_type='text/event-stream')
+
+
+        # return result
+#        logger.debug("upload finished")
+#        logger.debug("--------------------")
+#        response = HttpResponse()
+#        # response.write(grade_result)
+#        response.status_code = 200
+#        return response
+
+    except task.TaskXmlException as inst:
+        logger.exception(inst)
+        callstack = traceback.format_exc()
+        print("TaskXmlException caught Stack Trace: " + str(callstack))
+        yield str(inst) + str(callstack)
+#        response = HttpResponse()
+#        response.write(get_http_error_page('Task error', str(inst), callstack))
+#        response.status_code = 400 # bad request
+#        return response
+    except Exception as inst:
+        logger.exception(inst)
+        callstack = traceback.format_exc()
+        print("Exception caught Stack Trace: " + str(callstack))
+        yield str(inst) + str(callstack)
+#        response = HttpResponse()
+#        response.write(get_http_error_page('Error in upload', str(inst), callstack))
+#        response.status_code = 500 # internal error
+#        return response
+
+
 def grade_api_v2(request,):
     """
     grade_api_v2
@@ -107,100 +158,10 @@ def grade_api_v2(request,):
 
     logger.debug("new grading request")
 
-    xml_version = None
-    answer_format = "proformav2"
-
     # create task and get Id
     try:
-        # get request XML from LMS (called 'submission.xml' in ProFormA)
-        xml = get_request_xml(request)
-        logger.debug("type(xml): " + str(type(xml)))
-        #logger.debug("got xml: " + xml)
-
-        # debugging uploaded files
-        #for field_name, file in request.FILES.items():
-        #    filename = file.name
-        #    logger.debug("grade_api_v2: request.Files: " + str(file) + "\tfilename: " + str(filename))
-
-        # todo:
-        # 1. check xml -> validate against xsd
-        # 2. check uuid or download external xml
-        # 3. files > file id all should be zipped
-
-
-        # get xml version
-        #xml_version = get_xml_version(submission_xml=xml)
-
-        # do not validate for performance reasons
-        # validate xsd
-        #if xml_version:
-        #    # logger.debug("xml: " + xml)
-        #    is_valid = validate_xml(xml=xml, xml_version=xml_version)
-        #else:
-        #    logger.debug("no version - " + str(xml))
-        #    is_valid = validate_xml(xml=xml)
-
-        #logger.debug(xml)
-
-        # note: we use lxml/etree here because it is very fast
-        root = etree.fromstring(xml)
-        # print ('NAMESPACE ' + root.xpath('namespace-uri(.)'))
-        # print (root.nsmap[None])
-        # NAMESPACES = {'dns': root.nsmap[None]}
-        NAMESPACE = None
-        NAMESPACES = {}
-        # print(root.nsmap)
-        for key, value in root.nsmap.items():
-            if key is None:
-                if value == NAMESPACES_V2_0:
-                    NAMESPACE = NAMESPACES_V2_0
-                    templatefile = 'proforma/response_v2.0.xml'
-                    NAMESPACES['dns'] = value
-                elif value == NAMESPACES_V2_1:
-                    NAMESPACE = NAMESPACES_V2_1
-                    templatefile = 'proforma/response_v2.1.xml'
-                    NAMESPACES['dns'] = value
-                else:
-                    raise Exception("do not support namespace " + value)
-            else:
-                if value.find('praktomat') >= 0:
-                    NAMESPACES['praktomat'] = value
-                else:
-                    NAMESPACES[key] = value
-
-        if NAMESPACE is None:
-            raise Exception("no proforma namespace found")
-
-        task_file = None
-        task_filename = None
-        task_element = root.find(".//dns:external-task", NAMESPACES)
-        if task_element is not None:
-            uri_element = task_element.find(".//dns:uri", NAMESPACES)
-            if uri_element is not None:
-                # new 2.1: external task is defined in sub element uri
-                task_file, task_filename = get_external_task(request, uri_element.text)
-            else:
-                # old 2.1: external task is defined as text
-                task_file, task_filename = get_external_task(request, task_element.text)
-            #logger.debug('external-task in ' + task_path)
-        else:
-            task_element = root.find(".//dns:task", NAMESPACES)
-            if task_element is not None:
-                raise Exception ("embedded task in submission.xml is not supported")
-            else:
-                task_element = root.find(".//dns:inline-task-zip", NAMESPACES)
-                if task_element is not None:
-                    raise Exception ("inline-task-zip in submission.xml is not supported")
-                else:
-                    raise Exception("could not find task in submission.xml")
-
-        # xml2dict is very slow
-        #submission_dict = xml2dict(xml)
-
-        logger.info("grading request for task " + task_filename)
-        logger.debug('import task')
-        proformatask = task.import_task_internal(task_filename, task_file)
-#        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
+        [NAMESPACE, NAMESPACES, proformatask, root, templatefile] = import_task(request, False)
+        #        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
 
         grader = grade.Grader(proformatask, NAMESPACE)
         logger.debug(NAMESPACES)
@@ -264,6 +225,90 @@ def grade_api_v2(request,):
         response.write(get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
         return response
+
+
+def import_task(request, with_yield = False):
+    # get request XML from LMS (called 'submission.xml' in ProFormA)
+    xml = get_request_xml(request)
+    logger.debug("type(xml): " + str(type(xml)))
+    # logger.debug("got xml: " + xml)
+    # debugging uploaded files
+    # for field_name, file in request.FILES.items():
+    #    filename = file.name
+    #    logger.debug("grade_api_v2: request.Files: " + str(file) + "\tfilename: " + str(filename))
+    # todo:
+    # 1. check xml -> validate against xsd
+    # 2. check uuid or download external xml
+    # 3. files > file id all should be zipped
+    # get xml version
+    # xml_version = get_xml_version(submission_xml=xml)
+    # do not validate for performance reasons
+    # validate xsd
+    # if xml_version:
+    #    # logger.debug("xml: " + xml)
+    #    is_valid = validate_xml(xml=xml, xml_version=xml_version)
+    # else:
+    #    logger.debug("no version - " + str(xml))
+    #    is_valid = validate_xml(xml=xml)
+    # logger.debug(xml)
+    # note: we use lxml/etree here because it is very fast
+    root = etree.fromstring(xml)
+    # print ('NAMESPACE ' + root.xpath('namespace-uri(.)'))
+    # print (root.nsmap[None])
+    # NAMESPACES = {'dns': root.nsmap[None]}
+    NAMESPACE = None
+    NAMESPACES = {}
+    # print(root.nsmap)
+    for key, value in root.nsmap.items():
+        if key is None:
+            if value == NAMESPACES_V2_0:
+                NAMESPACE = NAMESPACES_V2_0
+                templatefile = 'proforma/response_v2.0.xml'
+                NAMESPACES['dns'] = value
+            elif value == NAMESPACES_V2_1:
+                NAMESPACE = NAMESPACES_V2_1
+                templatefile = 'proforma/response_v2.1.xml'
+                NAMESPACES['dns'] = value
+            else:
+                raise Exception("do not support namespace " + value)
+        else:
+            if value.find('praktomat') >= 0:
+                NAMESPACES['praktomat'] = value
+            else:
+                NAMESPACES[key] = value
+    if NAMESPACE is None:
+        raise Exception("no proforma namespace found")
+    task_file = None
+    task_filename = None
+    task_element = root.find(".//dns:external-task", NAMESPACES)
+    if task_element is not None:
+        uri_element = task_element.find(".//dns:uri", NAMESPACES)
+        if uri_element is not None:
+            # new 2.1: external task is defined in sub element uri
+            task_file, task_filename = get_external_task(request, uri_element.text)
+        else:
+            # old 2.1: external task is defined as text
+            task_file, task_filename = get_external_task(request, task_element.text)
+        # logger.debug('external-task in ' + task_path)
+    else:
+        task_element = root.find(".//dns:task", NAMESPACES)
+        if task_element is not None:
+            raise Exception("embedded task in submission.xml is not supported")
+        else:
+            task_element = root.find(".//dns:inline-task-zip", NAMESPACES)
+            if task_element is not None:
+                raise Exception("inline-task-zip in submission.xml is not supported")
+            else:
+                raise Exception("could not find task in submission.xml")
+    # xml2dict is very slow
+    # submission_dict = xml2dict(xml)
+    logger.info("grading request for task " + task_filename)
+    logger.debug('import task')
+    # if with_yield:
+    #    yield 'import task'
+
+    proformatask = task.import_task_internal(task_filename, task_file, with_yield)
+    return NAMESPACE, NAMESPACES, proformatask, root, templatefile
 
 
 def get_external_task(request, task_uri):

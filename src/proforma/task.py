@@ -329,7 +329,9 @@ def get_task(hash, uuid, title) :
     return None
 
 
-def import_task_internal(filename, task_file):
+def import_task_internal(filename, task_file, with_yield):
+#    if with_yield:
+#        yield 'let us do the work'
 
     logger.debug('import_task_internal called')
 
@@ -340,6 +342,9 @@ def import_task_internal(filename, task_file):
     format_namespace_v2_0_1 = "urn:proforma:v2.0.1"
 
     # rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
+
+#    if with_yield:
+#        yield 'check if task is already stored'
 
     dict_zip_files = None
     if filename[-3:].upper() == 'ZIP':
@@ -373,6 +378,9 @@ def import_task_internal(filename, task_file):
     import uuid
     hash = uuid.UUID(md5) # as uuid
     logger.debug('task hash is ' + str(hash))
+
+#    if with_yield:
+#        yield 'task hash is ' + str(hash)
 
     # TODO check against schema??
 
