@@ -379,19 +379,16 @@ def import_task_internal(filename, task_file, with_yield):
     hash = uuid.UUID(md5) # as uuid
     logger.debug('task hash is ' + str(hash))
 
-#    if with_yield:
-#        yield 'task hash is ' + str(hash)
-
     # TODO check against schema??
 
     # check Namespace
     #if format_namespace_v0_9_4 in list(xml_object.nsmap.values()):
     #    logger.debug('handle 0.9.4 task')
     #    response_data = task_v0_94.importTask(task_xml, dict_zip_files)  # request,)
-    if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
-        logger.debug('handle 1.0.1 task')
-        response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
-    elif format_namespace_v2_0 in list(xml_object.nsmap.values()):
+#    if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
+#        logger.debug('handle 1.0.1 task')
+#        response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
+    if format_namespace_v2_0 in list(xml_object.nsmap.values()):
         logger.debug('handle 2.0 task')
         task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0)
         response_data = task_2.import_task()
