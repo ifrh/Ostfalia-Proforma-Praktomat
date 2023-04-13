@@ -105,49 +105,20 @@ def upload_v2(request,):
     rtype: upload_v2
     """
 
-#    import datetime
-#    import time
-
-#    def event_stream():
-#        for x in range(3):
-#            time.sleep(2)
-#            response = 'data: The server time is: %s\n\n' % datetime.datetime.now()
-#            logger.debug(response + '\r\n')
-#            yield response
-
-
     logger.debug("new upload request")
-
     try:
         return StreamingHttpResponse(import_task(request, True), content_type='text/event-stream')
-
-
-        # return result
-#        logger.debug("upload finished")
-#        logger.debug("--------------------")
-#        response = HttpResponse()
-#        # response.write(grade_result)
-#        response.status_code = 200
-#        return response
 
     except task.TaskXmlException as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()
         print("TaskXmlException caught Stack Trace: " + str(callstack))
         yield str(inst) + str(callstack)
-#        response = HttpResponse()
-#        response.write(get_http_error_page('Task error', str(inst), callstack))
-#        response.status_code = 400 # bad request
-#        return response
     except Exception as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()
         print("Exception caught Stack Trace: " + str(callstack))
         yield str(inst) + str(callstack)
-#        response = HttpResponse()
-#        response.write(get_http_error_page('Error in upload', str(inst), callstack))
-#        response.status_code = 500 # internal error
-#        return response
 
 
 def grade_api_v2(request,):
