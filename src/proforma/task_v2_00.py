@@ -436,7 +436,8 @@ class Task_2_00:
 #        requirements_txt = inst.files.filter(filename='requirements.txt', path='')
 #        if len(requirements_txt) > 1:
 #            raise Exception('more than one requirements.txt found')
-        template.create()
+        yield 'create sandbox template for python unit test\r\n'
+        yield from template.create()
 
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
@@ -580,7 +581,7 @@ class Task_2_00:
                         self._create_cpp_unit_test(xmlTest)
                     elif task_proglang == 'python':
                         logger.debug('** create_python_unit_test')
-                        self._create_python_unit_test(xmlTest)
+                        yield from self._create_python_unit_test(xmlTest)
                     else:
                         raise task.TaskXmlException('invalid proglang, supported is java and c')
                 elif testtype == "java-checkstyle":

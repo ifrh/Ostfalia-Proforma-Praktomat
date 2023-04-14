@@ -100,27 +100,6 @@ class Git(VersionControlSystem):
 
 
 
-def send_generator():
-    while True:
-        x = yield
-        if not x is None:
-            print(x)
-            yield x
-#
-# def fake(messages):
-#     import time
-#     messages.send('hallo')
-#     time.sleep(1)
-#     messages.send('hallo nochmal')
-#     time.sleep(1)
-#     messages.send('es läuft')
-#
-#
-def fake2(producer):
-    producer.send("Hallo1")
-    yield "Hallo2"
-
-
 def upload_v2(request,):
     """
     upload_v2
@@ -129,43 +108,17 @@ def upload_v2(request,):
 
     logger.debug("new upload request")
 
-    producer = None
-    response = None
     try:
-        # producer = send_generator()
-        # producer.send(None) # start
-        # response = StreamingHttpResponse(fake2(producer))
         proformatask = Proforma_Request(request)
         response = StreamingHttpResponse(proformatask.import_task())
         return response
     except Exception as inst:
-        # if producer is not None:
-        #    producer.close()
         logger.exception(inst)
         response = HttpResponse()
         callstack = traceback.format_exc()
         response.write(get_http_error_page('Task error', str(inst), callstack))
         response.status_code = 500 # internal server error
         return response
-
-
-
-#     messages = send_generator()
-#     try:
-# #        return StreamingHttpResponse(import_task(request), content_type='text/event-stream')
-#         # return StreamingHttpResponse(fake2(request,), content_type='text/event-stream')
-#         return StreamingHttpResponse(fake2)
-#
-#     except task.TaskXmlException as inst:
-#         logger.exception(inst)
-#         callstack = traceback.format_exc()
-#         print("TaskXmlException caught Stack Trace: " + str(callstack))
-#         yield str(inst) + str(callstack)
-#     except Exception as inst:
-#         logger.exception(inst)
-#         callstack = traceback.format_exc()
-#         print("Exception caught Stack Trace: " + str(callstack))
-#         yield str(inst) + str(callstack)
 
 
 def grade_api_v2(request,):

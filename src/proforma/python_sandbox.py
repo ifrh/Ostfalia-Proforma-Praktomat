@@ -82,9 +82,11 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
         templ_path = self.get_python_template_path()
         if self.template_exists(templ_path):
+            yield 'python template already exists\r\n'
             # already exists => return
             return
 
+        yield 'create virtual python environment\r\n'
         templ_dir = self._create_venv(templ_path)
         logger.info('Create Python template ' + templ_dir)
 
@@ -93,6 +95,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             if requirements_txt is not None:
                 hash = PythonSandboxTemplate.get_hash(requirements_path)
                 print(hash)
+                yield 'install requirements\r\n'
                 logger.info('install requirements')
                 # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
                 env = {}
@@ -106,10 +109,16 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                                      environment_variables=env, unsafe=True)
                 logger.debug(output)
                 logger.debug(error)
+                if output is not None:
+                    yield str(output)
+                    yield '\r\n'
+                if error is not None:
+                    yield str(error)
+                    yield '\r\n'
                 if exitcode != 0:
                     raise Exception('Cannot install requirements.txt: \n\n' + output)
 
-
+            yield 'add missing libraries \r\n'
             logger.info('copy python libraries from OS')
             pythonbin = os.readlink('/usr/bin/python3')
             logger.debug('python is ' + pythonbin)  # expect python3.x
@@ -145,6 +154,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     #            else:
     #                print('**' + filePath)
 
+            yield 'freeze template\r\n'
             self._commit(templ_dir)
         except:
             # try and delete complete templ_dir

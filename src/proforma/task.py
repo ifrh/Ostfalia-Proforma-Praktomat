@@ -382,8 +382,6 @@ class Proforma_Task:
         hash = uuid.UUID(md5) # as uuid
         logger.debug('task hash is ' + str(hash))
 
-        yield "import\r\n"
-
         # TODO check against schema??
 
         # check Namespace
