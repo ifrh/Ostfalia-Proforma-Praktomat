@@ -251,69 +251,69 @@ def extract_zip_with_xml_and_zip_dict(uploaded_file):
     return task_xml, dict_zip_files
 
 
-def respond_error_message(message):
-    response = HttpResponse()
-    response.write(message)
-    return response
+# def respond_error_message(message):
+#     response = HttpResponse()
+#     response.write(message)
+#     return response
 
-def check_post_request(request):
-
-    postdata = None
-    # check request object -> refactor method
-    if request.method != 'POST':
-        message = "No POST-Request"
-        respond_error_message(message=message)
-    else:
-        try:
-            postdata = request.POST.copy()
-        except Exception as e:
-            message = "Error no Files attached. " + str(e)
-            respond_error_message(message=message)
-
-    # it should be one File one xml or one zip
-    if len(postdata) > 1:
-        message = "Only one file is supported"
-        respond_error_message(message=message)
-    else:
-        pass
-
-
-# URI entry point
-@csrf_exempt  # disable csrf-cookie
-def import_task(request):
-    """
-    :param request: request object for getting POST and GET
-    :return: response
-
-    expect xml-file in post-request
-    tries to objectify the xml and import it in Praktomat
-    """
-
-    logger.debug('import_task 2 called')
-
-    try:
-        check_post_request(request)
-        filename, uploaded_file = request.FILES.popitem()  # returns list?
-        task = import_task_internal(filename, uploaded_file[0])
-        response_data = dict()
-        response_data['taskid'] = task.id
-        response_data['message'] = ''
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
+# def check_post_request(request):
+#
+#     postdata = None
+#     # check request object -> refactor method
+#     if request.method != 'POST':
+#         message = "No POST-Request"
+#         respond_error_message(message=message)
+#     else:
+#         try:
+#             postdata = request.POST.copy()
+#         except Exception as e:
+#             message = "Error no Files attached. " + str(e)
+#             respond_error_message(message=message)
+#
+#     # it should be one File one xml or one zip
+#     if len(postdata) > 1:
+#         message = "Only one file is supported"
+#         respond_error_message(message=message)
+#     else:
+#         pass
 
 
-    except Exception as inst:
-        logger.exception(inst)
-        print("Exception caught: " + str(type(inst)))  # the exception instance
-        print("Exception caught: " + str(inst.args))  # arguments stored in .args
-        print("Exception caught: " + str(inst))  # __str__ allows args to be printed directly
-        callstack = traceback.format_exc()
-        print("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
-
-        #x, y = inst.args
-        #print 'x =', x
-        #print 'y =', y
-        response = HttpResponse()
-        response.write("Error while importing task\r\n" + str(inst) + '\r\n' + callstack)
+# # URI entry point
+# @csrf_exempt  # disable csrf-cookie
+# def import_task(request):
+#     """
+#     :param request: request object for getting POST and GET
+#     :return: response
+#
+#     expect xml-file in post-request
+#     tries to objectify the xml and import it in Praktomat
+#     """
+#
+#     logger.debug('import_task 2 called')
+#
+#     try:
+#         check_post_request(request)
+#         filename, uploaded_file = request.FILES.popitem()  # returns list?
+#         task = import_task_internal(filename, uploaded_file[0])
+#         response_data = dict()
+#         response_data['taskid'] = task.id
+#         response_data['message'] = ''
+#         return HttpResponse(json.dumps(response_data), content_type="application/json")
+#
+#
+#     except Exception as inst:
+#         logger.exception(inst)
+#         print("Exception caught: " + str(type(inst)))  # the exception instance
+#         print("Exception caught: " + str(inst.args))  # arguments stored in .args
+#         print("Exception caught: " + str(inst))  # __str__ allows args to be printed directly
+#         callstack = traceback.format_exc()
+#         print("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
+#
+#         #x, y = inst.args
+#         #print 'x =', x
+#         #print 'y =', y
+#         response = HttpResponse()
+#         response.write("Error while importing task\r\n" + str(inst) + '\r\n' + callstack)
 
 
 def get_task(hash, uuid, title) :
@@ -329,77 +329,90 @@ def get_task(hash, uuid, title) :
     return None
 
 
-def import_task_internal(filename, task_file):
-    logger.debug('import_task_internal called')
 
-    # here is the actual namespace for the version
-    format_namespace_v0_9_4 = "urn:proforma:task:v0.9.4"
-    format_namespace_v1_0_1 = "urn:proforma:task:v1.0.1"
-    format_namespace_v2_0 = "urn:proforma:v2.0"
-    format_namespace_v2_0_1 = "urn:proforma:v2.0.1"
+class Proforma_Task:
+    """ Simple class that was created in order to use more generators
+    for providing progress information to the user
+    """
+    def __init__(self):
+        self.response_data = None
 
-    # rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
+    def import_task_internal(self, filename, task_file):
+        logger.debug('import_task_internal called')
 
-    dict_zip_files = None
-    if filename[-3:].upper() == 'ZIP':
-        if type(task_file) == InMemoryUploadedFile:
-            logger.debug('compute MD5 for zip file')
-            md5 = hashlib.md5(task_file.read()).hexdigest()
-        elif type(task_file) == bytes:
-            md5 = hashlib.md5(task_file).hexdigest()
-        else:
-            logger.debug('class is : ' + task_file.__class__.__name__)
-            raise Exception('cannot compute MD5 because of unsupported class')
+        yield "calculate hash for task file\r\n"
+        # here is the actual namespace for the version
+        format_namespace_v0_9_4 = "urn:proforma:task:v0.9.4"
+        format_namespace_v1_0_1 = "urn:proforma:task:v1.0.1"
+        format_namespace_v2_0 = "urn:proforma:v2.0"
+        format_namespace_v2_0_1 = "urn:proforma:v2.0.1"
 
-        task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
-    else:
-        if type(task_file) == InMemoryUploadedFile:
-            task_xml = task_file.read()  # todo check name
-        else:
-            if type(task_file) == TemporaryUploadedFile:
-                task_xml = task_file.read()
+        # rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
+
+        dict_zip_files = None
+        if filename[-3:].upper() == 'ZIP':
+            if type(task_file) == InMemoryUploadedFile:
+                logger.debug('compute MD5 for zip file')
+                md5 = hashlib.md5(task_file.read()).hexdigest()
+            elif type(task_file) == bytes:
+                md5 = hashlib.md5(task_file).hexdigest()
             else:
-                task_xml = task_file
-        logger.debug('task_xml classname is ' + task_xml.__class__.__name__)
-        md5 = hashlib.md5(task_xml).hexdigest()
+                logger.debug('class is : ' + task_file.__class__.__name__)
+                raise Exception('cannot compute MD5 because of unsupported class')
 
-    logger.debug('task_xml class name is ' + task_xml.__class__.__name__)   
-    # logger.debug('task_xml = ' + task_xml)
-    xml_object = objectify.fromstring(task_xml)
-    logger.debug('xml_object class name is ' + xml_object.__class__.__name__)
+            task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
+        else:
+            if type(task_file) == InMemoryUploadedFile:
+                task_xml = task_file.read()  # todo check name
+            else:
+                if type(task_file) == TemporaryUploadedFile:
+                    task_xml = task_file.read()
+                else:
+                    task_xml = task_file
+            logger.debug('task_xml classname is ' + task_xml.__class__.__name__)
+            md5 = hashlib.md5(task_xml).hexdigest()
 
-    # convert MD5 hash to UUID (easier to store in Django)
-    import uuid
-    hash = uuid.UUID(md5) # as uuid
-    logger.debug('task hash is ' + str(hash))
+        logger.debug('task_xml class name is ' + task_xml.__class__.__name__)
+        # logger.debug('task_xml = ' + task_xml)
+        xml_object = objectify.fromstring(task_xml)
+        logger.debug('xml_object class name is ' + xml_object.__class__.__name__)
 
-    # TODO check against schema??
+        # convert MD5 hash to UUID (easier to store in Django)
+        import uuid
+        hash = uuid.UUID(md5) # as uuid
+        logger.debug('task hash is ' + str(hash))
 
-    # check Namespace
-    #if format_namespace_v0_9_4 in list(xml_object.nsmap.values()):
-    #    logger.debug('handle 0.9.4 task')
-    #    response_data = task_v0_94.importTask(task_xml, dict_zip_files)  # request,)
-#    if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
-#        logger.debug('handle 1.0.1 task')
-#        response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
-    if format_namespace_v2_0 in list(xml_object.nsmap.values()):
-        logger.debug('handle 2.0 task')
-        task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0)
-        response_data = task_2.import_task()
-    elif format_namespace_v2_0_1 in list(xml_object.nsmap.values()):
-        logger.debug('handle 2.0.1 task')
-        task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0_1)
-        response_data = task_2.import_task()
-    else:
-        raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
-                       # format_namespace_v0_9_4 + "\r\n" +
-                       # format_namespace_v1_0_1 + "\r\n" +
-                       format_namespace_v2_0)
+        yield "import\r\n"
 
-    if response_data == None:
-        raise Exception("could not create task")
+        # TODO check against schema??
 
-    return response_data
+        # check Namespace
+        #if format_namespace_v0_9_4 in list(xml_object.nsmap.values()):
+        #    logger.debug('handle 0.9.4 task')
+        #    response_data = task_v0_94.importTask(task_xml, dict_zip_files)  # request,)
+    #    if format_namespace_v1_0_1 in list(xml_object.nsmap.values()):
+    #        logger.debug('handle 1.0.1 task')
+    #        response_data = task_v1_01.import_task(task_xml, xml_object, dict_zip_files)
+        if format_namespace_v2_0 in list(xml_object.nsmap.values()):
+            logger.debug('handle 2.0 task')
+            task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0)
+            yield from task_2.import_task()
+            self.response_data = task_2.imported_task
+        elif format_namespace_v2_0_1 in list(xml_object.nsmap.values()):
+            logger.debug('handle 2.0.1 task')
+            task_2 = task_v2_00.Task_2_00(task_xml, xml_object, hash, dict_zip_files, format_namespace_v2_0_1)
+            yield from task_2.import_task()
+            self.response_data = task_2.imported_task
+        else:
+            raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
+                           # format_namespace_v0_9_4 + "\r\n" +
+                           # format_namespace_v1_0_1 + "\r\n" +
+                           format_namespace_v2_0)
+
+        if self.response_data == None:
+            raise Exception("could not create task")
+
+        # return response_data
 
 
 

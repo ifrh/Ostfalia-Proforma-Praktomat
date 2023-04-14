@@ -127,8 +127,6 @@ def upload_v2(request,):
     rtype: upload_v2
     """
 
-    print('DO HANDLE UPLOAD ')
-
     logger.debug("new upload request")
 
     producer = None
@@ -137,7 +135,7 @@ def upload_v2(request,):
         # producer = send_generator()
         # producer.send(None) # start
         # response = StreamingHttpResponse(fake2(producer))
-        proformatask = Proforma_Task(request)
+        proformatask = Proforma_Request(request)
         response = StreamingHttpResponse(proformatask.import_task())
         return response
     except Exception as inst:
@@ -180,7 +178,7 @@ def grade_api_v2(request,):
 
     # create task and get Id
     try:
-        proformatask = Proforma_Task(request)
+        proformatask = Proforma_Request(request)
         a = proformatask.import_task()
         # 'consume' a, needed because import_task is a generator which returns an iterator
         # This is required, otherwise the function is not completely executed
@@ -251,7 +249,7 @@ def grade_api_v2(request,):
         return response
 
 
-class Proforma_Task:
+class Proforma_Request:
     def __init__(self, request):
         self.request = request
         self.NAMESPACE = None
@@ -263,7 +261,7 @@ class Proforma_Task:
 
     def import_task(self):
         # get request XML from LMS (called 'submission.xml' in ProFormA)
-        yield 'read task meta data'
+        yield 'read task meta data\r\n'
         xml = self.get_request_xml()
         logger.debug("type(xml): " + str(type(xml)))
         # logger.debug("got xml: " + xml)
@@ -338,8 +336,9 @@ class Proforma_Task:
         logger.info("grading request for task " + task_filename)
         logger.debug('import task')
 
-        yield 'import task'
-        self.proformatask = task.import_task_internal(task_filename, task_file)
+        ptask = task.Proforma_Task()
+        yield from ptask.import_task_internal(task_filename, task_file)
+        self.proformatask = ptask.response_data
         # return NAMESPACE, NAMESPACES, proformatask, root, templatefile
 
 
@@ -631,7 +630,7 @@ class Proforma_Task:
                             fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
                             extradirs=[], unsafe=True)
 
-        Proforma_Task.check_exitcode(error, exitcode, output, timed_out)
+        Proforma_Request.check_exitcode(error, exitcode, output, timed_out)
         # logger.debug('SVN-output: ' + output)
         # find revision
         m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
@@ -690,7 +689,7 @@ class Proforma_Task:
         execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
                         fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
                         extradirs=[], unsafe=True)
-        Proforma_Task.check_exitcode(error, exitcode, output, timed_out)
+        Proforma_Request.check_exitcode(error, exitcode, output, timed_out)
 
 
         # find commit
@@ -701,7 +700,7 @@ class Proforma_Task:
         execute_arglist(cmd, tmp_dir, environment_variables={}, timeout=settings.TEST_TIMEOUT,
                         fileseeklimit=settings.TEST_MAXFILESIZE,
                         extradirs=[], unsafe=True)
-        Proforma_Task.check_exitcode(error, exitcode, output, timed_out)
+        Proforma_Request.check_exitcode(error, exitcode, output, timed_out)
         logger.debug(output)
 
         versioncontrolinfo = Git(submission_uri, output.strip())
@@ -732,7 +731,5 @@ class Proforma_Task:
 
         if timed_out:
             raise ExternalSubmissionException('timeout')
-
-
 
 

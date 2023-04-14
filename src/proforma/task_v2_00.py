@@ -238,6 +238,14 @@ class Task_2_00:
         self._praktomat_files = None
         self._format_namespace = format_namespace
         self._ns = {"p": self._format_namespace}
+        # result from import_task is stored as member
+        # variable in order to send progress information
+        # to the client (use generator approach)
+        self._imported_task = None
+
+    @property
+    def imported_task(self):
+        return self._imported_task
 
     # read all files from task and put them into a dictionary
     def _create_praktomat_files(self, xml_obj, external_file_dict=None, ):
@@ -521,8 +529,12 @@ class Task_2_00:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task is not None:
                 logger.debug('use cached task')
-                return old_task
+                yield 'use cached task\r\n'
+                self._imported_task = old_task
+                return
+                # return old_task
 
+        yield 'extract task\r\n'
         # no need to actually validate xml against xsd
         # (it is only time consuming)
         schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, self._get_xsd_path()))
@@ -547,8 +559,10 @@ class Task_2_00:
             # self.set_default_user(user_name=SYSUSER)
 
             # read files
+            yield 'create files\r\n'
             self._create_praktomat_files(xml_obj=self._xml_obj, external_file_dict=self._dict_zip_files)
             # create test objects
+            yield 'create tests\r\n'
             for xmlTest in self._xml_obj.tests.iterchildren():
                 testtype = xmlTest.xpath("p:test-type", namespaces=self._ns)[0].text
                 if testtype == "java-compilation":  # todo check compilation_xsd
@@ -590,8 +604,11 @@ class Task_2_00:
         # finally set identifier attributes (do not set in previous steps
         # in order to avoid a broken task to be stored
         self._praktomat_task.set_identifier_values(self._hash, task_uuid, task_title)
+        yield 'save\r\n'
         self._praktomat_task.save()
-        return self._praktomat_task.object
+        # return self._praktomat_task.object
+
+        self._imported_task = self._praktomat_task.object
 
     # def validate_xml(xml, xml_version=None):
     #     if xml_version is None:

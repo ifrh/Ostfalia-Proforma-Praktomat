@@ -80,7 +80,8 @@ def grade_api_lon_capa(request,):
     try:
         # create task object in database
         logger.debug('import task')
-        proformatask = task.import_task_internal(task_filename, task_file)
+        ptask = task.Proforma_Task()
+        proformatask = ptask.import_task_internal(task_filename, task_file)
 
         # run tests
         grader = grade.Grader(proformatask)
