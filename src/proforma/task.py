@@ -329,10 +329,7 @@ def get_task(hash, uuid, title) :
     return None
 
 
-def import_task_internal(filename, task_file, with_yield):
-#    if with_yield:
-#        yield 'let us do the work'
-
+def import_task_internal(filename, task_file):
     logger.debug('import_task_internal called')
 
     # here is the actual namespace for the version
@@ -342,9 +339,6 @@ def import_task_internal(filename, task_file, with_yield):
     format_namespace_v2_0_1 = "urn:proforma:v2.0.1"
 
     # rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
-
-#    if with_yield:
-#        yield 'check if task is already stored'
 
     dict_zip_files = None
     if filename[-3:].upper() == 'ZIP':

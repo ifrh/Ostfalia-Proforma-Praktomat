@@ -99,26 +99,75 @@ class Git(VersionControlSystem):
         super().__init__('Git', uri, commit)
 
 
+
+def send_generator():
+    while True:
+        x = yield
+        if not x is None:
+            print(x)
+            yield x
+#
+# def fake(messages):
+#     import time
+#     messages.send('hallo')
+#     time.sleep(1)
+#     messages.send('hallo nochmal')
+#     time.sleep(1)
+#     messages.send('es läuft')
+#
+#
+def fake2(producer):
+    producer.send("Hallo1")
+    yield "Hallo2"
+
+
 def upload_v2(request,):
     """
     upload_v2
     rtype: upload_v2
     """
 
-    logger.debug("new upload request")
-    try:
-        return StreamingHttpResponse(import_task(request, True), content_type='text/event-stream')
+    print('DO HANDLE UPLOAD ')
 
-    except task.TaskXmlException as inst:
-        logger.exception(inst)
-        callstack = traceback.format_exc()
-        print("TaskXmlException caught Stack Trace: " + str(callstack))
-        yield str(inst) + str(callstack)
+    logger.debug("new upload request")
+
+    producer = None
+    response = None
+    try:
+        # producer = send_generator()
+        # producer.send(None) # start
+        # response = StreamingHttpResponse(fake2(producer))
+        proformatask = Proforma_Task(request)
+        response = StreamingHttpResponse(proformatask.import_task())
+        return response
     except Exception as inst:
+        # if producer is not None:
+        #    producer.close()
         logger.exception(inst)
+        response = HttpResponse()
         callstack = traceback.format_exc()
-        print("Exception caught Stack Trace: " + str(callstack))
-        yield str(inst) + str(callstack)
+        response.write(get_http_error_page('Task error', str(inst), callstack))
+        response.status_code = 500 # internal server error
+        return response
+
+
+
+#     messages = send_generator()
+#     try:
+# #        return StreamingHttpResponse(import_task(request), content_type='text/event-stream')
+#         # return StreamingHttpResponse(fake2(request,), content_type='text/event-stream')
+#         return StreamingHttpResponse(fake2)
+#
+#     except task.TaskXmlException as inst:
+#         logger.exception(inst)
+#         callstack = traceback.format_exc()
+#         print("TaskXmlException caught Stack Trace: " + str(callstack))
+#         yield str(inst) + str(callstack)
+#     except Exception as inst:
+#         logger.exception(inst)
+#         callstack = traceback.format_exc()
+#         print("Exception caught Stack Trace: " + str(callstack))
+#         yield str(inst) + str(callstack)
 
 
 def grade_api_v2(request,):
@@ -131,17 +180,21 @@ def grade_api_v2(request,):
 
     # create task and get Id
     try:
-        [NAMESPACE, NAMESPACES, proformatask, root, templatefile] = import_task(request, False)
+        proformatask = Proforma_Task(request)
+        a = proformatask.import_task()
+        # 'consume' a, needed because import_task is a generator which returns an iterator
+        # This is required, otherwise the function is not completely executed
+        b = list(a)
         #        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
 
-        grader = grade.Grader(proformatask, NAMESPACE)
-        logger.debug(NAMESPACES)
-        submission_files, version_control = get_submission_files(root, request, NAMESPACES) # returns a dictionary (filename -> content)
+        grader = grade.Grader(proformatask.proformatask, proformatask.NAMESPACE)
+        logger.debug(proformatask.NAMESPACES)
+        submission_files, version_control = proformatask.get_submission_files() # returns a dictionary (filename -> content)
 
         # run tests
         grader.grade(submission_files, version_control, True)
         # get result
-        grade_result = grader.get_result(templatefile)
+        grade_result = grader.get_result(proformatask.templatefile)
 
         # return result
         logger.debug("grading finished")
@@ -198,150 +251,158 @@ def grade_api_v2(request,):
         return response
 
 
-def import_task(request, with_yield = False):
-    # get request XML from LMS (called 'submission.xml' in ProFormA)
-    xml = get_request_xml(request)
-    logger.debug("type(xml): " + str(type(xml)))
-    # logger.debug("got xml: " + xml)
-    # debugging uploaded files
-    # for field_name, file in request.FILES.items():
-    #    filename = file.name
-    #    logger.debug("grade_api_v2: request.Files: " + str(file) + "\tfilename: " + str(filename))
-    # todo:
-    # 1. check xml -> validate against xsd
-    # 2. check uuid or download external xml
-    # 3. files > file id all should be zipped
-    # get xml version
-    # xml_version = get_xml_version(submission_xml=xml)
-    # do not validate for performance reasons
-    # validate xsd
-    # if xml_version:
-    #    # logger.debug("xml: " + xml)
-    #    is_valid = validate_xml(xml=xml, xml_version=xml_version)
-    # else:
-    #    logger.debug("no version - " + str(xml))
-    #    is_valid = validate_xml(xml=xml)
-    # logger.debug(xml)
-    # note: we use lxml/etree here because it is very fast
-    root = etree.fromstring(xml)
-    # print ('NAMESPACE ' + root.xpath('namespace-uri(.)'))
-    # print (root.nsmap[None])
-    # NAMESPACES = {'dns': root.nsmap[None]}
-    NAMESPACE = None
-    NAMESPACES = {}
-    # print(root.nsmap)
-    for key, value in root.nsmap.items():
-        if key is None:
-            if value == NAMESPACES_V2_0:
-                NAMESPACE = NAMESPACES_V2_0
-                templatefile = 'proforma/response_v2.0.xml'
-                NAMESPACES['dns'] = value
-            elif value == NAMESPACES_V2_1:
-                NAMESPACE = NAMESPACES_V2_1
-                templatefile = 'proforma/response_v2.1.xml'
-                NAMESPACES['dns'] = value
+class Proforma_Task:
+    def __init__(self, request):
+        self.request = request
+        self.NAMESPACE = None
+        self.NAMESPACES = {}
+        self.proformatask = None
+        self.root = None
+        self.templatefile = None
+
+
+    def import_task(self):
+        # get request XML from LMS (called 'submission.xml' in ProFormA)
+        yield 'read task meta data'
+        xml = self.get_request_xml()
+        logger.debug("type(xml): " + str(type(xml)))
+        # logger.debug("got xml: " + xml)
+        # debugging uploaded files
+        # for field_name, file in request.FILES.items():
+        #    filename = file.name
+        #    logger.debug("grade_api_v2: request.Files: " + str(file) + "\tfilename: " + str(filename))
+        # todo:
+        # 1. check xml -> validate against xsd
+        # 2. check uuid or download external xml
+        # 3. files > file id all should be zipped
+        # get xml version
+        # xml_version = get_xml_version(submission_xml=xml)
+        # do not validate for performance reasons
+        # validate xsd
+        # if xml_version:
+        #    # logger.debug("xml: " + xml)
+        #    is_valid = validate_xml(xml=xml, xml_version=xml_version)
+        # else:
+        #    logger.debug("no version - " + str(xml))
+        #    is_valid = validate_xml(xml=xml)
+        # logger.debug(xml)
+        # note: we use lxml/etree here because it is very fast
+        self.root = etree.fromstring(xml)
+        # print ('NAMESPACE ' + root.xpath('namespace-uri(.)'))
+        # print (root.nsmap[None])
+        # NAMESPACES = {'dns': root.nsmap[None]}
+        # print(root.nsmap)
+        for key, value in self.root.nsmap.items():
+            if key is None:
+                if value == NAMESPACES_V2_0:
+                    self.NAMESPACE = NAMESPACES_V2_0
+                    self.templatefile = 'proforma/response_v2.0.xml'
+                    self.NAMESPACES['dns'] = value
+                elif value == NAMESPACES_V2_1:
+                    self.NAMESPACE = NAMESPACES_V2_1
+                    self.templatefile = 'proforma/response_v2.1.xml'
+                    self.NAMESPACES['dns'] = value
+                else:
+                    raise Exception("do not support namespace " + value)
             else:
-                raise Exception("do not support namespace " + value)
-        else:
-            if value.find('praktomat') >= 0:
-                NAMESPACES['praktomat'] = value
-            else:
-                NAMESPACES[key] = value
-    if NAMESPACE is None:
-        raise Exception("no proforma namespace found")
-    task_file = None
-    task_filename = None
-    task_element = root.find(".//dns:external-task", NAMESPACES)
-    if task_element is not None:
-        uri_element = task_element.find(".//dns:uri", NAMESPACES)
-        if uri_element is not None:
-            # new 2.1: external task is defined in sub element uri
-            task_file, task_filename = get_external_task(request, uri_element.text)
-        else:
-            # old 2.1: external task is defined as text
-            task_file, task_filename = get_external_task(request, task_element.text)
-        # logger.debug('external-task in ' + task_path)
-    else:
-        task_element = root.find(".//dns:task", NAMESPACES)
+                if value.find('praktomat') >= 0:
+                    self.NAMESPACES['praktomat'] = value
+                else:
+                    self.NAMESPACES[key] = value
+        if self.NAMESPACE is None:
+            raise Exception("no proforma namespace found")
+        task_file = None
+        task_filename = None
+        task_element = self.root.find(".//dns:external-task", self.NAMESPACES)
         if task_element is not None:
-            raise Exception("embedded task in submission.xml is not supported")
+            uri_element = task_element.find(".//dns:uri", self.NAMESPACES)
+            if uri_element is not None:
+                # new 2.1: external task is defined in sub element uri
+                task_file, task_filename = self.get_external_task(uri_element.text)
+            else:
+                # old 2.1: external task is defined as text
+                task_file, task_filename = self.get_external_task(task_element.text)
+            # logger.debug('external-task in ' + task_path)
         else:
-            task_element = root.find(".//dns:inline-task-zip", NAMESPACES)
+            task_element = self.root.find(".//dns:task", self.NAMESPACES)
             if task_element is not None:
-                raise Exception("inline-task-zip in submission.xml is not supported")
+                raise Exception("embedded task in submission.xml is not supported")
             else:
-                raise Exception("could not find task in submission.xml")
-    # xml2dict is very slow
-    # submission_dict = xml2dict(xml)
-    logger.info("grading request for task " + task_filename)
-    logger.debug('import task')
-    # if with_yield:
-    #    yield 'import task'
+                task_element = self.root.find(".//dns:inline-task-zip", self.NAMESPACES)
+                if task_element is not None:
+                    raise Exception("inline-task-zip in submission.xml is not supported")
+                else:
+                    raise Exception("could not find task in submission.xml")
+        # xml2dict is very slow
+        # submission_dict = xml2dict(xml)
+        logger.info("grading request for task " + task_filename)
+        logger.debug('import task')
 
-    proformatask = task.import_task_internal(task_filename, task_file, with_yield)
-    return NAMESPACE, NAMESPACES, proformatask, root, templatefile
-
-
-def get_external_task(request, task_uri):
-    # logger.debug("task_uri: " + str(task_uri))
-    ##
-    # test file-field
-    m = re.match(r"(http\-file\:)(?P<file_name>.+)", task_uri)
-    file_name = None
-    if m:
-        file_name = m.group('file_name')
-    else:
-        raise Exception("unsupported external task URI: " + task_uri)
-
-    logger.debug("file_name: " + str(file_name))
-    for filename, file in list(request.FILES.items()):
-        name = request.FILES[filename].name
-        if name == file_name:
-            task_filename = name
-            task_file = file
-            return task_file, task_filename
-
-    raise Exception("could not find task with URI " + task_uri)
+        yield 'import task'
+        self.proformatask = task.import_task_internal(task_filename, task_file)
+        # return NAMESPACE, NAMESPACES, proformatask, root, templatefile
 
 
-def get_request_xml(request):
-    """
-    check the POST-Object
-    1. could be just a submission.xml
-    2. could be a submission.zip
+    def get_external_task(self, task_uri):
+        # logger.debug("task_uri: " + str(task_uri))
+        ##
+        # test file-field
+        m = re.match(r"(http\-file\:)(?P<file_name>.+)", task_uri)
+        file_name = None
+        if m:
+            file_name = m.group('file_name')
+        else:
+            raise Exception("unsupported external task URI: " + task_uri)
 
-    :rtype: submission.xml
-    :param request: 
-    """
-    # todo check encoding of the xml -> first line
-    encoding = 'utf-8'
-    if not request.POST:
-        #if not request.FILES:
-        #    raise KeyError("No submission attached")
+        logger.debug("file_name: " + str(file_name))
+        for filename, file in list(self.request.FILES.items()):
+            name = self.request.FILES[filename].name
+            if name == file_name:
+                task_filename = name
+                task_file = file
+                return task_file, task_filename
 
-        try:
-            # submission.xml in request.Files
-            logger.debug("FILES.keys(): " + str(list(request.FILES.keys())))
-            if request.FILES['submission.xml'].name is not None:
-                xml = request.FILES['submission.xml'].read() # convert InMemoryUploadedFile to string
-                return xml
-            elif request.FILES['submission.zip'].name:
-                # todo zip handling -> praktomat zip
-                raise Exception("zip handling is not implemented")
-            else:
+        raise Exception("could not find task with URI " + task_uri)
+
+
+    def get_request_xml(self):
+        """
+        check the POST-Object
+        1. could be just a submission.xml
+        2. could be a submission.zip
+
+        :rtype: submission.xml
+        :param request:
+        """
+        # todo check encoding of the xml -> first line
+        encoding = 'utf-8'
+        if not self.request.POST:
+            #if not request.FILES:
+            #    raise KeyError("No submission attached")
+
+            try:
+                # submission.xml in request.Files
+                logger.debug("FILES.keys(): " + str(list(self.request.FILES.keys())))
+                if self.request.FILES['submission.xml'].name is not None:
+                    xml = self.request.FILES['submission.xml'].read() # convert InMemoryUploadedFile to string
+                    return xml
+                elif self.request.FILES['submission.zip'].name:
+                    # todo zip handling -> praktomat zip
+                    raise Exception("zip handling is not implemented")
+                else:
+                    raise KeyError("No submission attached")
+            except MultiValueDictKeyError:
                 raise KeyError("No submission attached")
-        except MultiValueDictKeyError:
-            raise KeyError("No submission attached")
-    else:
-        logger.debug("got submission.xml as form data")
-        xml = request.POST.get("submission.xml")
+        else:
+            logger.debug("got submission.xml as form data")
+            xml = self.request.POST.get("submission.xml")
 
-        # logger.debug('submission' + xml)
-        if xml is None:
-            raise KeyError("No submission attached -> submission.xml")
+            # logger.debug('submission' + xml)
+            if xml is None:
+                raise KeyError("No submission attached -> submission.xml")
 
-        xml_encoded = xml.encode(encoding)
-        return xml_encoded
+            xml_encoded = xml.encode(encoding)
+            return xml_encoded
 
 
 
@@ -387,285 +448,290 @@ def get_request_xml(request):
 
 
 
-def get_submission_file_from_request(searched_file_name, request):
-    # remove beginning and trailing whitespaces
-    searched_file_name = searched_file_name.strip()
+    def get_submission_file_from_request(self, searched_file_name):
+        # remove beginning and trailing whitespaces
+        searched_file_name = searched_file_name.strip()
 
-    logger.debug("search submission file: '" + searched_file_name + "'")
+        logger.debug("search submission file: '" + searched_file_name + "'")
 
-    for filename, file in list(request.FILES.items()):
-        name = request.FILES[filename].name
-        logger.debug("request.FILES['" + filename + "'].name = '" + name + "'")
+        for filename, file in list(self.request.FILES.items()):
+            name = self.request.FILES[filename].name
+            logger.debug("request.FILES['" + filename + "'].name = '" + name + "'")
 
-        if filename == searched_file_name:
-            submission_files_dict = dict()
-            if name.lower().endswith('.zip'):
-                # uncompress submission
-                regex = r'(' + '|'.join([
-                    r'/$',  # don't unpack folders - the zipfile package will create them on demand
-                ]) + r')'
-                ignored_file_names_re = re.compile(regex)
+            if filename == searched_file_name:
+                submission_files_dict = dict()
+                if name.lower().endswith('.zip'):
+                    # uncompress submission
+                    regex = r'(' + '|'.join([
+                        r'/$',  # don't unpack folders - the zipfile package will create them on demand
+                    ]) + r')'
+                    ignored_file_names_re = re.compile(regex)
 
-                zip_file = zipfile.ZipFile(file, 'r')
-                for zipFileName in zip_file.namelist():
-                    if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
-                        t = tempfile.NamedTemporaryFile(delete=True)
-                        t.write(zip_file.open(zipFileName).read())  # todo: encoding
-                        t.flush()
-                        my_temp = File(t)
-                        my_temp.name = zipFileName
-                        submission_files_dict[zipFileName] = my_temp
+                    zip_file = zipfile.ZipFile(file, 'r')
+                    for zipFileName in zip_file.namelist():
+                        if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
+                            t = tempfile.NamedTemporaryFile(delete=True)
+                            t.write(zip_file.open(zipFileName).read())  # todo: encoding
+                            t.flush()
+                            my_temp = File(t)
+                            my_temp.name = zipFileName
+                            submission_files_dict[zipFileName] = my_temp
 
-                return submission_files_dict
+                    return submission_files_dict
 
-            elif name.lower().endswith('.jar'):
-                # read binary file
-                logger.debug("submission file is a JAR file")
-                file_content = str(file.read())
-                submission_files_dict.update({searched_file_name: file_content})
-                return submission_files_dict
-            # elif name.lower().endswith('.java'):
-            #     # special handling for single java files
-            #     # add package name to filename
-            #     # TODO: move to grader
-            #     logger.debug("SPECIAL HANDLING FOR JAVA FILE")
-            #     logger.debug('File class is ' + file.__class__.__name__)
-            #     file.close()
-            #     file.open() # open in text mode
-            #     file_content = file.read()
-            #
-            #     short_filename = os.path.basename(searched_file_name)
-            #     if short_filename == searched_file_name: # short filename
-            #         package = grade.find_java_package_path(file_content)
-            #         logger.debug('classname is ' + file_content.__class__.__name__)
-            #         if len(package) > 0:
-            #             short_filename =  package + '/' + searched_file_name
-            #         else:
-            #             short_filename = searched_file_name
-            #         submission_files_dict.update({short_filename: file_content})
-            #     else:
-            #         submission_files_dict.update({searched_file_name: file_content})
-            #
-            #     return submission_files_dict
+                elif name.lower().endswith('.jar'):
+                    # read binary file
+                    logger.debug("submission file is a JAR file")
+                    file_content = str(file.read())
+                    submission_files_dict.update({searched_file_name: file_content})
+                    return submission_files_dict
+                # elif name.lower().endswith('.java'):
+                #     # special handling for single java files
+                #     # add package name to filename
+                #     # TODO: move to grader
+                #     logger.debug("SPECIAL HANDLING FOR JAVA FILE")
+                #     logger.debug('File class is ' + file.__class__.__name__)
+                #     file.close()
+                #     file.open() # open in text mode
+                #     file_content = file.read()
+                #
+                #     short_filename = os.path.basename(searched_file_name)
+                #     if short_filename == searched_file_name: # short filename
+                #         package = grade.find_java_package_path(file_content)
+                #         logger.debug('classname is ' + file_content.__class__.__name__)
+                #         if len(package) > 0:
+                #             short_filename =  package + '/' + searched_file_name
+                #         else:
+                #             short_filename = searched_file_name
+                #         submission_files_dict.update({short_filename: file_content})
+                #     else:
+                #         submission_files_dict.update({searched_file_name: file_content})
+                #
+                #     return submission_files_dict
+                else:
+                    file_content = file.read() ##.decode('utf-8')
+                    submission_files_dict.update({searched_file_name: file_content})
+                    return submission_files_dict
+
+        raise Exception("could not find external submission " + searched_file_name)
+
+
+
+    def get_submission_files(self):
+        NAMESPACES = self.NAMESPACES
+        root = self.root
+
+        ## TODO: read binary if possible and write binary without conversion
+
+        # check for external submission
+        submission_element = root.find(".//dns:external-submission", NAMESPACES)
+        if submission_element is not None:
+            uri_element = submission_element.find(".//dns:uri", NAMESPACES)
+            if uri_element is not None:
+                # new 2.1: external submission is defined in sub element uri
+                submission_uri = uri_element.text
             else:
-                file_content = file.read() ##.decode('utf-8')
-                submission_files_dict.update({searched_file_name: file_content})
-                return submission_files_dict
+                # old 2.1: external task is defined as text
+                submission_uri = submission_element.text
 
-    raise Exception("could not find external submission " + searched_file_name)
+            # handle external submission
+            if not submission_uri:
+                raise Exception("invalid value for external-submission (none)")
 
+            # extract filename (list)
+            m = re.match(r"(http\-file\:)(?P<file_name>.+)", submission_uri)
+            if m:
+                logger.debug('submission attached to request')
+                # special case for attached submission
+                file_names = m.group('file_name')
+                if file_names is None:
+                    raise Exception("missing filename in external-submission")
 
+                logger.debug("submission filename(s): " + str(file_names))
+                # filename may be a list of filenames
+                names = str(file_names).split(',')
+                submission_files_dict = dict()
+                for searched_file_name in names:
+                    # collect all files
+                    submission_files_dict.update(self.get_submission_file_from_request(searched_file_name))
+                return submission_files_dict, None
+            else:
+                # expect submission from version control system
+                # => figure out which system
+                metadata_element = None
+                if "praktomat" in NAMESPACES:
+                    metadata_element = submission_element.find(".//praktomat:meta-data", NAMESPACES)
 
-def get_submission_files(root, request, NAMESPACES):
-    ## TODO: read binary if possible and write binary without conversion
-
-    # check for external submission
-    submission_element = root.find(".//dns:external-submission", NAMESPACES)
-    if submission_element is not None:
-        uri_element = submission_element.find(".//dns:uri", NAMESPACES)
-        if uri_element is not None:
-            # new 2.1: external submission is defined in sub element uri
-            submission_uri = uri_element.text
-        else:
-            # old 2.1: external task is defined as text
-            submission_uri = submission_element.text
-
-        # handle external submission
-        if not submission_uri:
-            raise Exception("invalid value for external-submission (none)")
-
-        # extract filename (list)
-        m = re.match(r"(http\-file\:)(?P<file_name>.+)", submission_uri)
-        if m:
-            logger.debug('submission attached to request')
-            # special case for attached submission
-            file_names = m.group('file_name')
-            if file_names is None:
-                raise Exception("missing filename in external-submission")
-
-            logger.debug("submission filename(s): " + str(file_names))
-            # filename may be a list of filenames
-            names = str(file_names).split(',')
-            submission_files_dict = dict()
-            for searched_file_name in names:
-                # collect all files
-                submission_files_dict.update(get_submission_file_from_request(searched_file_name, request))
-            return submission_files_dict, None
-        else:
-            # expect submission from version control system
-            # => figure out which system
-            metadata_element = None
-            if "praktomat" in NAMESPACES:
-                metadata_element = submission_element.find(".//praktomat:meta-data", NAMESPACES)
-
-            if metadata_element is not None:
-                git_element = metadata_element.find(".//praktomat:git", NAMESPACES)
-                if git_element is not None:
-                    logger.debug('GIT submission')
-                    return get_submission_files_from_git(submission_uri, NAMESPACES)
-                svn_element = metadata_element.find(".//praktomat:svn", NAMESPACES)
-                if svn_element is not None:
+                if metadata_element is not None:
+                    git_element = metadata_element.find(".//praktomat:git", NAMESPACES)
+                    if git_element is not None:
+                        logger.debug('GIT submission')
+                        return self.get_submission_files_from_git(submission_uri)
+                    svn_element = metadata_element.find(".//praktomat:svn", NAMESPACES)
+                    if svn_element is not None:
+                        logger.debug('SVN submission')
+                        return self.get_submission_files_from_svn(submission_uri)
+                    raise Exception('cannot determine source of external submission')
+                else:
+                    # SVN:
+                    # export submission from URI
                     logger.debug('SVN submission')
-                    return get_submission_files_from_svn(submission_uri, NAMESPACES)
-                raise Exception('cannot determine source of external submission')
-            else:
-                # SVN:
-                # export submission from URI
-                logger.debug('SVN submission')
-                return get_submission_files_from_svn(submission_uri, NAMESPACES)
+                    return self.get_submission_files_from_svn(submission_uri)
 
-    #embedded submission
-    logger.debug('embedded submission')
-    return get_submission_files_from_submission_xml(root, NAMESPACES)
+        #embedded submission
+        logger.debug('embedded submission')
+        return self.get_submission_files_from_submission_xml()
 
 
-def get_submission_files_from_submission_xml(root, NAMESPACES):
-    submission_files_dict = dict()
-    # handle embedded text files
-    submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
-    for sub_file in submission_elements:
-        # logger.debug(sub_file)
-        filename = sub_file.attrib["filename"]
-        # logger.debug('classname is ' + sub_file.text.__class__.__name__)
-        file_content = sub_file.text  # no need to encode because it is already a Unicode object
-        submission_files_dict.update({filename: file_content})
+    def get_submission_files_from_submission_xml(self):
+        NAMESPACES = self.NAMESPACES
+        root = self.root
+        submission_files_dict = dict()
+        # handle embedded text files
+        submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
+        for sub_file in submission_elements:
+            # logger.debug(sub_file)
+            filename = sub_file.attrib["filename"]
+            # logger.debug('classname is ' + sub_file.text.__class__.__name__)
+            file_content = sub_file.text  # no need to encode because it is already a Unicode object
+            submission_files_dict.update({filename: file_content})
 
-    # handle embedded binary base64 encoded files
-    submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-bin-file", NAMESPACES)
-    for sub_file in submission_elements:
-        filename = sub_file.attrib["filename"]
-        import base64
-        file_content = base64.b64decode(sub_file.text)
-        submission_files_dict.update({filename: file_content})
+        # handle embedded binary base64 encoded files
+        submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-bin-file", NAMESPACES)
+        for sub_file in submission_elements:
+            filename = sub_file.attrib["filename"]
+            import base64
+            file_content = base64.b64decode(sub_file.text)
+            submission_files_dict.update({filename: file_content})
 
-    submission_elements = root.findall(".//dns:files/dns:file/dns:attached-bin-file", NAMESPACES)
-    if len(submission_elements) > 0:
-        raise Exception("attached-bin-file in submission is not supported")
-    submission_elements = root.findall(".//dns:files/dns:file/dns:attached-txt-file", NAMESPACES)
-    if len(submission_elements) > 0:
-        raise Exception("attached-txt-file in submission is not supported")
-    if len(submission_files_dict) == 0:
-        raise Exception("No submission attached")
-    return submission_files_dict, None
+        submission_elements = root.findall(".//dns:files/dns:file/dns:attached-bin-file", NAMESPACES)
+        if len(submission_elements) > 0:
+            raise Exception("attached-bin-file in submission is not supported")
+        submission_elements = root.findall(".//dns:files/dns:file/dns:attached-txt-file", NAMESPACES)
+        if len(submission_elements) > 0:
+            raise Exception("attached-txt-file in submission is not supported")
+        if len(submission_files_dict) == 0:
+            raise Exception("No submission attached")
+        return submission_files_dict, None
 
 
-def get_submission_files_from_svn(submission_uri, NAMESPACES):
-    from utilities.safeexec import execute_arglist
-    from django.conf import settings
+    def get_submission_files_from_svn(self, submission_uri):
+        from utilities.safeexec import execute_arglist
+        from django.conf import settings
 
-    folder = tempfile.mkdtemp()
-    tmp_dir = os.path.join(folder, "submission")
-    submission_uri = submission_uri.strip()
-    cmd = ['svn', 'export', '--username', os.environ['SVNUSER'], '--password', os.environ['SVNPASS'], submission_uri,
-           tmp_dir]
-    # logger.debug(cmd)
-    # fileseeklimit: do not limit here!
-    [output, error, exitcode, timed_out, oom_ed] = \
+        folder = tempfile.mkdtemp()
+        tmp_dir = os.path.join(folder, "submission")
+        submission_uri = submission_uri.strip()
+        cmd = ['svn', 'export', '--username', os.environ['SVNUSER'], '--password', os.environ['SVNPASS'], submission_uri,
+               tmp_dir]
+        # logger.debug(cmd)
+        # fileseeklimit: do not limit here!
+        [output, error, exitcode, timed_out, oom_ed] = \
+            execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
+                            fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
+                            extradirs=[], unsafe=True)
+
+        Proforma_Task.check_exitcode(error, exitcode, output, timed_out)
+        # logger.debug('SVN-output: ' + output)
+        # find revision
+        m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
+        revision = 'unknown revision'
+        if m:
+            if m.group('revision') is not None:
+                revision = m.group('revision')
+            logger.debug("SVN revision is: " + revision)
+
+        versioncontrolinfo = Subversion(submission_uri, revision)
+
+        # create filename dictionary
+        submission_files_dict = dict()
+        import glob
+        for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
+            if not os.path.isfile(file_name):  # ignore directories
+                continue
+
+            shortname = file_name[len(tmp_dir) + 1:]
+            # logger.debug('add ' + str(shortname))
+            submission_files_dict[shortname] = PhysicalFile(file_name)
+        return submission_files_dict, versioncontrolinfo
+
+
+
+    def get_submission_files_from_git(self, submission_uri):
+        """ get submission from gitlab/github or somewhere else """
+
+        from utilities.safeexec import execute_arglist
+        from django.conf import settings
+
+        submission_uri = submission_uri.strip()
+
+        user = os.environ['GITUSER']
+        token = os.environ['GITPASS']
+        if user is not None:
+            user = user.strip()
+            if len(user) > 0:
+                if token is not None:
+                    token = token.strip()
+                else:
+                    token = ""
+                # we have credentials. Place them into uri.
+                # https://username@github.com/username/repository.git
+                # https://username:password@github.com/username/repository.git
+                submission_with_creadentials_uri = submission_uri.replace('://', '://' + user + ':' + token + '@')
+
+        # do not print, credentials are visible in commandline
+        # print(submission_uri)
+
+        folder = tempfile.mkdtemp()
+        tmp_dir = os.path.join(folder, "submission")
+        cmd = ['git', 'clone', submission_with_creadentials_uri, tmp_dir]
+        # fileseeklimit: do not limit here!
+        [output, error, exitcode, timed_out, oom_ed] = \
         execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
                         fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
                         extradirs=[], unsafe=True)
-
-    check_exitcode(error, exitcode, output, timed_out)
-    # logger.debug('SVN-output: ' + output)
-    # find revision
-    m = re.search(r"(Exported revision )(?P<revision>.+)\.", output)
-    revision = 'unknown revision'
-    if m:
-        if m.group('revision') is not None:
-            revision = m.group('revision')
-        logger.debug("SVN revision is: " + revision)
-
-    versioncontrolinfo = Subversion(submission_uri, revision)
-
-    # create filename dictionary
-    submission_files_dict = dict()
-    import glob
-    for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
-        if not os.path.isfile(file_name):  # ignore directories
-            continue
-
-        shortname = file_name[len(tmp_dir) + 1:]
-        # logger.debug('add ' + str(shortname))
-        submission_files_dict[shortname] = PhysicalFile(file_name)
-    return submission_files_dict, versioncontrolinfo
+        Proforma_Task.check_exitcode(error, exitcode, output, timed_out)
 
 
+        # find commit
+        # cmd = ['git', 'log', '-1', '--pretty=format:%H']
+        cmd = ['git', 'log', '-1', settings.GIT_LOG_FORMAT]
 
-def get_submission_files_from_git(submission_uri, NAMESPACES):
-    """ get submission from gitlab/github or somewhere else """
+        [output, error, exitcode, timed_out, oom_ed] = \
+        execute_arglist(cmd, tmp_dir, environment_variables={}, timeout=settings.TEST_TIMEOUT,
+                        fileseeklimit=settings.TEST_MAXFILESIZE,
+                        extradirs=[], unsafe=True)
+        Proforma_Task.check_exitcode(error, exitcode, output, timed_out)
+        logger.debug(output)
 
-    from utilities.safeexec import execute_arglist
-    from django.conf import settings
+        versioncontrolinfo = Git(submission_uri, output.strip())
 
-    submission_uri = submission_uri.strip()
+        # create filenames dictionary
+        submission_files_dict = dict()
+        import glob
+        for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
+            if not os.path.isfile(file_name):  # ignore directories
+                continue
 
-    user = os.environ['GITUSER']
-    token = os.environ['GITPASS']
-    if user is not None:
-        user = user.strip()
-        if len(user) > 0:
-            if token is not None:
-                token = token.strip()
-            else:
-                token = ""
-            # we have credentials. Place them into uri.
-            # https://username@github.com/username/repository.git
-            # https://username:password@github.com/username/repository.git
-            submission_with_creadentials_uri = submission_uri.replace('://', '://' + user + ':' + token + '@')
-
-    # do not print, credentials are visible in commandline
-    # print(submission_uri)
-
-    folder = tempfile.mkdtemp()
-    tmp_dir = os.path.join(folder, "submission")
-    cmd = ['git', 'clone', submission_with_creadentials_uri, tmp_dir]
-    # fileseeklimit: do not limit here!
-    [output, error, exitcode, timed_out, oom_ed] = \
-    execute_arglist(cmd, folder, environment_variables={}, timeout=settings.TEST_TIMEOUT,
-                    fileseeklimit=None,  # settings.TEST_MAXFILESIZE,
-                    extradirs=[], unsafe=True)
-    check_exitcode(error, exitcode, output, timed_out)
+            shortname = file_name[len(tmp_dir) + 1:]
+            # logger.debug('add ' + str(shortname))
+            submission_files_dict[shortname] = PhysicalFile(file_name)
+        return submission_files_dict, versioncontrolinfo
 
 
-    # find commit
-    # cmd = ['git', 'log', '-1', '--pretty=format:%H']
-    cmd = ['git', 'log', '-1', settings.GIT_LOG_FORMAT]
+    def check_exitcode(error, exitcode, output, timed_out):
+        if exitcode != 0:
+            message = ''
+            if error != None:
+                logger.debug('error: ' + str(error))
+                message += error + ' '
+            if output != None:
+                logger.debug('output: ' + str(output))
+                message += output
+            raise ExternalSubmissionException(message)
 
-    [output, error, exitcode, timed_out, oom_ed] = \
-    execute_arglist(cmd, tmp_dir, environment_variables={}, timeout=settings.TEST_TIMEOUT,
-                    fileseeklimit=settings.TEST_MAXFILESIZE,
-                    extradirs=[], unsafe=True)
-    check_exitcode(error, exitcode, output, timed_out)
-    logger.debug(output)
-
-    versioncontrolinfo = Git(submission_uri, output.strip())
-
-    # create filenames dictionary
-    submission_files_dict = dict()
-    import glob
-    for file_name in glob.iglob(tmp_dir + '/**/*', recursive=True):
-        if not os.path.isfile(file_name):  # ignore directories
-            continue
-
-        shortname = file_name[len(tmp_dir) + 1:]
-        # logger.debug('add ' + str(shortname))
-        submission_files_dict[shortname] = PhysicalFile(file_name)
-    return submission_files_dict, versioncontrolinfo
-
-
-def check_exitcode(error, exitcode, output, timed_out):
-    if exitcode != 0:
-        message = ''
-        if error != None:
-            logger.debug('error: ' + str(error))
-            message += error + ' '
-        if output != None:
-            logger.debug('output: ' + str(output))
-            message += output
-        raise ExternalSubmissionException(message)
-
-    if timed_out:
-        raise ExternalSubmissionException('timeout')
+        if timed_out:
+            raise ExternalSubmissionException('timeout')
 
 
 
