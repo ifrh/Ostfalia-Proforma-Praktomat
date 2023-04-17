@@ -110,7 +110,7 @@ def upload_v2(request,):
 
     try:
         proformatask = Proforma_Request(request)
-        response = StreamingHttpResponse(proformatask.import_task())
+        response = StreamingHttpResponse(proformatask.import_task(True))
         return response
     except Exception as inst:
         logger.exception(inst)
@@ -212,7 +212,7 @@ class Proforma_Request:
         self.templatefile = None
 
 
-    def import_task(self):
+    def import_task(self, upload = False):
         # get request XML from LMS (called 'submission.xml' in ProFormA)
         yield 'read task meta data\r\n'
         xml = self.get_request_xml()
@@ -286,7 +286,11 @@ class Proforma_Request:
                     raise Exception("could not find task in submission.xml")
         # xml2dict is very slow
         # submission_dict = xml2dict(xml)
-        logger.info("grading request for task " + task_filename)
+        if upload:
+            logger.info("upload request for task " + task_filename)
+        else:
+            logger.info("grading request for task " + task_filename)
+
         logger.debug('import task')
 
         ptask = task.Proforma_Task()
