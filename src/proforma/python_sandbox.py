@@ -117,6 +117,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                     yield '\r\n'
                 if exitcode != 0:
                     yield 'Cannot install requirements.txt\n\n'
+                    yield output
                     raise Exception('Cannot install requirements.txt: \n\n' + output)
 
             yield 'add missing libraries \r\n'
