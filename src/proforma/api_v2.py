@@ -216,7 +216,10 @@ class Proforma_Request:
             yield from self.import_task(True)
         except Exception as inst:
             import time
+            yield "An exception occurred\r\n"
             yield str(inst) + '\r\n'
+            callstack = traceback.format_exc()
+            yield "Exception caught Stack Trace: " + str(callstack) + "\n\n"
             # Sleep so that the message can be sent to client
             time.sleep(2)
             raise
