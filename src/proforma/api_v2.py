@@ -114,11 +114,12 @@ def upload_v2(request,):
         return response
     except Exception as inst:
         logger.exception(inst)
-        response = HttpResponse()
-        callstack = traceback.format_exc()
-        response.write(get_http_error_page('Task error', str(inst), callstack))
-        response.status_code = 500 # internal server error
-        return response
+        yield str(inst)
+#        response = HttpResponse()
+#        callstack = traceback.format_exc()
+#        response.write(get_http_error_page('Task error', str(inst), callstack))
+#        response.status_code = 500 # internal server error
+#        return response
 
 
 def grade_api_v2(request,):
