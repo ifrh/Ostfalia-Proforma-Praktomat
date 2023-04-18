@@ -218,7 +218,7 @@ class Proforma_Request:
             import time
             yield str(inst) + '\r\n'
             # Sleep so that the message can be sent to client
-            time.sleep(1)
+            time.sleep(2)
             raise
 
     def import_task(self, upload = False):

@@ -110,14 +110,12 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                 logger.debug(output)
                 logger.debug(error)
                 if output is not None:
-                    yield str(output)
-                    yield '\r\n'
+                    yield str(output) + '\r\n'
                 if error is not None:
-                    yield str(error)
-                    yield '\r\n'
+                    yield str(error) + '\r\n'
                 if exitcode != 0:
-                    yield 'Cannot install requirements.txt\n\n'
-                    yield output
+                    # yield 'Cannot install requirements.txt\n\n'
+                    # yield output
                     raise Exception('Cannot install requirements.txt: \n\n' + output)
 
             yield 'add missing libraries \r\n'
