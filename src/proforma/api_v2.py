@@ -110,7 +110,7 @@ def upload_v2(request,):
 
     try:
         proformatask = Proforma_Request(request)
-        response = StreamingHttpResponse(proformatask.import_task(True))
+        response = StreamingHttpResponse(proformatask.import_task_yield_exc())
         return response
     except Exception as inst:
         logger.exception(inst)
@@ -211,6 +211,15 @@ class Proforma_Request:
         self.root = None
         self.templatefile = None
 
+    def import_task_yield_exc(self):
+        try:
+            self.import_task(True)
+        except Exception as inst:
+            import time
+            yield str(inst) + '\r\n'
+            # Sleep so that the message can be sent to client
+            time.sleep(1)
+            raise
 
     def import_task(self, upload = False):
         # get request XML from LMS (called 'submission.xml' in ProFormA)
