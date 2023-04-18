@@ -109,8 +109,8 @@ def upload_v2(request,):
     logger.debug("new upload request")
 
     try:
-        proformatask = Proforma_Request(request)
-        response = StreamingHttpResponse(proformatask.import_task_yield_exc())
+        proformarequest = Proforma_Request(request)
+        response = StreamingHttpResponse(proformarequest.import_task_yield_exc())
         return response
     except Exception as inst:
         logger.exception(inst)
@@ -213,7 +213,7 @@ class Proforma_Request:
 
     def import_task_yield_exc(self):
         try:
-            self.import_task(True)
+            yield from self.import_task(True)
         except Exception as inst:
             import time
             yield str(inst) + '\r\n'
