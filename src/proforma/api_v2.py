@@ -111,6 +111,8 @@ def upload_v2(request,):
     try:
         proformarequest = Proforma_Request(request)
         response = StreamingHttpResponse(proformarequest.import_task_yield_exc())
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'
         return response
     except Exception as inst:
         logger.exception(inst)
