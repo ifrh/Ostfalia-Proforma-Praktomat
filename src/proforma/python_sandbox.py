@@ -116,9 +116,9 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                 if exitcode != 0:
                     # yield 'Cannot install requirements.txt\n\n'
                     # yield output
-                    raise Exception('Cannot install requirements.txt: \n\n' + output)
+                    raise Exception('Cannot install requirements.txt: \n' + output)
 
-            yield 'add missing libraries \r\n'
+            yield 'add missing libraries\r\n'
             logger.info('copy python libraries from OS')
             pythonbin = os.readlink('/usr/bin/python3')
             logger.debug('python is ' + pythonbin)  # expect python3.x
