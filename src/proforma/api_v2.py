@@ -220,8 +220,13 @@ class Proforma_Request:
             import time
             yield "data: An exception occurred\n\n"
             yield 'data: ' + str(inst) + '\n\n'
+            yield "data: Exception caught Stack Trace: " + "\n\n"
             callstack = traceback.format_exc()
-            yield "data: Exception caught Stack Trace: " + str(callstack) + "\n\n"
+            # lines = callstack.split('\n')
+            lines = filter(str.strip, callstack.splitlines())
+            for line in lines:
+                yield "data: " + line + "\n\n"
+
             # Sleep so that the message can be sent to client
             time.sleep(2)
             raise

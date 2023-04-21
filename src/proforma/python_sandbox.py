@@ -105,7 +105,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                 result = process.wait(0)
                 if result != 0:
                     # stop further execution
-                    raise Exception('command exited with code <> 0')
+                    raise Exception('command exited with code != 0')
 
         except Exception as e:
             if type(e) == subprocess.TimeoutExpired:
