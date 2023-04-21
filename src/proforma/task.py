@@ -340,7 +340,7 @@ class Proforma_Task:
     def import_task_internal(self, filename, task_file):
         logger.debug('import_task_internal called')
 
-        yield "calculate hash for task file\r\n"
+        yield "data: calculate hash for task file\n\n"
         # here is the actual namespace for the version
         format_namespace_v0_9_4 = "urn:proforma:task:v0.9.4"
         format_namespace_v1_0_1 = "urn:proforma:task:v1.0.1"

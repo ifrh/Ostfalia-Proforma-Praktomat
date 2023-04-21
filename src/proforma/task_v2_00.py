@@ -436,7 +436,7 @@ class Task_2_00:
 #        requirements_txt = inst.files.filter(filename='requirements.txt', path='')
 #        if len(requirements_txt) > 1:
 #            raise Exception('more than one requirements.txt found')
-        yield 'create sandbox template for python unit test\r\n'
+        yield 'data: create sandbox template for python unit test\n\n'
         yield from template.create()
 
     def _create_java_checkstyle_test(self, xmlTest):
@@ -530,12 +530,12 @@ class Task_2_00:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task is not None:
                 logger.debug('use cached task')
-                yield 'use cached task\r\n'
+                yield 'data: use cached task\n\n'
                 self._imported_task = old_task
                 return
                 # return old_task
 
-        yield 'extract task\r\n'
+        yield 'data: extract task\n\n'
         # no need to actually validate xml against xsd
         # (it is only time consuming)
         schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, self._get_xsd_path()))
@@ -560,10 +560,10 @@ class Task_2_00:
             # self.set_default_user(user_name=SYSUSER)
 
             # read files
-            yield 'create files\r\n'
+            yield 'data: create files\n\n'
             self._create_praktomat_files(xml_obj=self._xml_obj, external_file_dict=self._dict_zip_files)
             # create test objects
-            yield 'create tests\r\n'
+            yield 'data: create tests\n\n'
             for xmlTest in self._xml_obj.tests.iterchildren():
                 testtype = xmlTest.xpath("p:test-type", namespaces=self._ns)[0].text
                 if testtype == "java-compilation":  # todo check compilation_xsd
@@ -605,11 +605,12 @@ class Task_2_00:
         # finally set identifier attributes (do not set in previous steps
         # in order to avoid a broken task to be stored
         self._praktomat_task.set_identifier_values(self._hash, task_uuid, task_title)
-        yield 'save\r\n'
+        yield 'data: save\n\n'
         self._praktomat_task.save()
         # return self._praktomat_task.object
 
         self._imported_task = self._praktomat_task.object
+        yield 'data: task is successfully imported\n\n'
 
     # def validate_xml(xml, xml_version=None):
     #     if xml_version is None:

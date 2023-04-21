@@ -26,7 +26,7 @@ import shutil
 
 from . import sandbox, task
 from django.conf import settings
-from utilities.safeexec import execute_command, execute_arglist
+from utilities.safeexec import execute_command, escape_xml_invalid_chars
 
 import logging
 
@@ -70,6 +70,52 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
 
+    def execute_arglist_yield(args, working_directory, environment_variables={}):
+        """ yield output text during execution. """
+        assert isinstance(args, list)
+
+        command = args[:]
+        # do not modify environment for current process => use copy!!
+        environment = os.environ.copy()
+        environment.update(environment_variables)
+
+        logger.debug('execute command in ' + working_directory + ':')
+        logger.debug('command :' + str(command))
+
+        try:
+            with subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                cwd=working_directory,
+                env=environment,
+                start_new_session=True, # call of os.setsid()
+            ) as process:
+                while True:
+                    data = process.stdout.readline()  # Alternatively proc.stdout.read(1024)
+                    if len(data) == 0:
+                        break
+                    yield 'data: ' + str(data) + '\n\n'
+                # if it is too fast then get remainder
+                remainder = process.communicate()[0]
+                if remainder is not None and len(remainder) > 0:
+                    yield 'data: ' + str(remainder) + '\n\n'
+
+                # Get exit code
+                result = process.wait(0)
+                if result != 0:
+                    # stop further execution
+                    raise Exception('command exited with code <> 0')
+
+        except Exception as e:
+            if type(e) == subprocess.TimeoutExpired:
+                logger.debug("TIMEOUT")
+                yield 'data: timeout\n\n'
+            else:
+                logger.error("exception occured: " + str(type(e)))
+            raise
+
+
     def create(self):
         self.check_preconditions()
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
@@ -82,11 +128,11 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
         templ_path = self.get_python_template_path()
         if self.template_exists(templ_path):
-            yield 'python template already exists\r\n'
+            yield 'data: python template already exists\n\n'
             # already exists => return
             return
 
-        yield 'create virtual python environment\r\n'
+        yield 'data: create virtual python environment\n\n'
         templ_dir = self._create_venv(templ_path)
         logger.info('Create Python template ' + templ_dir)
 
@@ -95,7 +141,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             if requirements_txt is not None:
                 hash = PythonSandboxTemplate.get_hash(requirements_path)
                 print(hash)
-                yield 'install requirements\r\n'
+                yield 'data: install requirements\n\n'
                 logger.info('install requirements')
                 # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
                 env = {}
@@ -103,22 +149,10 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     #            execute_command("bin/python bin/pip install -r " + requirements_path,
     #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
 
-                (output, error, exitcode, timed_out, oom_ed) = \
-                    execute_arglist(["bin/python", "bin/pip", "install", "-r", requirements_path],
-                                    working_directory=os.path.join(templ_dir, '.venv'),
-                                     environment_variables=env, unsafe=True)
-                logger.debug(output)
-                logger.debug(error)
-                if output is not None:
-                    yield str(output) + '\r\n'
-                if error is not None:
-                    yield str(error) + '\r\n'
-                if exitcode != 0:
-                    # yield 'Cannot install requirements.txt\n\n'
-                    # yield output
-                    raise Exception('Cannot install requirements.txt: \n' + output)
+                cmd = ["bin/python", "bin/pip", "install", "-r", requirements_path]
+                yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
 
-            yield 'add missing libraries\r\n'
+            yield 'data: add missing libraries\n\n'
             logger.info('copy python libraries from OS')
             pythonbin = os.readlink('/usr/bin/python3')
             logger.debug('python is ' + pythonbin)  # expect python3.x
@@ -154,7 +188,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     #            else:
     #                print('**' + filePath)
 
-            yield 'freeze template\r\n'
+            yield 'data: freeze template\n\n'
             self._commit(templ_dir)
         except:
             # try and delete complete templ_dir

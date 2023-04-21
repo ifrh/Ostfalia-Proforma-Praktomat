@@ -218,17 +218,17 @@ class Proforma_Request:
             yield from self.import_task(True)
         except Exception as inst:
             import time
-            yield "An exception occurred\r\n"
-            yield str(inst) + '\r\n'
+            yield "data: An exception occurred\n\n"
+            yield 'data: ' + str(inst) + '\n\n'
             callstack = traceback.format_exc()
-            yield "Exception caught Stack Trace: " + str(callstack) + "\n\n"
+            yield "data: Exception caught Stack Trace: " + str(callstack) + "\n\n"
             # Sleep so that the message can be sent to client
             time.sleep(2)
             raise
 
     def import_task(self, upload = False):
         # get request XML from LMS (called 'submission.xml' in ProFormA)
-        yield 'read task meta data\r\n'
+        yield 'data: read task meta data\n\n'
         xml = self.get_request_xml()
         logger.debug("type(xml): " + str(type(xml)))
         # logger.debug("got xml: " + xml)
