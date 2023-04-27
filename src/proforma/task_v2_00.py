@@ -521,6 +521,7 @@ class Task_2_00:
         logger.debug('uuid is ' + task_uuid)
         task_title = self._xml_obj.xpath("/p:task/p:title", namespaces=self._ns)[0]
         logger.debug('title is "' + task_title + '"')
+        yield 'data: import task "' + task_title + '"\n\n'
         task_proglang = self._xml_obj.xpath("/p:task/p:proglang", namespaces=self._ns)[0]
         logger.debug('proglang is "' + task_proglang + '"')
 
@@ -529,8 +530,8 @@ class Task_2_00:
         if CACHE_TASKS:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task is not None:
-                logger.debug('use cached task')
-                yield 'data: use cached task\n\n'
+                logger.debug('task already exists, no import')
+                yield 'data: task already exists, no import\n\n'
                 self._imported_task = old_task
                 return
                 # return old_task

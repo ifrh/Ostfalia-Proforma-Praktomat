@@ -150,7 +150,11 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
 
                 cmd = ["bin/python", "bin/pip", "install", "-r", requirements_path]
-                yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
+                try:
+                    yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
+                except:
+                    # convert exception in order to have more info for the user
+                    raise Exception('Cannot install requirements.txt')
 
             yield 'data: add missing libraries\n\n'
             logger.info('copy python libraries from OS')

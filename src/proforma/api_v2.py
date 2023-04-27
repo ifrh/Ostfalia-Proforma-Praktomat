@@ -216,6 +216,8 @@ class Proforma_Request:
     def import_task_yield_exc(self):
         try:
             yield from self.import_task(True)
+            # send special characters and success result
+            yield "data:SUCCESS####"
         except Exception as inst:
             import time
             yield "data: An exception occurred\n\n"
@@ -227,13 +229,15 @@ class Proforma_Request:
             for line in lines:
                 yield "data: " + line + "\n\n"
 
+            # send special characters and failure result
+            yield "data:FAIL####"
             # Sleep so that the message can be sent to client
             time.sleep(2)
             raise
 
     def import_task(self, upload = False):
         # get request XML from LMS (called 'submission.xml' in ProFormA)
-        yield 'data: read task meta data\n\n'
+        # yield 'data: read task meta data\n\n'
         xml = self.get_request_xml()
         logger.debug("type(xml): " + str(type(xml)))
         # logger.debug("got xml: " + xml)
