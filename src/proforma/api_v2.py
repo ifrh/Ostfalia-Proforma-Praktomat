@@ -217,7 +217,7 @@ class Proforma_Request:
         try:
             yield from self.import_task(True)
             # send special characters and success result
-            yield "data:SUCCESS####"
+            yield "data: SUCCESS####\n\n"
         except Exception as inst:
             import time
             yield "data: An exception occurred\n\n"
@@ -230,7 +230,7 @@ class Proforma_Request:
                 yield "data: " + line + "\n\n"
 
             # send special characters and failure result
-            yield "data:FAIL####"
+            yield "data: FAIL####\n\n"
             # Sleep so that the message can be sent to client
             time.sleep(2)
             raise
