@@ -47,6 +47,10 @@ def grade_api_v2(request):
 
 
 @csrf_exempt  # disable csrf-cookie
+def runtest(request):
+    return api_v2.runtest(request)
+
+@csrf_exempt  # disable csrf-cookie
 def upload_v2(request):
     return api_v2.upload_v2(request)
 

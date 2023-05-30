@@ -17,6 +17,8 @@ urlpatterns = [
 
     url(r'^api/v2/upload$', proforma.views.upload_v2, name="upload_v2"),
 
+    url(r'^api/v2/runtest$', proforma.views.runtest, name="runtest"),
+
     url(r'^version$', proforma.views.show_version, name="show_version"),
     url(r'^info$', proforma.views.show_info, name="show_info"),
     url(r'^favicon\.ico$', proforma.views.icon, name="icon"),

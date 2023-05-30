@@ -38,7 +38,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-keep_sandbox = False
+keep_sandbox = True
 if keep_sandbox:
     print('*********************************************\n')
     print('*** Attention! Sandboxes are not deleted! ***\n')

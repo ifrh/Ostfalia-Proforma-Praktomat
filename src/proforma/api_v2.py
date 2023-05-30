@@ -122,6 +122,20 @@ def upload_v2(request,):
 #        response.status_code = 500 # internal server error
 #        return response
 
+def runtest(request,):
+    """
+    like grade_api_v2 but with server sent events
+    """
+    logger.debug("new request for running tests")
+
+    try:
+        proformarequest = Proforma_Request(request)
+        response = StreamingHttpResponse(proformarequest.run_test_yield_exc())
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'
+        return response
+    except Exception as inst:
+        logger.exception(inst)
 
 def grade_api_v2(request,):
     """
@@ -212,6 +226,28 @@ class Proforma_Request:
         self.proformatask = None
         self.root = None
         self.templatefile = None
+
+    def run_test_yield_exc(self):
+        try:
+            yield from self.import_task(True)
+            # send special characters and success result
+            yield "data: SUCCESS####\n\n"
+        except Exception as inst:
+            import time
+            yield "data: An exception occurred\n\n"
+            yield 'data: ' + str(inst) + '\n\n'
+            yield "data: Exception caught Stack Trace: " + "\n\n"
+            callstack = traceback.format_exc()
+            # lines = callstack.split('\n')
+            lines = filter(str.strip, callstack.splitlines())
+            for line in lines:
+                yield "data: " + line + "\n\n"
+
+            # send special characters and failure result
+            yield "data: FAIL####\n\n"
+            # Sleep so that the message can be sent to client
+            time.sleep(2)
+            raise
 
     def import_task_yield_exc(self):
         try:
