@@ -381,7 +381,7 @@ def check_solution(solution, run_all = 0, debug_keep_tmp = True):
     #env = CheckerEnvironment(solution)
 
     #solution.copySolutionFiles(env.tmpdir())
-    run_checks(solution, None, run_all, debug_keep_tmp)
+    yield from run_checks(solution, None, run_all, debug_keep_tmp)
 
     # Delete temporary directory
     #if not(debug_keep_tmp and settings.DEBUG):
@@ -476,6 +476,7 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
 
             logger.debug('=> run check ' + checker.__class__.__name__)
             try:
+                yield "data: Prepare test\n\n"
                 env = CheckerEnvironment(solution)
 
                 solution.copySolutionFiles(env.tmpdir())
@@ -493,6 +494,7 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
                 if can_run_checker:
                     # Invoke Checker
                     # if settings.DEBUG or 'test' in sys.argv:
+                    yield "data: Run test\n\n"
                     result = checker.run(env)
                     #else:
                     #    try:
@@ -507,6 +509,7 @@ def run_checks(solution, env, run_all, debug_keep_tmp=True):
                 else:
                     # make non passed result
                     # this as well as the dependency check should propably go into checker class
+                    yield "data: Dependent test failed\n\n"
                     result = checker.create_result(env)
                     result.set_log("Checker konnte nicht ausgeführt werden, da benötigte Checker nicht bestanden wurden.")
                     result.set_passed(False)

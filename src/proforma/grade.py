@@ -95,7 +95,7 @@ class Grader:
             ProFormAChecker.retrieve_subtest_results = False
 
         ProFormAChecker.xml_namespace = self.namespace
-        self.solution.check_solution(True, keep_sandbox)
+        yield from self.solution.check_solution(True, keep_sandbox)
         logger.debug('get results...')
         self.result = self.solution.allCheckerResults()
 

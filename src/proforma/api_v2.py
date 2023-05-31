@@ -65,8 +65,7 @@ def get_http_error_page(title, message, callstack):
 
 Praktomat: %s
 
-Callstack:
-    %s""" % (title, message, VERSION.version, callstack)
+%s""" % (title, message, VERSION.version, callstack)
 
 
 # exception class for handling situations where
@@ -159,7 +158,10 @@ def grade_api_v2(request,):
         submission_files, version_control = proformatask.get_submission_files() # returns a dictionary (filename -> content)
 
         # run tests
-        grader.grade(submission_files, version_control, True)
+        a = grader.grade(submission_files, version_control, True)
+        # once again: consume
+        b = list(a)
+
         # get result
         grade_result = grader.get_result(proformatask.templatefile)
 
@@ -227,26 +229,88 @@ class Proforma_Request:
         self.root = None
         self.templatefile = None
 
+    def yield_exception(self, inst, callstack):
+        yield 'data: \n\n'
+        yield 'data:     ' + str(inst) + '\n\n'
+        yield 'data: \n\n'
+        yield 'data: Praktomat: ' + VERSION.version + ' \n\n'
+        yield 'data: \n\n'
+        # lines = callstack.split('\n')
+        lines = filter(str.strip, callstack.splitlines())
+        for line in lines:
+            yield "data: " + line + "\n\n"
+
     def run_test_yield_exc(self):
         try:
             yield from self.import_task(True)
-            # send special characters and success result
-            yield "data: SUCCESS####\n\n"
-        except Exception as inst:
-            import time
-            yield "data: An exception occurred\n\n"
-            yield 'data: ' + str(inst) + '\n\n'
-            yield "data: Exception caught Stack Trace: " + "\n\n"
-            callstack = traceback.format_exc()
-            # lines = callstack.split('\n')
-            lines = filter(str.strip, callstack.splitlines())
-            for line in lines:
+
+            grader = grade.Grader(self.proformatask, self.NAMESPACE)
+            logger.debug(self.NAMESPACES)
+            yield "data: Get submission files\n\n"
+            submission_files, version_control = self.get_submission_files()  # returns a dictionary (filename -> content)
+
+            # run tests
+            yield from grader.grade(submission_files, version_control, True)
+            # get result
+            yield "data: Get result\n\n"
+            grade_result = grader.get_result(self.templatefile)
+
+            # return result
+            logger.debug("grading finished")
+            logger.debug("--------------------")
+            yield "data: RESPONSE####\n\n"
+            for line in grade_result.splitlines():
                 yield "data: " + line + "\n\n"
 
+            # yield "data: " + grade_result + "\n\n"
+
+#            response = HttpResponse()
+#            response.write(grade_result)
+#            response.status_code = 200
+#            #        logger.debug("Number of solutions: " + str(Solution.objects.filter(task=proformatask).count()))
+#            return response
+
+            # send special characters and success result
+            # yield "data: SUCCESS####\n\n"
+        except task.TaskXmlException as inst:
+            # import time
+            yield "data: RESPONSE####\n\n"
+            yield "data: Task error\n\n"
+            yield from self.yield_exception(inst, traceback.format_exc())
+            #            yield "data: Callstack:" + "\n\n"
+            # callstack = traceback.format_exc()
+            # lines = callstack.split('\n')
+            # lines = filter(str.strip, callstack.splitlines())
+            # for line in lines:
+            #    yield "data: " + line + "\n\n"
+
             # send special characters and failure result
-            yield "data: FAIL####\n\n"
+            # yield "data: FAIL####\n\n"
             # Sleep so that the message can be sent to client
-            time.sleep(2)
+            # time.sleep(2)
+            raise
+        except Exception as inst:
+            import time
+            yield "data: RESPONSE####\n\n"
+            yield "data: Error in grading process\n\n"
+            yield from self.yield_exception(inst, traceback.format_exc())
+
+##            yield 'data: \n\n'
+#            yield 'data:     ' + str(inst) + '\n\n'
+#            yield 'data: \n\n'
+#            yield 'data: Praktomat: ' + VERSION.version + ' \n\n'
+#            yield 'data: \n\n'
+#            yield "data: Callstack:" + "\n\n"
+#            callstack = traceback.format_exc()
+            # lines = callstack.split('\n')
+#            lines = filter(str.strip, callstack.splitlines())
+#            for line in lines:
+#                yield "data: " + line + "\n\n"
+
+            # send special characters and failure result
+            # yield "data: FAIL####\n\n"
+            # Sleep so that the message can be sent to client
+            # time.sleep(2)
             raise
 
     def import_task_yield_exc(self):
