@@ -81,14 +81,21 @@ def grade_api_lon_capa(request,):
         # create task object in database
         logger.debug('import task')
         ptask = task.Proforma_Task()
-        proformatask = ptask.import_task_internal(task_filename, task_file)
+        a = ptask.import_task_internal(task_filename, task_file)
+        # 'consume' a, needed because import_task is a generator which returns an iterator
+        # This is required, otherwise the function is not completely executed
+        b = list(a)
+        proformatask = ptask.response_data
 
         # run tests
         grader = grade.Grader(proformatask)
 
         submission_files = dict()
         submission_files.update({submission_filename: submission})
-        grader.grade(submission_files, None, False)
+
+        a = grader.grade(submission_files, None, False)
+        # once again: consume
+        b = list(a)
         # get result
         grade_result = grader.get_result('proforma/response_loncapa.xml', False)
 

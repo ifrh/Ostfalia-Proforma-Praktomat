@@ -113,25 +113,25 @@ def error_page(request):
     response.status_code = 404
     return response
 
-@csrf_exempt  # NOTE: f�r Marcel danach remove;)
-def test_post(request, ):
-    response = HttpResponse()
-
-    if not (request.method == "POST"):
-        response.write("No Post-Request")
-    else:
-        postMessages = request.POST
-        for key, value in postMessages.items():
-            response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
-        try:
-            if not (request.FILES is None):
-                response.write("List of Files: \r\n")
-                for key, value in request.FILES.items():
-                    response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
-                    response.write("Content of: " + str(key) + "\r\n")
-                    response.write(request.FILES[key].read() + "\r\n")
-            else:
-                response.write("\r\n\r\n No Files Attached")
-        except Exception:
-            response.write("\r\n\r\n Exception!: " + str(Exception))
-    return response
+# @csrf_exempt  # NOTE: f�r Marcel danach remove;)
+# def test_post(request, ):
+#     response = HttpResponse()
+#
+#     if not (request.method == "POST"):
+#         response.write("No Post-Request")
+#     else:
+#         postMessages = request.POST
+#         for key, value in postMessages.items():
+#             response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
+#         try:
+#             if not (request.FILES is None):
+#                 response.write("List of Files: \r\n")
+#                 for key, value in request.FILES.items():
+#                     response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
+#                     response.write("Content of: " + str(key) + "\r\n")
+#                     response.write(request.FILES[key].read() + "\r\n")
+#             else:
+#                 response.write("\r\n\r\n No Files Attached")
+#         except Exception:
+#             response.write("\r\n\r\n Exception!: " + str(Exception))
+#     return response
