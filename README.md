@@ -189,11 +189,13 @@ You can also omit the relative path for Java source files:
 In order to get progress information during upload and running tests another 
 interface is provided. 
 
-        http://<serverhost>/api/v2/runtest
-Same as http://<serverhost>/api/v2/submissions but sends server sent events while running tests.
+        http://{serverhost}/api/v2/runtest
 
-        http://<serverhost>/api/v2/upload
-Same as http://<serverhost>/api/v2/runtest but does not run tests. Only the task is uploaded into cache and
+Same as http://{serverhost}/api/v2/submissions but sends server sent events while running tests.
+
+        http://{serverhost}/api/v2/upload
+
+Same as http://{serverhost}/api/v2/runtest but does not run tests. Only the task is uploaded into cache and
 a sandbox template is created if required for the programming language.
 
 
