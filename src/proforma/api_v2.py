@@ -282,9 +282,10 @@ class Proforma_Request:
             # raise
         except Exception as inst:
             import time
-            yield "data: RESPONSE####\n\n"
+            yield "data: RESPONSE START####\n\n"
             yield "data: Error in grading process\n\n"
             yield from self.yield_exception(inst, traceback.format_exc())
+            yield "data: RESPONSE END####\n\n"
             # do not raise as the connection handling may get broken
             # raise
 
