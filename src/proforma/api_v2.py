@@ -288,7 +288,7 @@ class Proforma_Request:
             # yield "data: FAIL####\n\n"
             # Sleep so that the message can be sent to client
             # time.sleep(2)
-            raise
+            # raise
         except Exception as inst:
             import time
             yield "data: RESPONSE####\n\n"
@@ -311,7 +311,7 @@ class Proforma_Request:
             # yield "data: FAIL####\n\n"
             # Sleep so that the message can be sent to client
             # time.sleep(2)
-            raise
+            # raise
 
     def import_task_yield_exc(self):
         try:
