@@ -276,7 +276,7 @@ class Proforma_Request:
             # yield "data: SUCCESS####\n\n"
         except task.TaskXmlException as inst:
             # import time
-            yield "data: RESPONSE####\n\n"
+            yield "data: RESPONSE START####\n\n"
             yield "data: Task error\n\n"
             yield from self.yield_exception(inst, traceback.format_exc())
             yield "data: RESPONSE END####\n\n"
