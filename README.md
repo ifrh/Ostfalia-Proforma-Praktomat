@@ -1,9 +1,11 @@
-This is the source distribution of Ostfalia-Praktomat, a programming course manager which can also be used as a simple
-grading backend for different programming languages.
+
+This is the source distribution of Ostfalia-Praktomat, a simple
+programming test runner for various programming languages.
 
 The code is a fork (2019) from the KIT Praktomat (https://github.com/KITPraktomatTeam/Praktomat).
 It adds the ProFormA interface (https://github.com/ProFormA/proformaxml) which enables Praktomat
-to be used as a grading backend in learning management systems.
+to be used as a test runner backend in learning management systems.
+Most of the unused code is removed in order to ease maintenance.  
 
 The ProFormA format for tasks is 2.0 and 2.0.1 with some limitations.
 The ProFormA format for HTTP request and response is 2.0 and 2.1. 
@@ -22,7 +24,6 @@ The following programming languages and test frameworks are provided with the Pr
 | C++          |            Googletest, Make/CMake            |
 | C            |        Googletest, CUnit, Make/CMake         |
 | Python 3.8   | Unittest with Pip <br/>(Doctest preparation) |
-|              |                                              |
 | SetlX        |          Simple test, Syntax Check           |
 
 
@@ -182,6 +183,19 @@ Sample for http-file for Java submission files list:
 You can also omit the relative path for Java source files:
 
         http-file:User.java,File.java
+
+## Server sent events
+
+In order to get progress information during upload and running tests another 
+interface is provided. 
+
+        http://<serverhost>/api/v2/runtest
+Same as http://<serverhost>/api/v2/submissions but sends server sent events while running tests.
+
+        http://<serverhost>/api/v2/upload
+Same as http://<serverhost>/api/v2/runtest but does not run tests. Only the task is uploaded into cache and
+a sandbox template is created if required for the programming language.
+
 
 ## LON-CAPA API
 
