@@ -260,6 +260,7 @@ class Proforma_Request:
             logger.debug("--------------------")
             yield "data: RESPONSE####\n\n"
             for line in grade_result.splitlines():
+                logger.debug(line)
                 yield "data: " + line + "\n\n"
 
             # yield "data: " + grade_result + "\n\n"
@@ -277,40 +278,14 @@ class Proforma_Request:
             yield "data: RESPONSE####\n\n"
             yield "data: Task error\n\n"
             yield from self.yield_exception(inst, traceback.format_exc())
-            #            yield "data: Callstack:" + "\n\n"
-            # callstack = traceback.format_exc()
-            # lines = callstack.split('\n')
-            # lines = filter(str.strip, callstack.splitlines())
-            # for line in lines:
-            #    yield "data: " + line + "\n\n"
-
-            # send special characters and failure result
-            # yield "data: FAIL####\n\n"
-            # Sleep so that the message can be sent to client
-            # time.sleep(2)
+            # do not raise as the connection handling may get broken
             # raise
         except Exception as inst:
             import time
             yield "data: RESPONSE####\n\n"
             yield "data: Error in grading process\n\n"
             yield from self.yield_exception(inst, traceback.format_exc())
-
-##            yield 'data: \n\n'
-#            yield 'data:     ' + str(inst) + '\n\n'
-#            yield 'data: \n\n'
-#            yield 'data: Praktomat: ' + VERSION.version + ' \n\n'
-#            yield 'data: \n\n'
-#            yield "data: Callstack:" + "\n\n"
-#            callstack = traceback.format_exc()
-            # lines = callstack.split('\n')
-#            lines = filter(str.strip, callstack.splitlines())
-#            for line in lines:
-#                yield "data: " + line + "\n\n"
-
-            # send special characters and failure result
-            # yield "data: FAIL####\n\n"
-            # Sleep so that the message can be sent to client
-            # time.sleep(2)
+            # do not raise as the connection handling may get broken
             # raise
 
     def import_task_yield_exc(self):
@@ -331,9 +306,8 @@ class Proforma_Request:
 
             # send special characters and failure result
             yield "data: FAIL####\n\n"
-            # Sleep so that the message can be sent to client
-            time.sleep(2)
-            raise
+            # do not raise as the connection handling may get broken
+            # raise
 
     def import_task(self, upload = False):
         # get request XML from LMS (called 'submission.xml' in ProFormA)
