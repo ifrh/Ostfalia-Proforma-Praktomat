@@ -260,7 +260,7 @@ class Proforma_Request:
             logger.debug("--------------------")
             yield "data: RESPONSE####\n\n"
             for line in grade_result.splitlines():
-                logger.debug(line)
+                # logger.debug(line)
                 yield "data: " + line + "\n\n"
 
             # yield "data: " + grade_result + "\n\n"
