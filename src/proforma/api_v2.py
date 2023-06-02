@@ -258,10 +258,11 @@ class Proforma_Request:
             # return result
             logger.debug("grading finished")
             logger.debug("--------------------")
-            yield "data: RESPONSE####\n\n"
+            yield "data: RESPONSE START####\n\n"
             for line in grade_result.splitlines():
                 # logger.debug(line)
                 yield "data: " + line + "\n\n"
+            yield "data: RESPONSE END####\n\n"
 
             # yield "data: " + grade_result + "\n\n"
 
@@ -278,6 +279,7 @@ class Proforma_Request:
             yield "data: RESPONSE####\n\n"
             yield "data: Task error\n\n"
             yield from self.yield_exception(inst, traceback.format_exc())
+            yield "data: RESPONSE END####\n\n"
             # do not raise as the connection handling may get broken
             # raise
         except Exception as inst:
