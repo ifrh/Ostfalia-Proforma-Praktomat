@@ -5,6 +5,7 @@ new: runtest (i.e. grading using server sent events)
 # 4.17.0
 
 new: upload function (using server sent events)
+new: create template for python tests with virtual environment and requirements
 
 # 4.16.1
 
