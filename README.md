@@ -62,6 +62,8 @@ A sample file is included as .env.example.
 
 Modify credentials!
 
+Adjust number of workers to fit your hardware.
+
 ##### Optional: Change Locale
 
 By default Praktomat uses German locale which results in German Checkstyle messages.

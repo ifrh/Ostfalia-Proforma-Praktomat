@@ -1,3 +1,8 @@
+# 4.18.1
+
+* new extract number of workers
+* switch to production version
+
 # 4.18.0
 
 new: runtest (i.e. grading using server sent events)
