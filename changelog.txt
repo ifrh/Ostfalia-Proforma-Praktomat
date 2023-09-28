@@ -1,3 +1,8 @@
+# 4.18.3
+
+* new: if student code consists of exactly one Java file, it will be retained for the Junit test
+  for support of tests with Java source code parser
+
 # 4.18.2
 
 * bugfix nginx configuration: large requests
