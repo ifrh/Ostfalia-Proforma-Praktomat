@@ -149,7 +149,21 @@ class JUnitChecker(ProFormAChecker):
         return text
 
     def run(self, env):
+        # Special treatment for test cases that want to analyze the original Java student code.
+        # Normally, all Java files are deleted after compilation to prevent a student from reading the test code.
+        # If there is only one file in this sandbox folder (student code), then it will be restored after deletion.
+        # This is only done if the student code consists of exactly one file,
+        # otherwise there is a risk that the student code contains test files that would overwrite the teacher's tests.
+        from pathlib import Path
+        files = list(Path(env.tmpdir()).rglob("*.[jJ][aA][vV][aA]"))
+        if len(files) == 1:
+            # create backup file
+            logger.debug(files[0])
+            import shutil
+            shutil.copyfile(str(files[0].absolute()), str(files[0].absolute()) + '__.bak')
+
         self.copy_files(env)
+
 
         # compile test
         logger.debug('JUNIT Checker build')
@@ -180,6 +194,11 @@ class JUnitChecker(ProFormAChecker):
             logger.error('exitcode for java files deletion :' + str(exitcode))
             logger.error(output)
             logger.error(error)
+
+        if len(files) == 1:
+            # restore single backup file in case of Java parser testcode
+            import shutil
+            shutil.copyfile(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
 
         # run test
         logger.debug('JUNIT Checker run')

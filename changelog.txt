@@ -2,7 +2,6 @@
 
 change tester uid to value other than 1000 as this causes problems with WSL2 
 
-
 # 4.18.2
 
 * bugfix nginx configuration: large requests
