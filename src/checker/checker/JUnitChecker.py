@@ -2,7 +2,6 @@
 
 import re
 
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
@@ -12,6 +11,7 @@ from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from solutions.models import Solution
+import xml.etree.ElementTree as ET
 
 from checker.compiler.JavaBuilder import JavaBuilder
 import logging
@@ -148,6 +148,20 @@ class JUnitChecker(ProFormAChecker):
             text = text[len(warning2) + 1:]
         return text
 
+    def __is_xml_output(self, output):
+        print("__is_xml_output")
+        """ checks if the test output is valid xml.
+        When the student calls exit in his or her code then the return code
+        cannot be evaluated because the Java RunListener is not able
+        to intercept the exit code and modify it to an error exit code.
+        """
+        root = ET.fromstring(output)
+        if root.tag == "test-result":
+            for score in root.findall("./result/score"):
+                return True
+
+        return False
+
     def run(self, env):
         # Special treatment for test cases that want to analyze the original Java student code.
         # Normally, all Java files are deleted after compilation to prevent a student from reading the test code.
@@ -258,8 +272,11 @@ class JUnitChecker(ProFormAChecker):
 
         if use_run_listener:
             # RUN LISTENER
+            if exitcode != 0 and self.__is_xml_output(output):
+                exitcode = 0
+
             if exitcode == 0:
-                # normal detailed results
+                # normal detailed XML results
                 # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
                 result.set_log(output, timed_out=timed_out, truncated=False, oom_ed=oom_ed, log_format=CheckerResult.PROFORMA_SUBTESTS)
             else:

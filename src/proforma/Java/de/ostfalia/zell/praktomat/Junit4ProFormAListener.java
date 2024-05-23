@@ -35,6 +35,8 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+import static java.lang.System.exit;
+
 // support for Ostfalia JunitAddOn without needing to import classes from there:
 // declare a new annotation named TestDescription
 @Retention(RetentionPolicy.RUNTIME)
@@ -89,6 +91,7 @@ public class Junit4ProFormAListener extends RunListener {
     public static void cleanup() {
     // reset redirection
 
+        System.out.println("cleanup");
         if (Junit4ProFormAListener.finishedProperly) {
             System.setOut(Junit4ProFormAListener.originalOut);           
             System.setErr(Junit4ProFormAListener.originalErr);
@@ -117,7 +120,7 @@ public class Junit4ProFormAListener extends RunListener {
                         "                    <feedback-list>\n" +
                         "                        <student-feedback level=\"info\">\n" +
                         "                            <content format=\"plaintext\">RunListener Error: The test run quit unexpectedly.\n" +
-                        "This could have happened because of a call to &#39;exit&#39; in the code. \n" +
+                        "This could have happened because of a call to 'exit' in the code. \n" +
                         "                            </content>\n" +
                         "                        </student-feedback>\n" +
                         "                    </feedback-list>\n" +
@@ -125,6 +128,7 @@ public class Junit4ProFormAListener extends RunListener {
               // suppress output in order to get a valid response format
               // System.out.println(consoleOutput);
               System.out.println(result);
+              // System.exit(2);
             } else {
               System.out.println(consoleOutput);
             }
@@ -584,7 +588,7 @@ public class Junit4ProFormAListener extends RunListener {
             // proforma.MyStringTest
             // de.ostfalia.gdp.ss19.s1.KegelVolumenTest
             // de.ostfalia.zell.isPalindromTask.PalindromTest
-            System.exit(1);                         
+            exit(1);
         }
         // PrintStream originalOut = System.out;
         // PrintStream originalErr = System.err;
@@ -613,20 +617,20 @@ public class Junit4ProFormAListener extends RunListener {
             System.err.println("JUnit entry point not found: " + e.getMessage());
             Junit4ProFormAListener.exitFromFramework = true;
             //System.out.println("Usage: program testclass (without extension)");
-            System.exit(1);                         
+            exit(1);
         } catch (Exception e) {            
             System.out.println("An Exception occurred");
             System.err.println(e.getMessage());
             Junit4ProFormAListener.exitFromFramework = true;
-            System.exit(1);                
+            exit(1);
         }
         
         if (Junit4ProFormAListener.singleton != null && Junit4ProFormAListener.singleton.failureOutsideTest) {
             Junit4ProFormAListener.exitFromFramework = true;
-            System.exit(1);            
+            exit(1);
         }
         
-        System.exit(0);            
+        exit(0);
     }
 
 }
