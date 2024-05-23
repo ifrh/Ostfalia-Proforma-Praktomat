@@ -39,13 +39,12 @@ import org.junit.runner.notification.RunListener;
 // declare a new annotation named TestDescription
 @Retention(RetentionPolicy.RUNTIME)
 @interface TestDescription {
-	String value();
+    String value();
 }
 
 
 public class Junit4ProFormAListener extends RunListener {
 
-	
     private final PrintStream writer;
     private Document doc = null;
     private Element subtestsResponse;
@@ -55,8 +54,8 @@ public class Junit4ProFormAListener extends RunListener {
     private ByteArrayOutputStream baos = null; 
     
     // allow 30kB char of text from stdout/stderr redirection
-	final int maxStdoutLen = 30720;  
-	private int stdoutLeft = maxStdoutLen;
+    final int maxStdoutLen = 30720;
+    private int stdoutLeft = maxStdoutLen;
     
     // parameters of current test
     private boolean passed = true;
@@ -66,55 +65,72 @@ public class Junit4ProFormAListener extends RunListener {
     Element studentFeedback;
     
     static PrintStream originalOut = null;
-    static PrintStream originalErr = null;    	
-    static boolean finishedProperly = false;    	
-    static boolean exitFromFramework = false;    	
-    static Junit4ProFormAListener singleton = null;    	
+    static PrintStream originalErr = null;        
+    static boolean finishedProperly = false;        
+    static boolean exitFromFramework = false;        
+    static Junit4ProFormAListener singleton = null;        
 
     
     private boolean failureOutsideTest = false;    
     
 
     public Junit4ProFormAListener() throws UnsupportedEncodingException {
-    	Junit4ProFormAListener.originalOut = System.out;
-    	Junit4ProFormAListener.originalErr = System.err;      	
+        Junit4ProFormAListener.originalOut = System.out;
+        Junit4ProFormAListener.originalErr = System.err;          
         // System.out.println("capture output");
-    	
-    	writer = System.out;
+    
+        writer = System.out;
         // redirect stdout and stderr and force UTF-8 output
         baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos, true, "UTF-8"));           
         System.setErr(new PrintStream(baos, true, "UTF-8"));
     }
 
-	public static void cleanup() {
-		// reset redirection    	
-        
+    public static void cleanup() {
+    // reset redirection
+
         if (Junit4ProFormAListener.finishedProperly) {
             System.setOut(Junit4ProFormAListener.originalOut);           
             System.setErr(Junit4ProFormAListener.originalErr);
-            // System.out.println("ok");           	
+            // System.out.println("ok");               
         } else {
-        	// Handle exit
-        	String consoleOutput = singleton.baos.toString();
-        	consoleOutput = consoleOutput.trim();
-        	if (consoleOutput.length() > 0) {
-        		// avoid having a lot of extra text because of redirecting stdout/stderr
-        		if (consoleOutput.length() > singleton.stdoutLeft) {
-    				consoleOutput = singleton.multiByteSubstr(consoleOutput, singleton.stdoutLeft) + "... [truncated]";
-        		}
-        	}
-        	singleton.baos.reset();           
+            // Handle exit
+            String consoleOutput = singleton.baos.toString();
+            consoleOutput = consoleOutput.trim();
+            if (consoleOutput.length() > 0) {
+                // avoid having a lot of extra text because of redirecting stdout/stderr
+                if (consoleOutput.length() > singleton.stdoutLeft) {
+                    consoleOutput = singleton.multiByteSubstr(consoleOutput, singleton.stdoutLeft) + "... [truncated]";
+                }
+            }
+            singleton.baos.reset();           
             System.setOut(Junit4ProFormAListener.originalOut);           
             System.setErr(Junit4ProFormAListener.originalErr);
-			if (!Junit4ProFormAListener.exitFromFramework) {
-	            System.out.println("The test run quit unexpectedly.");        		        	        				
-	            System.out.println("This might happen due to an 'exit' call in the code. ");        		        	        				
-			}
+            if (!Junit4ProFormAListener.exitFromFramework) {
+                    // System.out.println("The test run quit unexpectedly.");
+                    // System.out.println("This could have happened because of a call to 'exit' call in the code. ");
+
+                    String result = "                <test-result>                \n" +
+                        "                    <result is-internal-error=\"true\">\n" +
+                        "                        <score>0</score>\n" +
+                        "                    </result>\n" +
+                        "                    <feedback-list>\n" +
+                        "                        <student-feedback level=\"info\">\n" +
+                        "                            <content format=\"plaintext\">RunListener Error: The test run quit unexpectedly.\n" +
+                        "This could have happened because of a call to &#39;exit&#39; in the code. \n" +
+                        "                            </content>\n" +
+                        "                        </student-feedback>\n" +
+                        "                    </feedback-list>\n" +
+                        "                </test-result>";
+              // suppress output in order to get a valid response format
+              // System.out.println(consoleOutput);
+              System.out.println(result);
+            } else {
+              System.out.println(consoleOutput);
+            }
             
-            System.out.println(consoleOutput);        		        	        
         }
-	}    
+    }    
 
     
     public Junit4ProFormAListener(PrintStream writer) {
@@ -122,7 +138,7 @@ public class Junit4ProFormAListener extends RunListener {
     }
 
     public void setTestclassname(String testclassname) {
-    	this.testClassname = testclassname;
+        this.testClassname = testclassname;
     }
     
     @Override    
@@ -136,66 +152,66 @@ public class Junit4ProFormAListener extends RunListener {
         subtestsResponse = doc.createElement("subtests-response");
         doc.appendChild(subtestsResponse);          
         //testResponse.appendChild(subtestsResponse);    
-    	this.stdoutLeft = maxStdoutLen;
+        this.stdoutLeft = maxStdoutLen;
     }
     
 /*    
     public void testRunAbortedWithException(Exception e) {
     String xml = "        <test-result>" + 
-    		"          <result is-internal-error=\"true\">" + 
-    		"            <score>0.0</score>" + 
-    		"          </result>" + 
-    		"          <feedback-list>" + 
-    		"            <student-feedback level=\"debug\">" + 
-    		"              <title>JUnit</title>\r\n" + 
-    		"              <content format=\"html\">Fake Message</content>" + 
-    		"            </student-feedback>" + 
-    		"            <teacher-feedback level=\"debug\">" + 
-    		"              <title>JUnit</title>" + 
-    		"              <content format=\"plaintext\">content18</content>" + 
-    		"            </teacher-feedback>" + 
-    		"          </feedback-list>" + 
-    		"        </test-result>";	
+            "          <result is-internal-error=\"true\">" + 
+            "            <score>0.0</score>" + 
+            "          </result>" + 
+            "          <feedback-list>" + 
+            "            <student-feedback level=\"debug\">" + 
+            "              <title>JUnit</title>\r\n" + 
+            "              <content format=\"html\">Fake Message</content>" + 
+            "            </student-feedback>" + 
+            "            <teacher-feedback level=\"debug\">" + 
+            "              <title>JUnit</title>" + 
+            "              <content format=\"plaintext\">content18</content>" + 
+            "            </teacher-feedback>" + 
+            "          </feedback-list>" + 
+            "        </test-result>";    
     }
     */
     
     @Override
     public void testRunFinished(Result result) {
         try {
-			baos.close();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+            baos.close();
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
 
         
         if (this.failureOutsideTest) {
-        	// no xml creation
-        	return;
+            // no xml creation
+            return;
         }
         
-    	
+        
         // Transform Document to XML String
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer;
-		try {
-			transformer = tf.newTransformer();
-	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-	        transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");	        
-	        StringWriter xmlWriter = new StringWriter();
-	        DOMSource root = new DOMSource(doc);
-	        transformer.transform(root, new StreamResult(writer));
-	        
-	        // print the String value of final xml document        
-	        getWriter().println(xmlWriter.getBuffer().toString());    				
-		} catch (TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-	        getWriter().print(e.getMessageAndLocation());    				
-		}
+        try {
+            transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");            
+            StringWriter xmlWriter = new StringWriter();
+            DOMSource root = new DOMSource(doc);
+            transformer.transform(root, new StreamResult(writer));
+            
+            // print the String value of final xml document        
+            getWriter().println(xmlWriter.getBuffer().toString());                    
+        } catch (TransformerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            getWriter().print(e.getMessageAndLocation());                    
+        }
 
-    	Junit4ProFormAListener.finishedProperly = true;          
+        Junit4ProFormAListener.finishedProperly = true;          
 //        printHeader(result.getRunTime());
     }
 
@@ -203,24 +219,24 @@ public class Junit4ProFormAListener extends RunListener {
     
     @Override
     public void testStarted(Description description) {
-    	String title = "";
-    	String descTitle = new String(description.toString());
-    	
-    	descTitle = descTitle.substring(0, descTitle.indexOf("("));
+        String title = "";
+        String descTitle = new String(description.toString());
+        
+        descTitle = descTitle.substring(0, descTitle.indexOf("("));
         for (String w : descTitle.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
-        	if (title.isEmpty() && w.equalsIgnoreCase("test"))
-        		continue;
-        	
-        	title += w + ' ';
+            if (title.isEmpty() && w.equalsIgnoreCase("test"))
+                continue;
+            
+            title += w + ' ';
         }    
 
         title = title.trim();
         passed = true;   
         counter ++;
         
-    	// create xml 
-    	
-    	
+        // create xml 
+        
+        
         /*<subtest-response id = 's1'>
           <test-result>        
         
@@ -247,7 +263,7 @@ public class Junit4ProFormAListener extends RunListener {
         testResult.appendChild(result);
         score = doc.createElement("score");
         result.appendChild(score);
-    	
+        
         feedbackList = doc.createElement("feedback-list");
         testResult.appendChild(feedbackList);
         
@@ -259,155 +275,155 @@ public class Junit4ProFormAListener extends RunListener {
         studentFeedback.appendChild(xmlTitle);    
         xmlTitle.appendChild(doc.createTextNode(cleanXmlUtf8Char(title)));        
 
-    	TestDescription annotation = description.getAnnotation(TestDescription.class);
-    	if (annotation != null) {
-        	String annoDescription = annotation.value();    
+        TestDescription annotation = description.getAnnotation(TestDescription.class);
+        if (annotation != null) {
+            String annoDescription = annotation.value();    
             if (!annoDescription.isEmpty()) {
                 Element xmlDesc = doc.createElement("content");
                 studentFeedback.appendChild(xmlDesc);    
-                xmlDesc.appendChild(doc.createTextNode(cleanXmlUtf8Char(annoDescription)));                	
-            }        	
-    	}
+                xmlDesc.appendChild(doc.createTextNode(cleanXmlUtf8Char(annoDescription)));                    
+            }            
+        }
        
       
     }
 
     private String cleanXmlUtf8Char(String text) {
-		// replace invalid UTF-16/XML char by '[?]' 
-		// Note that Java uses UTF-16 as internal representation for Strings!
-    	// https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html
-    	
-    	// Problem: Some of the invalid characters are escaped. These
-    	// escaped characters can result in problems in the receiver of the 'message'
-    	// because they are still invalid.
-    	
-    	// UTF-8 (used for xml) Codepoint range is U+0000 to U+10FFFF.   	
-   	
-    	// https://stackoverflow.com/questions/4237625/removing-invalid-xml-characters-from-a-string-in-java
-    	// So we must find invalid characters in UTF-16.
-    	// We also replace invalid XML 1.0 char in order to avoid further problems.
-    	// XML 1.0
-    	// #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
-	    final String xml10pattern = "[^"
-	            + "\u0009\r\n"
-	            + "\u0020-\uD7FF"
-	            // U+D800 to U+DFFF is reserved in UTF-16 (Wikipedia): 
-	            // The Unicode standard permanently reserves these code 
-	            // point values for UTF-16 encoding of the high and low surrogates.
-	            + "\uE000-\uFFFD"
-	            + "\ud800\udc00-\udbff\udfff"
-	            + "]";
-	
+        // replace invalid UTF-16/XML char by '[?]' 
+        // Note that Java uses UTF-16 as internal representation for Strings!
+        // https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html
+        
+        // Problem: Some of the invalid characters are escaped. These
+        // escaped characters can result in problems in the receiver of the 'message'
+        // because they are still invalid.
+        
+        // UTF-8 (used for xml) Codepoint range is U+0000 to U+10FFFF.       
+       
+        // https://stackoverflow.com/questions/4237625/removing-invalid-xml-characters-from-a-string-in-java
+        // So we must find invalid characters in UTF-16.
+        // We also replace invalid XML 1.0 char in order to avoid further problems.
+        // XML 1.0
+        // #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+        final String xml10pattern = "[^"
+                + "\u0009\r\n"
+                + "\u0020-\uD7FF"
+                // U+D800 to U+DFFF is reserved in UTF-16 (Wikipedia): 
+                // The Unicode standard permanently reserves these code 
+                // point values for UTF-16 encoding of the high and low surrogates.
+                + "\uE000-\uFFFD"
+                + "\ud800\udc00-\udbff\udfff"
+                + "]";
     
-    	return text.replaceAll(xml10pattern, "[?]");
+    
+        return text.replaceAll(xml10pattern, "[?]");
     }
     
     
     private String multiByteSubstr(String original, int length)  {
-    	// return original.substring(0, original.offsetByCodePoints(0, length));
-    	return original.substring(0, length);
+        // return original.substring(0, original.offsetByCodePoints(0, length));
+        return original.substring(0, length);
     }
     
     @Override
     public void testFinished(Description description) {
         // todo: bei failed noch den Fehlertext
-    	// trim text that is written to stdout/err during test run.
-    	
-    	String consoleOutput = baos.toString();
-    	consoleOutput = consoleOutput.trim();
-    	if (consoleOutput.length() > 0) {
-    		// avoid having a lot of extra text because of redirecting stdout/stderr
-    		if (consoleOutput.length() > this.stdoutLeft) {
-				consoleOutput = this.multiByteSubstr(consoleOutput, this.stdoutLeft) + "... [truncated]";
-    		}
-			this.stdoutLeft -=  consoleOutput.length();
-			if (this.stdoutLeft < 0) {
-				this.stdoutLeft = 0;				
-			}
-  		
+        // trim text that is written to stdout/err during test run.
+        
+        String consoleOutput = baos.toString();
+        consoleOutput = consoleOutput.trim();
+        if (consoleOutput.length() > 0) {
+            // avoid having a lot of extra text because of redirecting stdout/stderr
+            if (consoleOutput.length() > this.stdoutLeft) {
+                consoleOutput = this.multiByteSubstr(consoleOutput, this.stdoutLeft) + "... [truncated]";
+            }
+            this.stdoutLeft -=  consoleOutput.length();
+            if (this.stdoutLeft < 0) {
+                this.stdoutLeft = 0;                
+            }
+          
             Element feedback = doc.createElement("student-feedback");        
             feedbackList.appendChild(feedback);
             Element content = doc.createElement("content");
             content.setAttribute("format", "plaintext");        
-            feedback.appendChild(content);                		
+            feedback.appendChild(content);                        
             content.appendChild(doc.createTextNode(cleanXmlUtf8Char(consoleOutput)));  
-    	}
+        }
         baos.reset();
 
-    	if (passed) {
-            score.appendChild(doc.createTextNode("1.0"));    		
+        if (passed) {
+            score.appendChild(doc.createTextNode("1.0"));            
             studentFeedback.setAttribute("level", "info");
         }
-    	else {
-            score.appendChild(doc.createTextNode("0.0"));            		
+        else {
+            score.appendChild(doc.createTextNode("0.0"));                    
             studentFeedback.setAttribute("level", "error");
-    	}  	
+        }      
     }
     
     private StackTraceElement[]  stripStackTrace(StackTraceElement[] elements) { 
-    	Class<?> testclass;
-    	final int maxTraceElments = 10;
-		try {
-			testclass = Class.forName(this.testClassname);
-	    	int i = 0;
-	        for (StackTraceElement element : elements) {
-				Class<?> clazz;
-				clazz = Class.forName(element.getClassName());
-				i++;
-				if (testclass == clazz || i == maxTraceElments) {
-					// found => remove tail
-			    	StackTraceElement[] newStacktrace = new StackTraceElement[i];
-			    	System.arraycopy( elements, 0, newStacktrace, 0, i);
-			    	return newStacktrace;
-				}
-	        }			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			//writer.append("***CANNOT STRIP STACK TRACE\n");
-			//writer.append("Testclass: " + this.testClassname + "\n");
-			//writer.append("Exception: " + e.getMessage() + "\n");				
-			//writer.append("Exception: " + e.toString() + "\n");				
-			//e.fillInStackTrace().printStackTrace(writer);				
-			// e.printStackTrace();
-			
-			// this version needs accessClassInPackage.sun.nio.fs
-		    // when using policy manager			
-			try {
-				// in case of an error simply deliver first 10 elements of stack trace				
-				final int max = maxTraceElments;
-		    	StackTraceElement[] newStacktrace = new StackTraceElement[max];
-		    	System.arraycopy( elements, 0, newStacktrace, 0, max);
-		    	return newStacktrace;	 										
-			} catch (Exception f) {
-				return elements;    	
-			}
-		}
-    	
-		return elements;    	
+        Class<?> testclass;
+        final int maxTraceElments = 10;
+        try {
+            testclass = Class.forName(this.testClassname);
+            int i = 0;
+            for (StackTraceElement element : elements) {
+                Class<?> clazz;
+                clazz = Class.forName(element.getClassName());
+                i++;
+                if (testclass == clazz || i == maxTraceElments) {
+                    // found => remove tail
+                    StackTraceElement[] newStacktrace = new StackTraceElement[i];
+                    System.arraycopy( elements, 0, newStacktrace, 0, i);
+                    return newStacktrace;
+                }
+            }            
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            //writer.append("***CANNOT STRIP STACK TRACE\n");
+            //writer.append("Testclass: " + this.testClassname + "\n");
+            //writer.append("Exception: " + e.getMessage() + "\n");                
+            //writer.append("Exception: " + e.toString() + "\n");                
+            //e.fillInStackTrace().printStackTrace(writer);                
+            // e.printStackTrace();
+            
+            // this version needs accessClassInPackage.sun.nio.fs
+            // when using policy manager            
+            try {
+                // in case of an error simply deliver first 10 elements of stack trace                
+                final int max = maxTraceElments;
+                StackTraceElement[] newStacktrace = new StackTraceElement[max];
+                System.arraycopy( elements, 0, newStacktrace, 0, max);
+                return newStacktrace;                                             
+            } catch (Exception f) {
+                return elements;        
+            }
+        }
+        
+        return elements;        
     }
     
     private void createFeedback(String title, String content, boolean teacher) {
-    	Element xmlFeedback = null;
-    	if (teacher)
-    		xmlFeedback = doc.createElement("teacher-feedback");
-    	else 
-    		xmlFeedback = doc.createElement("student-feedback");
-    		
+        Element xmlFeedback = null;
+        if (teacher)
+            xmlFeedback = doc.createElement("teacher-feedback");
+        else 
+            xmlFeedback = doc.createElement("student-feedback");
+            
         feedbackList.appendChild(xmlFeedback);
         
-    	Element xmlTitle = doc.createElement("title");
-    	xmlFeedback.appendChild(xmlTitle);    
-    	xmlTitle.appendChild(doc.createTextNode(cleanXmlUtf8Char(title)));        
+        Element xmlTitle = doc.createElement("title");
+        xmlFeedback.appendChild(xmlTitle);    
+        xmlTitle.appendChild(doc.createTextNode(cleanXmlUtf8Char(title)));        
 
-    	Element xmlContent = doc.createElement("content");
-    	xmlContent.setAttribute("format", "plaintext");        
-    	xmlFeedback.appendChild(xmlContent);           		
-    	xmlContent.appendChild(doc.createTextNode(cleanXmlUtf8Char(content)));      	
+        Element xmlContent = doc.createElement("content");
+        xmlContent.setAttribute("format", "plaintext");        
+        xmlFeedback.appendChild(xmlContent);                   
+        xmlContent.appendChild(doc.createTextNode(cleanXmlUtf8Char(content)));          
     }
     
     @Override
     public void testFailure(Failure failure) {
-    	Description d = failure.getDescription();
+        Description d = failure.getDescription();
         //String failureText = failure.toString();
         String message = failure.getMessage();
         String testHeader = failure.getTestHeader();
@@ -421,46 +437,46 @@ public class Junit4ProFormAListener extends RunListener {
         StackTraceElement[] strippedStacktrace = this.stripStackTrace(failure.getException().getStackTrace());
         String stackTraceString = "";
         for (StackTraceElement s : strippedStacktrace) {
-        	stackTraceString = stackTraceString + s.toString() + "\n";
+            stackTraceString = stackTraceString + s.toString() + "\n";
         }  
         stackTraceString = stackTraceString +  "[...]\n";
         
-    	if (studentFeedback == null) {
-    		this.failureOutsideTest = true;
-    		writer.println(failure);
-    		writer.println("");
-    		writer.println(stackTraceString);        		
-    		return;    		
-    	}          
+        if (studentFeedback == null) {
+            this.failureOutsideTest = true;
+            writer.println(failure);
+            writer.println("");
+            writer.println(stackTraceString);                
+            return;            
+        }          
         
         if (strippedStacktrace.length > 0) {
-        	if (strippedStacktrace[0].getClassName().startsWith("org.junit.")) {
-        		// Function Error in Test Code
-        		// => do not show stack trace to student
-        		showStackTraceToStudent = false;
-        		exceptionText = message; 
-        	} else {
-        		// assume coding error: 
-        		// check if the exception occured inside student code
-                // this.createFeedback("Stack Trace", stackTraceString, false);        		
-        	}
+            if (strippedStacktrace[0].getClassName().startsWith("org.junit.")) {
+                // Function Error in Test Code
+                // => do not show stack trace to student
+                showStackTraceToStudent = false;
+                exceptionText = message; 
+            } else {
+                // assume coding error: 
+                // check if the exception occured inside student code
+                // this.createFeedback("Stack Trace", stackTraceString, false);                
+            }
         } 
         
-           	
-    	// create student feedback        
+               
+        // create student feedback        
         if (exceptionText != null) {
-        	if (studentFeedback.getElementsByTagName("content").getLength() == 0) {
-        		// append content to existing student-feedback
+            if (studentFeedback.getElementsByTagName("content").getLength() == 0) {
+                // append content to existing student-feedback
                 Element xmlFailure = doc.createElement("content");
                 xmlFailure.setAttribute("format", "plaintext");        
                 studentFeedback.appendChild(xmlFailure);
-            	xmlFailure.appendChild(doc.createTextNode(cleanXmlUtf8Char(exceptionText)));
-            	//xmlFailure.appendChild(doc.createTextNode("EXCEPTION TEXT: " + exceptionText));
-        	} else {
-                this.createFeedback("", exceptionText, false); // no title        		
-        	}
-        	
-        	
+                xmlFailure.appendChild(doc.createTextNode(cleanXmlUtf8Char(exceptionText)));
+                //xmlFailure.appendChild(doc.createTextNode("EXCEPTION TEXT: " + exceptionText));
+            } else {
+                this.createFeedback("", exceptionText, false); // no title                
+            }
+            
+            
         } else {
             // this.createFeedback("Exception text", "N/A", true);
         }
@@ -474,17 +490,17 @@ public class Junit4ProFormAListener extends RunListener {
         Element teacherFeedback = doc.createElement("teacher-feedback");        
         feedbackList.appendChild(teacherFeedback);
         
-        	Element xmlTitle = doc.createElement("title");
-        	teacherFeedback.appendChild(xmlTitle);    
-        	xmlTitle.appendChild(doc.createTextNode("Stack Trace"));        
+            Element xmlTitle = doc.createElement("title");
+            teacherFeedback.appendChild(xmlTitle);    
+            xmlTitle.appendChild(doc.createTextNode("Stack Trace"));        
 
-        	Element xmlException = doc.createElement("content");
-        	xmlException.setAttribute("format", "plaintext");        
-        	teacherFeedback.appendChild(xmlException);    
-        	String teacherText = "";
-        	teacherText = exceptionText + "\n" + failure.getTrace();        
-        		
-        	xmlException.appendChild(doc.createTextNode(teacherText));  
+            Element xmlException = doc.createElement("content");
+            xmlException.setAttribute("format", "plaintext");        
+            teacherFeedback.appendChild(xmlException);    
+            String teacherText = "";
+            teacherText = exceptionText + "\n" + failure.getTrace();        
+                
+            xmlException.appendChild(doc.createTextNode(teacherText));  
 */        
         
         passed = false;  
@@ -533,7 +549,7 @@ public class Junit4ProFormAListener extends RunListener {
         
         float score = ((float)(counter - counterFailed))/counter;
         getWriter().print("Score: " + score);
-    	
+        
 /*        
         if (result.wasSuccessful()) {
             getWriter().println();
@@ -550,7 +566,7 @@ public class Junit4ProFormAListener extends RunListener {
     }
     
 /*    protected testRunFinished(Result result) {
-    	
+        
     }
 */
     /**
@@ -563,12 +579,12 @@ public class Junit4ProFormAListener extends RunListener {
     
     public static void main(String[] args) throws UnsupportedEncodingException {
         if (args.length == 0) {
-        	System.err.println("Invalid argument number. Usage: program testclass (without extension)");
-        	// sample:
-        	// proforma.MyStringTest
-        	// de.ostfalia.gdp.ss19.s1.KegelVolumenTest
-        	// de.ostfalia.zell.isPalindromTask.PalindromTest
-	        System.exit(1);			 			
+            System.err.println("Invalid argument number. Usage: program testclass (without extension)");
+            // sample:
+            // proforma.MyStringTest
+            // de.ostfalia.gdp.ss19.s1.KegelVolumenTest
+            // de.ostfalia.zell.isPalindromTask.PalindromTest
+            System.exit(1);                         
         }
         // PrintStream originalOut = System.out;
         // PrintStream originalErr = System.err;
@@ -578,39 +594,39 @@ public class Junit4ProFormAListener extends RunListener {
         
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() { try {
-				// listener.close();
-            	Junit4ProFormAListener.cleanup();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} }
+                // listener.close();
+                Junit4ProFormAListener.cleanup();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } }
         });       
         
-		JUnitCore core= new JUnitCore();			
-		Junit4ProFormAListener.singleton = new Junit4ProFormAListener();
- 			
-		try {        
-			core.addListener(Junit4ProFormAListener.singleton);
-			Junit4ProFormAListener.singleton.setTestclassname(args[0]);			
-			core.run(Class.forName(args[0]));
-		} catch (ClassNotFoundException e) {        
-			System.err.println("JUnit entry point not found: " + e.getMessage());
-			Junit4ProFormAListener.exitFromFramework = true;
-	    	//System.out.println("Usage: program testclass (without extension)");
-	        System.exit(1);			 			
-		} catch (Exception e) {	        
-			System.out.println("An Exception occurred");
-			System.err.println(e.getMessage());
-			Junit4ProFormAListener.exitFromFramework = true;
-	        System.exit(1);				
-		}
-		
-		if (Junit4ProFormAListener.singleton != null && Junit4ProFormAListener.singleton.failureOutsideTest) {
-			Junit4ProFormAListener.exitFromFramework = true;
-	        System.exit(1);			
-		}
-		
-        System.exit(0);			
-	}
+        JUnitCore core= new JUnitCore();            
+        Junit4ProFormAListener.singleton = new Junit4ProFormAListener();
+             
+        try {        
+            core.addListener(Junit4ProFormAListener.singleton);
+            Junit4ProFormAListener.singleton.setTestclassname(args[0]);            
+            core.run(Class.forName(args[0]));
+        } catch (ClassNotFoundException e) {        
+            System.err.println("JUnit entry point not found: " + e.getMessage());
+            Junit4ProFormAListener.exitFromFramework = true;
+            //System.out.println("Usage: program testclass (without extension)");
+            System.exit(1);                         
+        } catch (Exception e) {            
+            System.out.println("An Exception occurred");
+            System.err.println(e.getMessage());
+            Junit4ProFormAListener.exitFromFramework = true;
+            System.exit(1);                
+        }
+        
+        if (Junit4ProFormAListener.singleton != null && Junit4ProFormAListener.singleton.failureOutsideTest) {
+            Junit4ProFormAListener.exitFromFramework = true;
+            System.exit(1);            
+        }
+        
+        System.exit(0);            
+    }
 
 }
