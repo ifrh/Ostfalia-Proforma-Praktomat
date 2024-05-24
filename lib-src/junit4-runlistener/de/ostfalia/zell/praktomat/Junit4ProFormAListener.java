@@ -91,7 +91,6 @@ public class Junit4ProFormAListener extends RunListener {
     public static void cleanup() {
     // reset redirection
 
-        System.out.println("cleanup");
         if (Junit4ProFormAListener.finishedProperly) {
             System.setOut(Junit4ProFormAListener.originalOut);           
             System.setErr(Junit4ProFormAListener.originalErr);

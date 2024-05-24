@@ -148,17 +148,17 @@ class JUnitChecker(ProFormAChecker):
             text = text[len(warning2) + 1:]
         return text
 
-    def __is_xml_output(self, output):
+    def _is_xml_output(self, output):
         print("__is_xml_output")
         """ checks if the test output is valid xml.
-        When the student calls exit in his or her code then the return code
-        cannot be evaluated because the Java RunListener is not able
-        to intercept the exit code and modify it to an error exit code.
         """
-        root = ET.fromstring(output)
-        if root.tag == "test-result":
-            for score in root.findall("./result/score"):
-                return True
+        try:
+            root = ET.fromstring(output)
+            if root.tag == "test-result":
+                for score in root.findall("./result/score"):
+                    return True
+        except:
+            pass
 
         return False
 
@@ -272,7 +272,12 @@ class JUnitChecker(ProFormAChecker):
 
         if use_run_listener:
             # RUN LISTENER
-            if exitcode != 0 and self.__is_xml_output(output):
+            # When the student calls exit in his or her code then the return code
+            # cannot be evaluated because the Java RunListener is not able
+            # to intercept the exit code and modify it to an error exit code.
+            # Therefore in case of an exit code <> 0 (expecting no XML)
+            # it is checked whether there is valid XML output.
+            if exitcode != 0 and self._is_xml_output(output):
                 exitcode = 0
 
             if exitcode == 0:
