@@ -84,8 +84,10 @@ class JavaBuilder(ClassFileGeneratingBuilder):
             regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
 #            regexp = '(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<msgtype>[a-z]+):\s(?<text>.+)'
             result["format"] = CheckerResult.FEEDBACK_LIST_LOG
+            # in order to improve testability sort all filenames alphabetically
+            sorted_filenames = sorted(filenames)
             result["log"] = t.render({
-                'filenames': filenames,
+                'filenames': sorted_filenames,
                 'output': output,
                 'cmdline': os.path.basename(args[0]) + ' ' +  reduce(lambda parm, ps: parm + ' ' + ps, args[1:], ''),
                 'regexp': ('' if ProFormAChecker.xml_namespace == ProFormAChecker.NAMESPACES_V2_0 else regexp),
