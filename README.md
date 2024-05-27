@@ -1,6 +1,4 @@
 # TODO
-* update Django
-* check module versions (pip list)
 * update Java
 * update Checkstyle
 * update Ubuntu => update python version

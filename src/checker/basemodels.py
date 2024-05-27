@@ -55,6 +55,7 @@ class Checker(models.Model):
     If a Checker is not always run, it is only run if a *task_maker*
     starts the complete rerun of all Checkers. """
 
+    id = models.BigAutoField(primary_key=True) # Django 3.2 requires a primary key for each class
     created = models.DateTimeField(auto_now_add=True)
     order = models.IntegerField(help_text = _('Determines the order in which the checker will start. Not necessary continuously!'))
 
@@ -206,6 +207,8 @@ class CheckerResult(models.Model):
         - The time of the run. """
 
     from solutions.models import Solution
+
+    id = models.BigAutoField(primary_key=True) # Django 3.2 requires a primary key for each class
     solution = models.ForeignKey(Solution, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -341,6 +344,7 @@ def get_checkerresultartefact_upload_path(instance, filename):
 
 class CheckerResultArtefact(models.Model):
 
+    id = models.BigAutoField(primary_key=True) # Django 3.2 requires a primary key for each class
     result = models.ForeignKey(CheckerResult, related_name='artefacts', on_delete=models.CASCADE)
     filename = models.CharField(max_length=128)
     file = models.FileField(

@@ -1,11 +1,9 @@
 
 chardet==5.2.0 #
-Django==2.2.28
+Django==3.2.25
 # django-extensions==3.1.5
-# eventlet 0.31 is not compatible with gunicorn 20.1.0
-#eventlet==0.30.2
 gevent==24.2.1 #
-gunicorn==22.0.0
+gunicorn==22.0.0 #
 
 
 lxml==5.2.2 #
@@ -23,15 +21,9 @@ psycopg2-binary==2.9.9 #
 # for python unittests
 unittest-xml-reporting==3.2.0 #
 
-# workaround for debug-toolbar/sqlparse incompatibility, see http://stackoverflow.com/questions/38479063/django-debug-toolbar-breaking-on-admin-while-getting-sql-stats
-
-# It appears that due to the pull-request https://github.com/aljosa/django-tinymce/pull/103 merged in django-tinymce==2.4.0, jquery is loaded after our onw jquery
-# loaded in admin-sites. Using an old version of django-tinymce (2.3.x) is not possible because it uses methods removed between Django 1.8 and 1.11.
-# We might want to use the django-admin provieded jquery in our admin-site jquery snippets?!?!?
 
 ## modules automatically installed
 
-# dbus-python==1.2.16
 elementpath==4.4.0 #
 greenlet==3.0.3 #
 pytz==2024.1 #
@@ -41,5 +33,15 @@ sqlparse==0.5.0 #
 wheel==0.43.0 #
 xmlschema==3.3.1 #
 
+#asgiref                3.8.1
+#click                  8.1.7
+#dbus-python            1.2.16
+#packaging              24.0
+#pip                    24.0
+#psycopg2-binary        2.9.9
+#pyelftools             0.31
+#PyGObject              3.36.0
+#typing_extensions      4.12.0
+#zope.event             5.0
+#zope.interface         6.4.post2
 
-# dnspython==1.16.0

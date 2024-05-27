@@ -29,7 +29,7 @@ for (mimetype, extension) in settings.MIMETYPE_ADDITIONAL_EXTENSIONS:
 
 class Solution(models.Model):
     """ """
-
+    id = models.BigAutoField(primary_key=True) # Django 3.2 requires a primary key for each class
     number = models.IntegerField(null=False, editable=False, help_text = _("Id unique in task and user. E.g. Solution 1 of user X in task Y in contrast to global solution Z"))
 
     task = models.ForeignKey('tasks.task', on_delete=models.CASCADE)
@@ -115,7 +115,7 @@ def get_solutionfile_upload_path(instance, filename):
 
 class SolutionFile(models.Model):
     """docstring for SolutionFile"""
-
+    id = models.BigAutoField(primary_key=True) # Django 3.2 requires a primary key for each class
     solution = models.ForeignKey(Solution, on_delete=models.CASCADE)
     file = models.FileField(upload_to = get_solutionfile_upload_path, max_length=500, help_text = _('Source code file as part of a solution an archive file (.zip, .tar or .tar.gz) containing multiple solution files.'))
     mime_type = models.CharField(max_length=100, help_text = _("Guessed file type. Automatically  set on save()."))

@@ -19,6 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Task(models.Model):
+    id = models.BigAutoField(primary_key=True) # Django 3.2 requires a primary key for each class
     title = models.CharField(max_length=100, help_text = _("The name of the task"))
     description = models.TextField(help_text = _("Description of the assignment."))
     publication_date = models.DateTimeField(help_text = _("The time on which the user will see the task."))
