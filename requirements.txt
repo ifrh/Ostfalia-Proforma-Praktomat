@@ -1,5 +1,5 @@
 
-chardet==5.0.0
+chardet==5.2.0 #
 Django==2.2.28
 # django-extensions==3.1.5
 # eventlet 0.31 is not compatible with gunicorn 20.1.0
