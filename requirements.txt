@@ -31,10 +31,10 @@ unittest-xml-reporting==3.2.0 #
 ## modules automatically installed
 
 # dbus-python==1.2.16
-elementpath==4.4.0
-greenlet==2.0.1
-pytz==2022.6
-setuptools==65.5.1
+elementpath==4.4.0 #
+greenlet==3.0.3 #
+pytz==2024.1 #
+setuptools==70.0.0 #
 six==1.16.0 #
 sqlparse==0.5.0 #
 wheel==0.43.0 #
