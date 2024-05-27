@@ -1,3 +1,11 @@
+# TODO
+* update Django
+* check module versions (pip list)
+* update Java
+* update Checkstyle
+* update Ubuntu => update python version
+* JUnit5 latest version support
+
 
 This is the source distribution of Ostfalia-Praktomat, a simple
 programming test runner for various programming languages.
