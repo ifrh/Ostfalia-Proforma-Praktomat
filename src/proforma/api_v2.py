@@ -784,7 +784,7 @@ class Proforma_Request:
             if output != None:
                 logger.debug('output: ' + str(output))
                 message += output
-            raise ExternalSubmissionException(message)
+            raise ExternalSubmissionException(message.strip())
 
         if timed_out:
             raise ExternalSubmissionException('timeout')
