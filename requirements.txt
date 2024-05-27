@@ -7,7 +7,7 @@ eventlet==0.30.2
 gunicorn==20.1.0
 
 
-lxml==5.2.2
+lxml==5.2.2 #
 # lxml==4.9.4 # faster than 5.2.2??
 
 # for getting shared objects for sandbox
@@ -31,14 +31,14 @@ unittest-xml-reporting==3.2.0 #
 ## modules automatically installed
 
 # dbus-python==1.2.16
-elementpath==3.0.2
+elementpath==4.4.0
 greenlet==2.0.1
 pytz==2022.6
 setuptools==65.5.1
-six==1.16.0
+six==1.16.0 #
 sqlparse==0.5.0 #
-wheel==0.38.4
-xmlschema==2.1.1
+wheel==0.43.0 #
+xmlschema==3.3.1 #
 
 
 # dnspython==1.16.0
