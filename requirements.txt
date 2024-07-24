@@ -10,8 +10,9 @@ lxml==5.2.2 #
 # lxml==4.9.4 # faster than 5.2.2??
 
 # for getting shared objects for sandbox
-lddcollect==0.2.0 #
+# lddcollect==0.2.0 #
 
+pyclean
 
 psycopg2-binary==2.9.9 #
 
@@ -19,7 +20,8 @@ psycopg2-binary==2.9.9 #
 # Pygments==2.11.2
 
 # for python unittests
-unittest-xml-reporting==3.2.0 #
+docker==7.1.0
+# unittest-xml-reporting==3.2.0 #
 
 
 ## modules automatically installed

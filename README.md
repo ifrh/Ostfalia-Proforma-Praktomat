@@ -16,21 +16,20 @@ Most of the unused code is removed in order to ease maintenance.
 The ProFormA format for tasks is 2.0 and 2.0.1 with some limitations.
 The ProFormA format for HTTP request and response is 2.0 and 2.1. 
 
-The code is currently only used as a 'docker composition'.
-So the installation manual for a plain Linux server is not up-to-date, 
-but you can follow the Dockerfile. 
+The code is running as a 'docker composition'.
+Each testcase runs in its own docker container. 
 
 #### Programming Languages
 
 The following programming languages and test frameworks are provided with the ProFormA interface.
 
-| Language     |               Test Frameworks                |
-| :---:        |:--------------------------------------------:|         
-| Java 17      |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1    |
-| C++          |            Googletest, Make/CMake            |
-| C            |        Googletest, CUnit, Make/CMake         |
-| Python 3.8   | Unittest with Pip <br/>(Doctest preparation) |
-| SetlX        |          Simple test, Syntax Check           |
+|  Language   |               Test Frameworks                |
+|:-----------:|:--------------------------------------------:|         
+|   Java 21   |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1    |
+|     C++     |            Googletest, Make/CMake            |
+|      C      |        Googletest, CUnit, Make/CMake         |
+| Python 3.11 | Unittest with Pip <br/>(Doctest preparation) |
+|    SetlX    |          Simple test, Syntax Check           |
 
 
 For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy the `setlx-2.7.x.jar` 
@@ -52,10 +51,17 @@ The following types of submission are supported:
 
 ## Installation
 
-ProFormA Praktomat requires
- 
-* docker (https://docs.docker.com/engine/install/) and 
-* docker-compose (https://docs.docker.com/compose/install/). 
+ProFormA Praktomat requires docker (https://docs.docker.com/get-docker/).  
+
+Each test run in its own docker container. This requires the user in the main container 
+to be member of the docker group of the host computer. 
+This is achieved by adding him to a group whose ID is identical to the ID of the Docker group on the host.
+
+So you need to figure out the group id of the docker group on your computer: 
+
+        grep "docker" /etc/group
+
+Set this group id value in the docker-compose.yml file as DOCKER_GROUP_ID.
 
 #### Configuration
 
@@ -68,7 +74,7 @@ A sample file is included as .env.example.
 
 Modify credentials!
 
-Adjust number of workers to fit your hardware.
+Adjust number of workers to fit your hardware (e.g. WORKERS = <number of cores>). 
 
 ##### Optional: Change Locale
 
@@ -81,6 +87,7 @@ docker-compose.yml file. E.g. for American English set LOCALE to en_US.UTF-8:
         args:
             LOCALE: en_US.UTF-8
 
+Note: This does not work at the moment with the supplied Java dockerfile.  
 
 ##### Optional: HTTPS
 For enabling HTTPS (port 443) you must 
@@ -92,8 +99,8 @@ For enabling HTTPS (port 443) you must
 
 ##### Optional: Different Test Framework Versions
 
-For using other test framework versions then you need to modify the following files:
-- URLs in Dockerfile
+For using other test framework versions you need to modify the following files:
+- URLs in Dockerfile (folder docker-sandbox-image)
 - src/checker/checker/JUnitChecker.py
 - src/checker/checker/CheckStyleChecker.py
 - src/settings/docker.py
@@ -234,6 +241,42 @@ This can easily be done by calling
   
 There is no need to back-up anything!
 
+As the tests run in their own Docker containers, it cannot be ruled out that containers or images sometimes remain after test. 
+The images are always reused (with the exception of Python images with a tag not equal to 0).
+
+Remove dangling containers:
+
+        docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=exited)
+
+Under certain conditions, containers that have never been run could also get stuck:
+
+        docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=created)
+
+Remove unused temporary sandbox images: 
+
+        docker rm $(docker images --filter=reference="tmp:*" -q)
+
+
+On Praktomat (re)start all dangling containers and intermediate images are removed. 
+The docker images for the individual programming languages are retained.
+
+        docker compose up
+
+In case these are to be recreated, e.g. if the programming language Dockerfile
+has been changed, they must be deleted manually.
+
+        docker image ls
+        docker image rm <image1> <image2> ...
+
+Or: Remove all sandbox base images: 
+
+        docker image rm $(docker images --filter=reference="*-praktomat_sandbox" -q)
+
+Retrieve state information:
+
+        http://{serverhost}/praktomat-info
+
+
 ### Software Update
 
 In case of a software update this is the recommended process:
@@ -243,4 +286,18 @@ In case of a software update this is the recommended process:
 3. ./remove_migrations.sh (delete old build files) 
 4. `docker dompose build`    
 5. `docker dompose up` 
+
+### Troubleshooting 
+
+If you encounter responses containing errors like 'cannot allocate memory' then
+you should try and increase one of the following values 
+
+    TEST_MAXMEM_DOCKER_DEFAULT
+    TEST_MAXMEM_DOCKER_JAVA
+    TEST_MAXMEM_DOCKER_PYTHON
+
+in src/settings/docker.py for your programming language. 
+However, memory shortages can also lead to other error messages.
+
+
 

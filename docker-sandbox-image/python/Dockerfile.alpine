@@ -1,0 +1,59 @@
+# This results in a small docker image.
+# But if numpy (?) needs to be installed this will fail
+
+FROM python:3.11.9-alpine3.20
+
+MAINTAINER Ostfalia
+
+ENV PYTHONUNBUFFERED 1
+
+# set locale
+ARG LOCALE_PLAIN=de_DE
+ARG LOCALE=${LOCALE_PLAIN}.UTF-8
+
+RUN apk add --no-cache --update musl musl-utils musl-locales tzdata pkgconfig
+ENV TZ=Europe/Berlin
+RUN cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+RUN echo 'export LC_ALL=${LOCALE}' >> /etc/profile.d/locale.sh && \
+  sed -i 's|LANG=C.UTF-8|LANG=${LOCALE}|' /etc/profile.d/locale.sh
+
+#ENV LANG ${LOCALE} \
+#    LC_ALL ${LOCALE} \
+#    LANGUAGE ${LOCALE}
+
+ARG PRAKTOMAT_ID=1100
+
+# install xmlrunner for test framework
+RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting
+
+
+# create user with less capabilties
+# debian:
+# RUN groupadd -g ${GROUP_ID} praktomat \
+#    && useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/sh
+# alpine:
+RUN adduser -u ${PRAKTOMAT_ID} praktomat -s /bin/ash --disabled-password
+
+
+# create sandbox folder and copy framework files into it
+WORKDIR /sandbox
+
+ADD framework /sandbox
+
+# prepare sandbox folder: 
+# - set permissions
+# - create result folder
+# - create folder for matplotlib cache (suppresses warning)
+RUN chmod -R 777 /sandbox \
+	&& mkdir -p __result__ \
+	&& chmod -R 777 __result__ \
+	&& mkdir -p .matplotlib \
+	&& chmod -R 777 .matplotlib
+
+ENV MPLCONFIGDIR=/sandbox/.matplotlib
+
+
+
+# change user
+USER praktomat
+

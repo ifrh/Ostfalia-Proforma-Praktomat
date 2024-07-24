@@ -36,9 +36,9 @@ import logging
 from tasks.models import Task
 from accounts.models import User
 from solutions.models import Solution, SolutionFile
-from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
+from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, \
     PythonChecker, SetlXChecker
-from checker.compiler import JavaBuilder, CBuilder
+from checker.compiler import JavaBuilder# , CBuilder
 
 
 from . import task
@@ -224,48 +224,48 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
 
         for xmlTest in xml_task.tests.iterchildren():
 
-            if xmlTest.xpath("p:test-type", namespaces=ns)[0] == "anonymity":
-                inst = AnonymityChecker.AnonymityChecker.objects.create(task=new_task, order=val_order)
-                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                inst.save()
+#            if xmlTest.xpath("p:test-type", namespaces=ns)[0] == "anonymity":
+#                inst = AnonymityChecker.AnonymityChecker.objects.create(task=new_task, order=val_order)
+#                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+#                inst.save()
 
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "c-compilation":
-                inst = CBuilder.CBuilder.objects.create(task=new_task,
-                                                        order=val_order,
-                                                        _flags="-Wall",
-                                                        _output_flags="-o %s",
-                                                        _file_pattern=r"^[a-zA-Z0-9_]*\.[cC]$"
-                                                        )
-                if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-                                  namespaces=ns) and
-                    xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-                                  namespaces=ns)[0].text is not None):
-                    inst._flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-                                                namespaces=ns)[0].text
-                if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerOutputFlags",
-                                  namespaces=ns) and
-                    xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerOutputFlags",
-                                  namespaces=ns)[0].text is not None):
-                    inst._output_flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                                       "praktomat:config-CompilerOutputFlags",
-                                                       namespaces=ns)[0].text
-                if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-                                  namespaces=ns) and
-                    xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-                                  namespaces=ns)[0].text):
-                    inst._libs = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-                                               namespaces=ns)[0].text
-                if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFilePattern",
-                                  namespaces=ns) and
-                    xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFilePattern",
-                                  namespaces=ns)[0].text):
-                    inst._file_pattern = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                                       "praktomat:config-CompilerFilePattern",
-                                                       namespaces=ns)[0]
-                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                inst.save()
+            # if xmlTest.xpath("p:test-type", namespaces=ns)[0] == "c-compilation":
+            #     inst = CBuilder.CBuilder.objects.create(task=new_task,
+            #                                             order=val_order,
+            #                                             _flags="-Wall",
+            #                                             _output_flags="-o %s",
+            #                                             _file_pattern=r"^[a-zA-Z0-9_]*\.[cC]$"
+            #                                             )
+            #     if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
+            #                       namespaces=ns) and
+            #         xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
+            #                       namespaces=ns)[0].text is not None):
+            #         inst._flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
+            #                                     namespaces=ns)[0].text
+            #     if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerOutputFlags",
+            #                       namespaces=ns) and
+            #         xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerOutputFlags",
+            #                       namespaces=ns)[0].text is not None):
+            #         inst._output_flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+            #                                            "praktomat:config-CompilerOutputFlags",
+            #                                            namespaces=ns)[0].text
+            #     if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
+            #                       namespaces=ns) and
+            #         xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
+            #                       namespaces=ns)[0].text):
+            #         inst._libs = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
+            #                                    namespaces=ns)[0].text
+            #     if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFilePattern",
+            #                       namespaces=ns) and
+            #         xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFilePattern",
+            #                       namespaces=ns)[0].text):
+            #         inst._file_pattern = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+            #                                            "praktomat:config-CompilerFilePattern",
+            #                                            namespaces=ns)[0]
+            #     inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+            #     inst.save()
 
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "java-compilation":
+            if xmlTest.xpath("p:test-type", namespaces=ns)[0] == "java-compilation":
                 inst = JavaBuilder.JavaBuilder.objects.create(task=new_task,
                                                               order=val_order,
                                                               _flags="",

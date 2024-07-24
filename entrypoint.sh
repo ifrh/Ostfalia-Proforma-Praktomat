@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 echo "Docker entrypoint"
 #set -x
@@ -11,9 +12,14 @@ then
     echo "PostgreSQL started"
 fi
 
+echo "Cleaning docker and precreate docker images"
+python3 /praktomat/src/proforma/sandbox.py
 
-echo start cron
-sudo -n /usr/sbin/cron -f &
+
+
+echo "starting cron"
+sudo -n cron -f &
+# sudo -n /usr/sbin/cron -f &
 
 #python manage.py flush --no-input
 #python manage.py migrate

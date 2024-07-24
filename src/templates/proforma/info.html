@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Praktomat State</title>
+</head>
+<body>
+    <h1>Praktomat</h1>
+
+    {{ version }} <br>
+
+    <h2>Database</h2>
+        Tasks: {{ database.tasks }} <br>
+        Solutions: {{ database.solutions }} <br>
+
+    <h2>General Docker Information</h2>
+
+        Images: {{ docker.info.Images }} <br>
+        Containers: {{ docker.info.Containers }} <br>
+        Containers running: {{ docker.info.ContainersRunning }} <br>
+        Containers paused: {{ docker.info.ContainersPaused }} <br>
+        Containers stopped: {{ docker.info.ContainersStopped }} <br>
+
+        NCPU: {{ docker.info.NCPU }} <br>
+        MemTotal: {{ docker.info.MemTotal }} <br>
+
+
+    <h2>Images/Containers</h2>
+
+        <h3>Images</h3>
+        <!-- Praktomat Images: {{ docker.images }} <br> -->
+        {% for image in docker.images %}
+            <!-- {{ image.tags.0 }} Size: {{ image.attr.Size }} MB <br> -->
+            {{ image.name }} {{ image.sizeMb }} MB <br>
+        {% endfor %}
+
+        <h3>Containers</h3>
+        {% for container in docker.containers %}
+            {{ container.name }} {{ container.status }} (started at {{ container.attrs.State.StartedAt }}) <br>
+        {% endfor %}
+
+        <!--Containers: {{ docker.containers }} <br> -->
+
+
+    <h2>Disk usage</h2>
+        Sandbox disk usage: {{ disk.sandbox }}
+
+</body>
+</html>

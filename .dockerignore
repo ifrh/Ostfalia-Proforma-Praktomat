@@ -2,14 +2,24 @@
 # named migrations
 
 # clean build
-**/migrations
+*/migrations
 
 # no compiled python
-**/__pycache__
+*/__pycache__
+*/*.pyc
+*/*.bak
 
-examples
+*/unused/*
+
+old_examples
+test
 
 documentation
 
 docker-image
+docker-sandbox-image/test-executor
 
+lib-src
+
+
+.git

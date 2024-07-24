@@ -23,6 +23,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseNotFound
 from django.conf import settings
+from django.template.loader import get_template
 import os
 
 from tasks.models import Task
@@ -30,6 +31,8 @@ from solutions.models import Solution
 
 from . import api_v2
 from . import api_lon_capa
+from . import sandbox
+
 from utilities.safeexec import execute_arglist
 import VERSION
 
@@ -66,39 +69,37 @@ def show_version(request):
 
 @csrf_exempt
 def show_info(request):
+    version = VERSION.version
+
+    disk = {}
+
     # read disk usage for sandbox
-    response = HttpResponse()
-    response.write("Praktomat: " + VERSION.version + "<br>\r\n")
     sandboxdir = settings.SANDBOX_DIR
     if not os.path.exists(sandboxdir):
         # sandbox folder does not exist
-        response.write("Sandbox folder not found<br>\r\n")
+        disk['sandbox'] = "Sandbox folder not found"
     else:
         command = ['du', '-s', '-h']
         result = execute_arglist(args=command, working_directory=sandboxdir, timeout=60, unsafe=True)
         resultout = result[0]
-        resulterr = result[1]
-        # print(resultout)
-        # print(resulterr)
+        # resulterr = result[1]
+        disk['sandbox'] = resultout
 
-        response.write("Sandbox disk usage: " + resultout + "<br>\r\n")
-
+    database = {}
     # get number of tasks
-    # now = django.utils.timezone.now()
-    counter = 0
-    for e in Task.objects.all():
-        counter = counter + 1
-    response.write("Tasks: " + str(counter) + "<br>\r\n")
-
+    database['tasks'] = len(Task.objects.all())
     # get number of solutions
+    database['solutions'] = len(Solution.objects.all())
 
-    counter = 0
-    for e in Solution.objects.all():
-        counter = counter + 1
-    response.write("Solution: " + str(counter) + "<br>\r\n")
+    docker = sandbox.get_state()
+    # print(docker)
 
-    # prefer Json?
-    return HttpResponse(response)
+    t = get_template('proforma/info.html')
+    html_result = t.render({'database': database,
+                            'disk': disk,
+                            'version': version,
+                            'docker': docker})
+    return HttpResponse(html_result)
 
 @csrf_exempt
 def icon(request):
@@ -113,25 +114,3 @@ def error_page(request):
     response.status_code = 404
     return response
 
-# @csrf_exempt  # NOTE: f�r Marcel danach remove;)
-# def test_post(request, ):
-#     response = HttpResponse()
-#
-#     if not (request.method == "POST"):
-#         response.write("No Post-Request")
-#     else:
-#         postMessages = request.POST
-#         for key, value in postMessages.items():
-#             response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
-#         try:
-#             if not (request.FILES is None):
-#                 response.write("List of Files: \r\n")
-#                 for key, value in request.FILES.items():
-#                     response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
-#                     response.write("Content of: " + str(key) + "\r\n")
-#                     response.write(request.FILES[key].read() + "\r\n")
-#             else:
-#                 response.write("\r\n\r\n No Files Attached")
-#         except Exception:
-#             response.write("\r\n\r\n Exception!: " + str(Exception))
-#     return response

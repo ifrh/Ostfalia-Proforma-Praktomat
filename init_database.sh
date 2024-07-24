@@ -1,5 +1,7 @@
 #!/bin/bash
 #set -x
+set -o pipefail
+set -e
 
 DATABASE_INITIALISED=0
 
@@ -22,21 +24,22 @@ fi
 
 # clear python cache since there can be old files that confuse migrations
 echo "clean python cache"
-sudo -n /usr/bin/py3clean /praktomat
+sudo -n /usr/local/bin/pyclean /praktomat/src
 
-# py3clean does not delete cache files generated from source files that have been deleted since
-find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+# pyclean does not delete cache files generated from source files that have been deleted since
+# find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf || true
 
 # update tables in case of a modified or added checker
 
 echo "make migrations"
 # do not use exit here!
 # sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations configuration
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations accounts
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations tasks
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations solutions
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations checker
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations
+sudo -n -E /usr/local/bin/python3 ./src/manage-docker.py makemigrations accounts
+sudo -n -E /usr/local/bin/python3 ./src/manage-docker.py makemigrations tasks
+sudo -n -E /usr/local/bin/python3 ./src/manage-docker.py makemigrations solutions
+sudo -n -E /usr/local/bin/python3 ./src/manage-docker.py makemigrations checker
+sudo -n -E /usr/local/bin/python3 ./src/manage-docker.py makemigrations
 
 echo "migrate"
 python3 ./src/manage-docker.py migrate || exit

@@ -4,10 +4,11 @@ import re
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from checker.basemodels import CheckerFileField, CheckerResult, truncated_log
-from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from django.utils.html import escape
 from checker.checker.ProFormAChecker import ProFormAChecker
+from proforma import sandbox
+
 import os
 
 import logging
@@ -27,6 +28,29 @@ RXSECURE = re.compile(r"(import(?! math\s*$)(?! numpy\s*$)|open\s*\(|file\s*\(|e
 RXCODING = re.compile(r"coding[=:]\s*([-\w.]+)")
 
 RXSHEBANG = re.compile(r"(#!)+.*", re.MULTILINE)
+
+
+
+class PythonDoctestSandbox(sandbox.DockerSandbox):
+    def __init__(self, client, studentenv, command):
+        super().__init__(client, studentenv,
+                         "python3 -m compileall /sandbox -q", # compile command
+                         command, # run command
+                         None) # download path
+
+
+class PythonDoctestImage(sandbox.PythonImage):
+    """ derive from PythonImage in order to support requirements """
+    def __init__(self, praktomat_test):
+        super().__init__(praktomat_test)
+
+    def get_container(self, studentenv, command):
+        self.create_image()  # function is generator, so this must be handled in order to be executed
+        sandbox = PythonDoctestSandbox(self._client, studentenv, command)
+        sandbox.create(self._get_image_fullname(self._get_image_tag()))
+        return sandbox
+
+
 
 class PythonChecker(ProFormAChecker):
     name = models.CharField(max_length=100, default="Externen Tutor ausführen",
@@ -51,6 +75,11 @@ class PythonChecker(ProFormAChecker):
         return RXFAIL.search(output) is None
 
     def output_ok_positiv(self, output):
+        print(RXPASS.search(output))
+
+        x = re.search("Test passed.", output)
+        print(x)
+
         if RXPASS.search(output):
             return True
         else:
@@ -63,42 +92,20 @@ class PythonChecker(ProFormAChecker):
         else:
             return False
 
-    def removeSystemPath(self, output, env):
-        output = re.sub(env.tmpdir(), "", output, flags=re.MULTILINE)
-        output = re.sub("/usr/lib/python2.7/", "", output, flags=re.MULTILINE)
-        return output
-
     def run(self, env):
         """ Runs tests in a special environment. Here's the actual work.
         This runs the check in the environment ENV, returning a CheckerResult. """
 
+        test_dir = env.tmpdir()
         # Setup
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
 
-        test_dir = env.tmpdir()
-        replace = [(u'PROGRAM', env.program())] if env.program() else []
+        # replace = [(u'PROGRAM', env.program())] if env.program() else []
+        # copy test files (why are they not copied in prepare_run?)
         copy_file(self.doctest.path, os.path.join(test_dir,
                         os.path.basename(self.doctest.path)))
-        script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
-        # copy python interpreter with all its shared libraries into sandbox
-        # since it is not available because of chroot in restrict
-
-        # todo: make properly
-        copy_file('/usr/bin/python3', test_dir + '/python3')
-        self.copy_shared_objects(env)
-
-        # todo: make properly
-        # python3 instead of 3.8 and prepare outside checker
-        createpathonlib = "(cd / && tar -cf - usr/lib/python3.8) | (cd " + test_dir + " && tar -xf -)"
-        os.system(createpathonlib)
-
-
-        # Run the tests -- execute dumped shell script 'script.sh'
-        cmd = ["./python3", os.path.basename(self.doctest.name), "-v"]
-        environ = dict()
-        environ['USER'] = env.user().get_full_name()
-        environ['HOME'] = test_dir
+        # script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
 
         for (name, content) in env.sources():
             if self.checkSubmission(content):
@@ -108,54 +115,44 @@ class PythonChecker(ProFormAChecker):
                                "Betriebssystem kritische Befehle sind verboten")
                 return result
 
-        # (output, error, exitcode) = execute(args, working_directory=test_dir, environment_variables=environ)
+        run_cmd = "python3 " + os.path.basename(self.doctest.name) + " -v"
+        logger.debug(run_cmd)
 
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(),
-                                                               environment_variables=environ,
-                                                               # use_default_user_configuration=True,
-                                                               timeout=settings.TEST_TIMEOUT,
-                                                               fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                               # extradirs=[script_dir]
-                                                                       )
+        p_sandbox = PythonDoctestImage(self).get_container(test_dir, run_cmd)
+        p_sandbox.upload_environmment()
 
-
-        # cleanup sandbox
-        # todo: make properly shutil...
-        try:
-            os.system('rm -rf ' + test_dir + '/lib')
-            os.system('rm -rf ' + test_dir + '/lib64')
-            os.system('rm -rf ' + test_dir + '/usr/lib')
-            os.system('rm -rf ' + test_dir + '/__pycache__')
-            os.system('rm ' + test_dir + '/python3')
-        except:
-            logger.error('error while cleaning up python sandbox')
-
+        # precompile
+        (passed, output) = p_sandbox.compile_tests()
+        logger.debug("compilation passed is "+ str(passed))
         logger.debug(output)
-        logger.debug(error)
+        if not passed:
+            return self.handle_compile_error(env, output, "", False, False)
+
+        # run test
+        (passed, output, timeout) = p_sandbox.runTests(image_suffix="python")
         result = self.create_result(env)
         (output, truncated) = truncated_log(output)
 
         if self.remove:
             output = re.sub(self.remove, "", output)
 
+        output = output.strip() # remove whitespace characters from output - needed for regular expression
+
         # Remove Praktomat-Path-Prefixes from result:
-        output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
+        #output = re.sub(r"^"+re.escape(test_dir)+"/+", "", output, flags=re.MULTILINE)
+        output = re.sub(r"^"+re.escape("/sandbox")+"/+", "", output, flags=re.MULTILINE)
         if ProFormAChecker.retrieve_subtest_results:
             # plain text output
-            result.set_log(output, timed_out=timed_out, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
+            result.set_log(output, timed_out=timeout, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
         else:
             if not self.returns_html:
                 output = '<pre>' + output + '</pre>'
             output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
-            result.set_log(output, timed_out=timed_out, truncated=truncated)
-        result.set_passed(not exitcode and not timed_out and self.output_ok_positiv(output) and not truncated)
+            result.set_log(output, timed_out=timeout, truncated=truncated)
+
+        logger.debug(output)
+        result.set_passed(passed and not timeout and self.output_ok_positiv(output) and not truncated)
 
         return result
 
-
-from checker.admin import CheckerInline
-
-
-class PythonCheckerInline(CheckerInline):
-    model = PythonChecker

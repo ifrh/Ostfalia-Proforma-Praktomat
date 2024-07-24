@@ -10,9 +10,12 @@ from checker.basemodels import Checker, CheckerFileField, CheckerResult, truncat
 from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
+from proforma import sandbox
 
 import logging
 logger = logging.getLogger(__name__)
+
+use_sandbox = True
 
 class CheckStyleChecker(ProFormAChecker):
 
@@ -32,6 +35,7 @@ class CheckStyleChecker(ProFormAChecker):
         (u'check-8.23', u'Checkstyle 8.23 all'),
         (u'check-8.29', u'Checkstyle 8.29 all'),
         (u'check-10.1', u'Checkstyle 10.1 all'),
+        (u'check-10.17', u'Checkstyle 10.17 all'),
     )
     check_version = models.CharField(max_length=16, choices=CHECKSTYLE_CHOICES, default="check-8.29")
 
@@ -47,20 +51,34 @@ class CheckStyleChecker(ProFormAChecker):
 
     def run(self, env):
         self.copy_files(env)
-        
-        # Save save check configuration
-        config_path = os.path.join(env.tmpdir(), "checks.xml")
+        test_dir = env.tmpdir()
+
+        # Save check configuration
+        config_path = os.path.join(test_dir, "checks.xml")
         copy_file(self.configuration.path, config_path)
 
         # Run the tests
         # tests are run unsafe because checkstyle fails when network is missing
-        args = [settings.JVM, "-cp", settings.CHECKSTYLE_VER[self.check_version], "-Dbasedir=.",
+        args = ["java", "-cp", settings.CHECKSTYLE_VER[self.check_version], "-Dbasedir=.",
                 "com.puppycrawl.tools.checkstyle.Main", "-c", "checks.xml"] + \
-               [name for (name, content) in env.sources()] # + [" > ", env.tmpdir() + "/output.txt"]
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, env.tmpdir(), unsafe=True)
+               [name for (name, content) in env.sources()]  # + [" > ", env.tmpdir() + "/output.txt"]
+        if use_sandbox:
+            j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+            j_sandbox.upload_environmment()
+
+            cmd = ' '.join(args)  # convert cmd to string
+            timed_out = False
+            (passed, output, timed_out) = j_sandbox.runTests(cmd, safe=False, image_suffix="cs")
+            # (passed, output) = j_sandbox.exec_unsafe(cmd)
+
+            exitcode = 0 if passed else 1
+            oom_ed = False
+        else:
+            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(args, test_dir, unsafe=True)
 
         # Remove Praktomat-Path-Prefixes from result:
-        output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
+        output = re.sub(r""+re.escape("/sandbox/")+"+", "", output, flags=re.MULTILINE)
+        output = re.sub(r""+re.escape(test_dir + "/")+"+", "", output, flags=re.MULTILINE)
         warnings = str.count(output, '[WARN]')
         errors = str.count(output, '[ERROR]')
 
@@ -92,7 +110,7 @@ class CheckStyleChecker(ProFormAChecker):
 
         return result
 
-from checker.admin import    CheckerInline
+# from checker.admin import    CheckerInline
 
-class CheckStyleCheckerInline(CheckerInline):
-    model = CheckStyleChecker
+# class CheckStyleCheckerInline(CheckerInline):
+#    model = CheckStyleChecker

@@ -5,9 +5,10 @@ import re
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from checker.basemodels import CheckerResult, truncated_log
-from utilities.safeexec import execute_arglist
+#from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
+from proforma import sandbox
 
 
 import logging
@@ -43,37 +44,53 @@ class MakeChecker(ProFormAChecker):
     def run(self, env):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
+        test_dir = env.tmpdir()
 
-        # compile
-        build_result = self.compile_make(env)
-        if build_result != True:
-            return build_result
-
-        # remove source code files
-        extensions = ('.c', '.h', '.a', '.o', 'CMakeCache.txt', 'Makefile', 'makefile', 'CMakeLists.txt',
-                      'cmake_install.cmake')
-        self.remove_source_files(env, extensions)
-
-        # copy shared objects
-        self.copy_shared_objects(env)
-
+        # cmd = [self.class_name]
+        gt_sandbox = sandbox.CppImage(self).get_container(test_dir, self.class_name)
+        gt_sandbox.upload_environmment()
         # run test
-        logger.debug('run ' + self.class_name)
-        cmd = [self.class_name]
-        #[output, error, exitcode, timed_out, oom_ed] = \
-        #    execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
-        #logger.debug(output)
-        #logger.debug("exitcode: " + str(exitcode))
+        (passed, output) = gt_sandbox.compile_tests()
+        if not passed:
+            return self.handle_compile_error(env, output, "", False, False)
+        (passed, output, timeout) = gt_sandbox.runTests(image_suffix="make")
+        logger.debug("passed " + str(passed))
+        logger.debug("output " + output)
+        result = self.create_result(env)
 
-        # get result
-        (result, output) = self.run_command(cmd, env)
-        if not result.passed:
-            # error
-            return result
+        # if passed:
+        #    gt_sandbox.get_result_file()
+
+        # # compile
+        # build_result = self.compile_make(env)
+        # if build_result != True:
+        #     return build_result
+        #
+        # # remove source code files
+        # extensions = ('.c', '.h', '.a', '.o', 'CMakeCache.txt', 'Makefile', 'makefile', 'CMakeLists.txt',
+        #               'cmake_install.cmake')
+        # self.remove_source_files(env, extensions)
+        #
+        # # copy shared objects
+        # self.copy_shared_objects(env)
+        #
+        # # run test
+        # logger.debug('run ' + self.class_name)
+        # cmd = [self.class_name]
+        # #[output, error, exitcode, timed_out, oom_ed] = \
+        # #    execute_arglist(cmd, env.tmpdir(), timeout=settings.TEST_TIMEOUT, fileseeklimit=settings.TEST_MAXFILESIZE)
+        # #logger.debug(output)
+        # #logger.debug("exitcode: " + str(exitcode))
+        #
+        # # get result
+        # (result, output) = self.run_command(cmd, env)
+        #if not passed:
+        #     # error
+        #     return result
 					
         (output, truncated) = truncated_log(output)
-        result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
+        result.set_log(output, timed_out=timeout, truncated=truncated, oom_ed=False,
                        log_format=CheckerResult.TEXT_LOG)
-        result.set_passed(self.output_ok(output) and not truncated)
+        result.set_passed(passed and not truncated)
         return result
 

@@ -1,0 +1,98 @@
+
+# jammy: Ubuntu 22.04 LTS
+# FROM debian:bookworm-slim
+FROM ubuntu:jammy
+#FROM eclipse-temurin:21.0.3_9-jdk
+#FROM eclipse-temurin:21-jammy
+# => Python 3.10
+
+MAINTAINER Ostfalia
+
+ENV PYTHONUNBUFFERED 1
+
+ARG PRAKTOMAT_ID=1100
+
+
+# set locale to German (UTF-8)
+ARG LOCALE=de_DE.UTF-8
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# change locale to something UTF-8
+RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE} && rm -rf /var/lib/apt/lists/*
+ENV LANG ${LOCALE}
+ENV LC_ALL ${LOCALE}
+
+
+
+# Java:
+# install OpenJDK (for Java Compiler checks)
+# install OpenJFK for GUI tests (for Java JFX tasks)
+
+# RUN apt-get update && apt-get install -y default-jdk openjfx subversion cmake libcunit1 libcunit1-dev
+
+# install Java 17 from Bellsoft
+# CHANGE 'arch=amd64' to something that fits your architecture
+###RUN wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
+###RUN echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
+###RUN sudo apt-get update && apt-get install -y bellsoft-java17
+
+# Install Java and JavaFX
+# RUN apt-get update && apt-get install -y openjfx && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y default-jdk libopenjfx-java && rm -rf /var/lib/apt/lists/*
+
+# debian has no openjdk-21-jdk package :-(
+#RUN apt-get update \
+#   && apt-get install -y wget \
+#   && wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb && dpkg -i jdk-21_linux-x64_bin.deb
+#RUN apt-get update && apt-get install -y libopenjfx-java && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y openjdk-21-jdk && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openjdk-21-jdk libopenjfx-java && rm -rf /var/lib/apt/lists/*
+
+
+ADD extra /praktomat/extra
+
+
+# add JAVA test specific libraries
+# Checkstyle
+ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
+    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar \
+    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar \
+    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar \
+# JUnit4 runtime libraries
+    https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.jar \
+# JUnit 5
+    https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar \
+# destination
+    http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip \
+    /praktomat/lib/
+
+#RUN apt-get update \
+#    && apt-get install -y wget unzip \
+#    && wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib \
+#    && apt remove -y wget unzip \
+#    && rm -rf /var/lib/apt/lists/*
+    
+
+
+
+# set permissions
+# RUN chmod -R 0644 /praktomat/lib /praktomat/extra
+RUN find /praktomat -type d -exec chmod 755 {} \; \
+    && find /praktomat -type f -exec chmod 644 {} \;
+
+
+RUN apt list --installed > /praktomat/installed.txt
+
+# create sandbox folder and copy framework files into it
+WORKDIR /sandbox
+
+RUN chmod -R 777 /sandbox
+
+# add user praktomat
+RUN useradd -u ${PRAKTOMAT_ID} praktomat -s /bin/bash
+
+# change user
+USER praktomat
+
+

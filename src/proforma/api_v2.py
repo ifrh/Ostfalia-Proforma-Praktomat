@@ -246,13 +246,13 @@ class Proforma_Request:
 
             grader = grade.Grader(self.proformatask, self.NAMESPACE)
             logger.debug(self.NAMESPACES)
-            yield "data: Get submission files\n\n"
+            yield "data: get submission files\n\n"
             submission_files, version_control = self.get_submission_files()  # returns a dictionary (filename -> content)
 
             # run tests
             yield from grader.grade(submission_files, version_control, True)
             # get result
-            yield "data: Get result\n\n"
+            yield "data: get result\n\n"
             grade_result = grader.get_result(self.templatefile)
 
             # return result

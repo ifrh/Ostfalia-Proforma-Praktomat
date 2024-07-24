@@ -14,8 +14,11 @@ from checker.basemodels import CheckerResult, CheckerFileField, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
+from proforma import sandbox
 
 logger = logging.getLogger(__name__)
+
+use_sandbox = True
 
 RXSECURE = re.compile(r"(deleteFile|appendFile|load|readFile|writeFile|stop|assert|trace|ask|\brun\b|eval|execute)",
                       re.MULTILINE)
@@ -94,17 +97,29 @@ class SetlXChecker(ProFormAChecker):
         cmd = [settings.JVM, '-cp', settings.SETLXJAR, "org.randoom.setlx.pc.ui.SetlX", "concat.stlx"]
         # (output, error, exitcode) = execute(args, env.tmpdir())
 
-        environ = {}
-        environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
 
-        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, env.tmpdir(),
+        if use_sandbox:
+            j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+            j_sandbox.upload_environmment()
+
+            cmd = ' '.join(cmd)  # convert cmd to string
+            timed_out = False
+#            (passed, output, timed_out) = j_sandbox.runTests(cmd, safe=False)
+            (passed, output, timed_out) = j_sandbox.runTests(command=cmd, image_suffix="setlx")
+
+            exitcode = 0 if passed else 1
+            oom_ed = False
+        else:
+            environ = {}
+            environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
+            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(cmd, test_dir,
                                                                            environment_variables=environ,
                                                                            timeout=settings.TEST_TIMEOUT,
                                                                            fileseeklimit=settings.TEST_MAXFILESIZE,
                                                                            extradirs=[script_dir],
                                                                         unsafe=True)
 
-        # [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
+            # [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
                                                            #  use_default_user_configuration=True,
                                                            #  timeout=settings.TEST_TIMEOUT,
                                                            #  fileseeklimit=settings.TEST_MAXFILESIZE,
@@ -114,8 +129,8 @@ class SetlXChecker(ProFormAChecker):
         (output, truncated) = truncated_log(output)
 
         # Remove Praktomat-Path-Prefixes from result:
-        # output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
-        output = re.sub(r""+re.escape(env.tmpdir() + "/")+"+", "", output, flags=re.MULTILINE)
+        output = re.sub(r""+re.escape("/sandbox/")+"+", "", output, flags=re.MULTILINE)
+        output = re.sub(r""+re.escape(test_dir + "/")+"+", "", output, flags=re.MULTILINE)
 
         passed = True
         if len(output.strip()) == 0:
@@ -137,8 +152,8 @@ class SetlXChecker(ProFormAChecker):
 
         return result
 
-from checker.admin import CheckerInline
+# from checker.admin import CheckerInline
 
 
-class SetlXCheckerInline(CheckerInline):
-    model = SetlXChecker
+# class SetlXCheckerInline(CheckerInline):
+#    model = SetlXChecker

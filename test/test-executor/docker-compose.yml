@@ -1,0 +1,19 @@
+version: '3'
+
+services:    
+  praktomat_sandbox:
+    restart: "no"
+    build:
+      context: .
+#      args:
+#        LOCALE: de_DE.UTF-8
+    command: python3 ./executor.py
+    volumes:
+#      - ./result:/result
+      - ./solution:/solution:ro
+      - ./task:/task:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+# copy result:
+# docker cp 1a31c67898c1:/result/unittest_results.xml .

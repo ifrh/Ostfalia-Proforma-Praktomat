@@ -89,8 +89,6 @@ PRIVATE_KEY = join(dirname(dirname(dirname(__file__))), 'examples', 'certificate
 CERTIFICATE = join(dirname(dirname(dirname(__file__))), 'examples', 'certificates', 'signer.pem')
 SECRET_KEY = "not-so-secret"
 
-SYSADMIN_MOTD_URL = "https://praktomat.cs.kit.edu/sysadmin_motd.html"
-
 # Use a dedicated user to test submissions
 USEPRAKTOMATTESTER = True
 
@@ -135,7 +133,7 @@ CHECKSTYLE_VER['check-10.1'] = '/praktomat/lib/checkstyle-10.1-all.jar'
 # GIT_LOG_FORMAT = "--oneline" # short hash message
 GIT_LOG_FORMAT = "--pretty=format:%H" # only full hash
 
-JCFDUMP = 'jcf-dump'
+# JCFDUMP = 'jcf-dump'
 SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 
 #JAVA_BINARY = 'javac-sun-1.7'
@@ -145,7 +143,7 @@ SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 
 
 # Our VM has 4 cores, so lets try to use them
-NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 6
+# NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 6
 # But not with Isabelle, which is memory bound
 
 # Finally load defaults for missing settings.
@@ -158,21 +156,25 @@ defaults.load_defaults(globals())
 defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/x-stlx', '.stlx'))
 defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/plain', '.csv'))
 
+# default memory limit for docker sandboxes
+TEST_MAXMEM_DOCKER_DEFAULT = 1800
+TEST_MAXMEM_DOCKER_JAVA = 5000  # java sandboxes
+TEST_MAXMEM_DOCKER_PYTHON = 2200  # python sandboxes
 
 
-# logging formatter for profiling function runtime
-class DurationFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.start_time = time.time()
-    def formatTime(self, record, datefmt=None):
-        now = record.created
-        duration = now - self.start_time
-        self.start_time = time.time()
-        return format(duration * 1000, '.1f')
-
-def formatterfactory(format):
-    return DurationFormatter(format)
+# # logging formatter for profiling function runtime
+# class DurationFormatter(logging.Formatter):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.start_time = time.time()
+#     def formatTime(self, record, datefmt=None):
+#         now = record.created
+#         duration = now - self.start_time
+#         self.start_time = time.time()
+#         return format(duration * 1000, '.1f')
+#
+# def formatterfactory(format):
+#     return DurationFormatter(format)
 
 LOGGING = {
     'version': 1,
@@ -234,8 +236,8 @@ LOGGING = {
         },
         'utilities': {
             'handlers': ['console'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },

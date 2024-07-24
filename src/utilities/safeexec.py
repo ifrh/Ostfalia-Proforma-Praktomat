@@ -51,6 +51,8 @@ def execute_arglist(args, working_directory, environment_variables={},
                     timeout=None, maxmem=None, fileseeklimit=None, extradirs=[], unsafe=False, error_to_output=True):
     """ Wrapper to execute Commands with the praktomat testuser. Excpects Command as list of arguments, the first being the execeutable to run. """
     assert isinstance(args, list)
+    if not unsafe:
+        raise Exception("Safe mode is not supported")
 
     command = args[:]
 
@@ -65,35 +67,35 @@ def execute_arglist(args, working_directory, environment_variables={},
 
     sudo_prefix = ["sudo", "-E", "-u", "tester"]
 
-    if unsafe:
-        command = []
-    elif settings.USEPRAKTOMATTESTER:
-        # run restrict binary which changes user to tester and limits resources
-        # command = sudo_prefix.copy()
-        command = ["/sbin/restrict"]
-    elif settings.USESAFEDOCKER:
-        command = ["sudo", "safe-docker"]
-        # for safe-docker, we cannot kill it ourselves, due to sudo, so
-        # rely on the timeout provided by safe-docker
-        if timeout is not None:
-            command += ["--timeout", "%d" % timeout]
-            # give the time out mechanism below some extra time
-            timeout += 5
-        if maxmem is not None:
-            command += ["--memory", "%sm" % maxmem]
-        for d in extradirs:
-            command += ["--dir", d]
-        command += ["--"]
-        # ensure ulimit
-        if fileseeklimit:
-            # Doesn’t work yet: http://stackoverflow.com/questions/25789425
-            command += ["bash", "-c", 'ulimit -f %d; exec \"$@\"' % fileseeklimit, "ulimit-helper"]
-        # add environment
-        command += ["env"]
-        for k, v in environment_variables.items():
-            command += ["%s=%s" % (k, v)]
-    else:
-        command = []
+    # if unsafe:
+    command = []
+    # elif settings.USEPRAKTOMATTESTER:
+    #     # run restrict binary which changes user to tester and limits resources
+    #     # command = sudo_prefix.copy()
+    #     command = ["/sbin/restrict"]
+    # # elif settings.USESAFEDOCKER:
+    # #     command = ["sudo", "safe-docker"]
+    # #     # for safe-docker, we cannot kill it ourselves, due to sudo, so
+    # #     # rely on the timeout provided by safe-docker
+    # #     if timeout is not None:
+    # #         command += ["--timeout", "%d" % timeout]
+    # #         # give the time out mechanism below some extra time
+    # #         timeout += 5
+    # #     if maxmem is not None:
+    # #         command += ["--memory", "%sm" % maxmem]
+    # #     for d in extradirs:
+    # #         command += ["--dir", d]
+    # #     command += ["--"]
+    # #     # ensure ulimit
+    # #     if fileseeklimit:
+    # #         # Doesn’t work yet: http://stackoverflow.com/questions/25789425
+    # #         command += ["bash", "-c", 'ulimit -f %d; exec \"$@\"' % fileseeklimit, "ulimit-helper"]
+    # #     # add environment
+    # #     command += ["env"]
+    # #     for k, v in environment_variables.items():
+    # #         command += ["%s=%s" % (k, v)]
+    # else:
+    #     command = []
     command += args[:]
 
     logger.debug('execute command in ' + working_directory + ':')
@@ -104,7 +106,7 @@ def execute_arglist(args, working_directory, environment_variables={},
     def prepare_subprocess():
         # create a new session for the spawned subprocess using os.setsid,
         # so we can later kill it and all children on timeout, taken from http://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
-        os.setsid()
+        # os.setsid()
         # Limit the size of files created during execution
         resource.setrlimit(resource.RLIMIT_NOFILE, (128, 128))
         if fileseeklimit is not None:
@@ -117,8 +119,8 @@ def execute_arglist(args, working_directory, environment_variables={},
         stderr=subprocess.STDOUT if error_to_output else subprocess.PIPE,
         cwd=working_directory,
         env=environment,
-        #start_new_session=True, # call of os.setsid()
-        preexec_fn=prepare_subprocess
+        start_new_session=True # call of os.setsid()
+        # preexec_fn=prepare_subprocess
     )
 
     timed_out = False
@@ -142,15 +144,19 @@ def execute_arglist(args, working_directory, environment_variables={},
             # negative pid means process group
             # restrict used
             term_cmd = ["kill", "-TERM", "-" + str(process.pid)]
-            kill_cmd = ["kill", "-KILL", "-" + str(process.pid)]
+            kill_cmd = ["kill", "-SIGKILL", "-" + str(process.pid)]
             term_cmd = sudo_prefix + ["-n"] + term_cmd
             kill_cmd = sudo_prefix + ["-n"] + kill_cmd
 
-        subprocess.call(term_cmd)
+        print(term_cmd)
+        returncode = subprocess.call(term_cmd)
+        logger.debug("kill returned " + str(returncode))
         if process.poll() == None:
             time.sleep(5)
             logger.debug("force kill: " + str(kill_cmd))
-            subprocess.call(kill_cmd)
+            # os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            returncode = subprocess.call(kill_cmd)
+            logger.debug("force kill returned " + str(returncode))
 
             # if not unsafe and settings.USEPRAKTOMATTESTER:
             #    # restrict used
@@ -162,12 +168,6 @@ def execute_arglist(args, working_directory, environment_variables={},
         [output, error] = process.communicate()
         if not timed_out:
             raise # no timeout
-
-    if settings.USESAFEDOCKER and process.returncode == 23: #magic value
-        timed_out = True
-
-    if settings.USESAFEDOCKER and process.returncode == 24: #magic value
-        oom_ed = True
 
     # proforma: remove invalid xml char
     return [escape_xml_invalid_chars(output.decode('utf-8')), error, process.returncode, timed_out, oom_ed]

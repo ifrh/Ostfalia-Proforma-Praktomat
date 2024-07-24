@@ -1,0 +1,17 @@
+version: '3'
+
+services:    
+  praktomat_sandbox:
+    restart: "no"
+    build:
+      context: .
+#      args:
+#        LOCALE: de_DE.UTF-8
+    command: tail -f /dev/null
+#    volumes:
+#      - ./result:/result:rw
+#      - ./solution:/solution:ro
+
+
+# copy result:
+# docker cp 1a31c67898c1:/__result__/unittest_results.xml .

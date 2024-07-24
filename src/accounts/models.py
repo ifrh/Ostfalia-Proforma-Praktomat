@@ -40,136 +40,136 @@ class User(BasicUser):
     def __str__(self):
         return self.get_full_name() or self.username
 
-    def set_new_activation_key(self):
-        # The activation key will be a SHA1 hash, generated from a combination of the username and a random salt.
-        sha = hashlib.sha1()
-        sha.update( str(random.random()) + self.username)
-        self.activation_key = sha.hexdigest()
-        self.save()
+    # def set_new_activation_key(self):
+    #     # The activation key will be a SHA1 hash, generated from a combination of the username and a random salt.
+    #     sha = hashlib.sha1()
+    #     sha.update( str(random.random()) + self.username)
+    #     self.activation_key = sha.hexdigest()
+    #     self.save()
+    #
+    # def activation_key_expired(self):
+    #     """
+    #     Determine whether the activation key has expired, returning a boolean -- ``True`` if the key has expired.
+    #
+    #     The date the user signed up is incremented by the number of days specified in the setting ''get_settings().acount_activation_days`` (which should be the number of days after signup during which a user is allowed to activate their account); if the result is less than or equal to the current date, the key has expired and this method returns ``True``.
+    #     """
+    #     # skipped in Proforma
+    #     # expiration_date = datetime.timedelta(days=get_settings().acount_activation_days)
+    #     return False #     (self.user.date_joined + expiration_date <= datetime.datetime.now())
+    #
+    # activation_key_expired.boolean = True
+    #
+    # def is_activated(self):
+    #     """
+    #     Determine whether the user is already activated, returning a boolean -- ``True`` if he is.
+    #
+    #     If the user has already activated, the activation key will have been reset to the string ``ALREADY_ACTIVATED``
+    #     """
+    #     return self.activation_key == "ALREADY_ACTIVATED"
+    # is_activated.boolean = True
+    #
+    # def can_activate(self):
+    #     """
+    #     Determine whether the user can activate his account, returning a boolean.
+    #
+    #     This is determined by a three-step process:
+    #
+    #     1.     If the user has already activated, re-activating is not permitted, and so this method returns ``False`` in this case.
+    #
+    #     2.     If the activation key has expired this method returns ``False``.
+    #
+    #     3.     If an other user already activated an account with the same matnumber this method returns ``False``.
+    #     """
+    #     #dublicate_matnumber = User.objects.filter(mat_number=self.mat_number, is_active=True).count() >= 1
+    #     return not self.is_activated() and not self.activation_key_expired() # and not dublicate_matnumber
+    # can_activate.boolean = True
+    #
+    # def activate_user(activation_key):
+    #     """
+    #     Validate an activation key and activate the corresponding ''User`` if valid.
+    #
+    #     If the key is valid and has not expired, return the ``User`` after activating.
+    #
+    #     If the key is not valid or has expired, return ``False``.
+    #
+    #     If the key is valid but the ``User`` is already active, return ``False``.
+    #
+    #     To prevent reactivation of an account which has been deactivated by site administrators, the activation key is reset to the string ``ALREADY_ACTIVATED`` after successful activation.
+    #
+    #     """
+    #     # Make sure the key we're trying conforms to the pattern of a
+    #     # SHA1 hash; if it doesn't, no point trying to look it up in
+    #     # the database.
+    #     SHA1_RE = re.compile('^[a-f0-9]{40}$')
+    #     if SHA1_RE.search(activation_key):
+    #         try:
+    #             user = User.objects.get(activation_key=activation_key)
+    #         except User.DoesNotExist:
+    #             return False
+    #         if user.can_activate():
+    #             user.is_active = True
+    #             user.activation_key = "ALREADY_ACTIVATED"
+    #             user.save()
+    #             return user
+    #         return False
+    # activate_user = staticmethod(activate_user)
+    #
+    # # def is_shibboleth_user(self):
+    # #    return not self.has_usable_password()
+    #
+    # # Cache group membership for users
+    # def cached_groups(self):
+    #     if self._cached_groups is None:
+    #         self._cached_groups = set(x['name'] for x in self.groups.values('name'))
+    #     return self._cached_groups
 
-    def activation_key_expired(self):
-        """
-        Determine whether the activation key has expired, returning a boolean -- ``True`` if the key has expired.
-
-        The date the user signed up is incremented by the number of days specified in the setting ''get_settings().acount_activation_days`` (which should be the number of days after signup during which a user is allowed to activate their account); if the result is less than or equal to the current date, the key has expired and this method returns ``True``.
-        """
-        # skipped in Proforma
-        # expiration_date = datetime.timedelta(days=get_settings().acount_activation_days)
-        return False #     (self.user.date_joined + expiration_date <= datetime.datetime.now())
-
-    activation_key_expired.boolean = True
-
-    def is_activated(self):
-        """
-        Determine whether the user is already activated, returning a boolean -- ``True`` if he is.
-
-        If the user has already activated, the activation key will have been reset to the string ``ALREADY_ACTIVATED``
-        """
-        return self.activation_key == "ALREADY_ACTIVATED"
-    is_activated.boolean = True
-
-    def can_activate(self):
-        """
-        Determine whether the user can activate his account, returning a boolean.
-
-        This is determined by a three-step process:
-
-        1.     If the user has already activated, re-activating is not permitted, and so this method returns ``False`` in this case.
-
-        2.     If the activation key has expired this method returns ``False``.
-
-        3.     If an other user already activated an account with the same matnumber this method returns ``False``.
-        """
-        #dublicate_matnumber = User.objects.filter(mat_number=self.mat_number, is_active=True).count() >= 1
-        return not self.is_activated() and not self.activation_key_expired() # and not dublicate_matnumber
-    can_activate.boolean = True
-
-    def activate_user(activation_key):
-        """
-        Validate an activation key and activate the corresponding ''User`` if valid.
-
-        If the key is valid and has not expired, return the ``User`` after activating.
-
-        If the key is not valid or has expired, return ``False``.
-
-        If the key is valid but the ``User`` is already active, return ``False``.
-
-        To prevent reactivation of an account which has been deactivated by site administrators, the activation key is reset to the string ``ALREADY_ACTIVATED`` after successful activation.
-
-        """
-        # Make sure the key we're trying conforms to the pattern of a
-        # SHA1 hash; if it doesn't, no point trying to look it up in
-        # the database.
-        SHA1_RE = re.compile('^[a-f0-9]{40}$')
-        if SHA1_RE.search(activation_key):
-            try:
-                user = User.objects.get(activation_key=activation_key)
-            except User.DoesNotExist:
-                return False
-            if user.can_activate():
-                user.is_active = True
-                user.activation_key = "ALREADY_ACTIVATED"
-                user.save()
-                return user
-            return False
-    activate_user = staticmethod(activate_user)
-
-    # def is_shibboleth_user(self):
-    #    return not self.has_usable_password()
-
-    # Cache group membership for users
-    def cached_groups(self):
-        if self._cached_groups is None:
-            self._cached_groups = set(x['name'] for x in self.groups.values('name'))
-        return self._cached_groups
-
-    @property
-    def is_user(self):
-        return 'User' in self.cached_groups()
-    @property
-    def is_tutor(self):
-        return 'Tutor' in self.cached_groups()
-    @property
-    def is_trainer(self):
-        return 'Trainer' in self.cached_groups()
-    @property
-    def is_coordinator(self):
-        return 'Coordinator' in self.cached_groups()
-
-    @classmethod
-    def export_user(cls, queryset):
-        """ Serializes a user queryset and related objects to xml """
-        users = list(queryset)
-        django_users = list(BasicUser.objects.filter(user__in = queryset))
-        return serializers.serialize("xml", django_users + users) # order does matter!
-
-    @classmethod
-    @atomic
-    def import_user(cls, xml_data):
-        basicUser_id_map = {}
-        imported_user_ids = []
-        for deserialized_object in serializers.deserialize("xml", xml_data):
-            object = deserialized_object.object
-            if isinstance(object, User):
-                try:
-                    # object.tutorial = None
-                    # object.final_grade = None
-                    object.user_ptr = basicUser_id_map[int(object.pk)]    # object.id is null! so parse id.
-                    deserialized_object.save()
-                    imported_user_ids.append(object.pk)
-                except KeyError:
-                    pass # basicUser_id_map key not found because user already existed
-            else: # brach BasicUser
-                try:
-                    old_id = object.id
-                    object.id = None
-                    object.date_joined = datetime.datetime.now()
-                    deserialized_object.save()
-                    basicUser_id_map[old_id] = object
-                except utils.IntegrityError:
-                    pass # unique username validation - user already existed
-        return User.objects.filter(id__in = imported_user_ids)     # get them fresh from the db, otherwise the user object won't have basicUser attributes set
-
+    # @property
+    # def is_user(self):
+    #     return 'User' in self.cached_groups()
+    # @property
+    # def is_tutor(self):
+    #     return 'Tutor' in self.cached_groups()
+    # @property
+    # def is_trainer(self):
+    #     return 'Trainer' in self.cached_groups()
+    # @property
+    # def is_coordinator(self):
+    #     return 'Coordinator' in self.cached_groups()
+    #
+    # @classmethod
+    # def export_user(cls, queryset):
+    #     """ Serializes a user queryset and related objects to xml """
+    #     users = list(queryset)
+    #     django_users = list(BasicUser.objects.filter(user__in = queryset))
+    #     return serializers.serialize("xml", django_users + users) # order does matter!
+    #
+    # @classmethod
+    # @atomic
+    # def import_user(cls, xml_data):
+    #     basicUser_id_map = {}
+    #     imported_user_ids = []
+    #     for deserialized_object in serializers.deserialize("xml", xml_data):
+    #         object = deserialized_object.object
+    #         if isinstance(object, User):
+    #             try:
+    #                 # object.tutorial = None
+    #                 # object.final_grade = None
+    #                 object.user_ptr = basicUser_id_map[int(object.pk)]    # object.id is null! so parse id.
+    #                 deserialized_object.save()
+    #                 imported_user_ids.append(object.pk)
+    #             except KeyError:
+    #                 pass # basicUser_id_map key not found because user already existed
+    #         else: # brach BasicUser
+    #             try:
+    #                 old_id = object.id
+    #                 object.id = None
+    #                 object.date_joined = datetime.datetime.now()
+    #                 deserialized_object.save()
+    #                 basicUser_id_map[old_id] = object
+    #             except utils.IntegrityError:
+    #                 pass # unique username validation - user already existed
+    #     return User.objects.filter(id__in = imported_user_ids)     # get them fresh from the db, otherwise the user object won't have basicUser attributes set
+    #
 
 
 

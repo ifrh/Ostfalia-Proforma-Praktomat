@@ -6,12 +6,13 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
 from checker.basemodels import Checker, CheckerResult, truncated_log
-from checker.admin import    CheckerInline, AlwaysChangedModelForm
+# from checker.admin import    CheckerInline, AlwaysChangedModelForm
 from checker.checker.ProFormAChecker import ProFormAChecker
-from utilities.safeexec import execute_arglist
+# from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from solutions.models import Solution
 import xml.etree.ElementTree as ET
+from proforma import sandbox
 
 from checker.compiler.JavaBuilder import JavaBuilder
 import logging
@@ -21,10 +22,14 @@ logger = logging.getLogger(__name__)
 
 RXFAIL       = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|ABBRUCH DURCH ZEITUEBERSCHREITUNG|Could not find class|Killed|failures)(.*)$",    re.MULTILINE)
 
+
+use_sandbox = True
+
 class IgnoringJavaBuilder(JavaBuilder):
     _ignore = []
     # list of jar files belonging to task
     _custom_libs = []
+    JAVA_BIN = 'java' if use_sandbox else settings.JVM_SECURE
 
     def add_custom_lib(self, file):
         filename = file.path_relative_to_sandbox()
@@ -45,6 +50,28 @@ class IgnoringJavaBuilder(JavaBuilder):
     def create_result(self, env):
         assert isinstance(env.solution(), Solution)
         return CheckerResult(checker=self, solution=env.solution())
+
+    def get_run_command(self, env):
+        """ Build it. """
+        # Try to find out the main modules name with only the source files present
+        if self._main_required:
+            try:
+                env.set_program(self.main_module(env))
+            except self.NotFoundError:
+                pass
+
+        filenames = [name for name in self.get_file_names(env)]
+        args = ["javac"]
+#        args = ["javac"] + self.output_flags(env) + self.flags(env) + filenames + self.libs()
+        if use_sandbox:
+            args += ['-d'] + ['.']
+        args += self.output_flags(env) + self.flags(env) + filenames + self.libs()
+
+
+        return ' '.join(args)
+
+
+
 
 class JUnitChecker(ProFormAChecker):
     """ New Checker for JUnit Unittests. """
@@ -100,7 +127,7 @@ class JUnitChecker(ProFormAChecker):
             # java -jar junit-platform-console-standalone-<version>.jar <Options>
             # does not work!!
             # jar = settings.JAVA_LIBS[self.junit_version]
-            cmd = [settings.JVM_SECURE, "-jar", self.runner(),
+            cmd = [IgnoringJavaBuilder.JAVA_BIN, "-jar", self.runner(),
                "-cp", classpath,
 #               "--module-path", "/usr/share/openjfx/lib", # JFX
 #               "--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web",
@@ -112,7 +139,7 @@ class JUnitChecker(ProFormAChecker):
             # java -cp.:/praktomat/extra/junit-platform-console-standalone-<version>.jar:/praktomat/extra/Junit5RunListener.jar
             # de.ostfalia.zell.praktomat.Junit5ProFormAListener <mainclass>
             cmd = [# "sh", "-x",
-               settings.JVM_SECURE,
+               IgnoringJavaBuilder.JAVA_BIN,
                "-cp", classpath + ":" + settings.JUNIT5_RUN_LISTENER_LIB,
                 "--module-path", "/usr/share/openjfx/lib", # JFX
                 "--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web",
@@ -130,7 +157,7 @@ class JUnitChecker(ProFormAChecker):
         else:
             classpath += ":.:" + settings.JUNIT4_RUN_LISTENER_LIB
             runner = settings.JUNIT4_RUN_LISTENER
-        cmd = [settings.JVM_SECURE, "-cp", classpath,
+        cmd = [IgnoringJavaBuilder.JAVA_BIN, "-cp", classpath,
                "--module-path", "/usr/share/openjfx/lib", # JFX
                "--add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web",
                runner, self.class_name]
@@ -169,13 +196,19 @@ class JUnitChecker(ProFormAChecker):
         # This is only done if the student code consists of exactly one file,
         # otherwise there is a risk that the student code contains test files that would overwrite the teacher's tests.
         from pathlib import Path
-        files = list(Path(env.tmpdir()).rglob("*.[jJ][aA][vV][aA]"))
+        logger.debug("---- junit test start ----")
+        test_dir = env.tmpdir()
+        files = list(Path(test_dir).rglob("*.[jJ][aA][vV][aA]"))
+        restore_backup = False
+        restore_filename = None
         if len(files) == 1:
+            restore_backup = True
             # create backup file
-            logger.debug(files[0])
+            restore_filename = str(files[0].absolute())[len(test_dir)+1:]
             import shutil
             shutil.copyfile(str(files[0].absolute()), str(files[0].absolute()) + '__.bak')
 
+        # os.system('ls -al ' + test_dir)
         self.copy_files(env)
 
 
@@ -189,43 +222,57 @@ class JUnitChecker(ProFormAChecker):
                 java_builder.add_custom_lib(file)
         java_builder._ignore = self.ignore.split(" ")
 
-        build_result = java_builder.run(env)
+################
+        if use_sandbox:
+            # use sandbox instead of Java security manager
+            j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+            j_sandbox.upload_environmment()
+            # compile
+            # j_sandbox.exec('ls -al')
+            (passed, output) = j_sandbox.compile_tests(java_builder.get_run_command(env))
+            logger.debug("compilation passed is " + str(passed))
+            logger.debug(output)
+            if not passed:
+                return self.handle_compile_error(env, output, "", False, False)
+            exitcode = 0
+            (passed1, out) = j_sandbox.exec('find . -name *.java -delete')
+            if not passed1:
+                logger.error('java files deletion failed')
+                logger.error(out)
+            if restore_backup:
+                # restore single backup file in case of Java parser testcode
+                (passed1, out) = j_sandbox.exec('mv ' + restore_filename + '__.bak ' + restore_filename)
 
-        if not build_result.passed:
-            logger.info('could not compile JUNIT test')
-            # logger.debug("log: " + build_result.log)
-            result = self.create_result(env)
-            result.set_passed(False)
-            result.set_log(build_result.log,
-                           log_format=(CheckerResult.FEEDBACK_LIST_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
-#            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
-            return result
-
-        # delete all java files in the sandbox in order to avoid the student getting the test source code :-)
-        [output, error, exitcode, timed_out, oom_ed] = \
-            execute_arglist(['find', '.' , '-name', '*.java', '-delete'], env.tmpdir(), unsafe=True)
-        if exitcode != 0:
-            logger.error('exitcode for java files deletion :' + str(exitcode))
-            logger.error(output)
-            logger.error(error)
-
-        if len(files) == 1:
-            # restore single backup file in case of Java parser testcode
-            import shutil
-            shutil.copyfile(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
+        # else:
+        #     build_result = java_builder.run(env)
+        #
+        #     if not build_result.passed:
+        #         logger.info('could not compile JUNIT test')
+        #         # logger.debug("log: " + build_result.log)
+        #         result = self.create_result(env)
+        #         result.set_passed(False)
+        #         result.set_log(build_result.log,
+        #                        log_format=(
+        #                            CheckerResult.FEEDBACK_LIST_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
+        #         #            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
+        #         return result
+        #     # delete all java files in the sandbox in order to avoid the student getting the test source code :-)
+        #     [output, error, exitcode, timed_out, oom_ed] = \
+        #         execute_arglist(['find', '.' , '-name', '*.java', '-delete'], test_dir, unsafe=True)
+        #     if exitcode != 0:
+        #         logger.error('exitcode for java files deletion :' + str(exitcode))
+        #         logger.error(output)
+        #         logger.error(error)
+        #
+        #     if len(files) == 1:
+        #         # restore single backup file in case of Java parser testcode
+        #         import shutil
+        #         shutil.move(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
+        #
+################
 
         # run test
         logger.debug('JUNIT Checker run')
-        environ = {}
-
-        environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
-        environ['JAVA'] = settings.JVM
-        script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
-        environ['POLICY'] = os.path.join(script_dir, "junit.policy")
-        print(environ)
-        if not os.path.isfile(environ['POLICY']):
-            raise Exception('cannot find policy file ' + os.path.isfile(environ['POLICY']))
-
         if self.junit_version == 'junit5':
             # JUNIT5
             [cmd, use_run_listener] = self.get_run_command_junit5(java_builder.libs()[1])
@@ -233,16 +280,41 @@ class JUnitChecker(ProFormAChecker):
             # JUNIT4
             [cmd, use_run_listener] = self.get_run_command_junit4(java_builder.libs()[1])
 
-        # use Java security manager instead of restrict application        
-        [output, error, exitcode, timed_out, oom_ed] = \
-            execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
-                            fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
+################
 
-        # Remove deprecated warning for Java 17 and security manager
-        output = JUnitChecker.remove_deprecated_warning(output)
-        logger.debug('JUNIT output:' + str(output))
-        logger.debug('JUNIT error:' + str(error))
-        logger.debug('JUNIT exitcode:' + str(exitcode))
+        if use_sandbox:
+            # run
+            cmd = ' '.join(cmd)  # convert cmd to string
+            # logger.debug(cmd)
+            # j_sandbox.exec('ls -al')
+
+            (passed, output, timed_out) = j_sandbox.runTests(command=cmd, image_suffix="junit")
+#            (passed, output, timed_out) = j_sandbox.runTests("tail -f /dev/null")
+            # logger.debug(output)
+            exitcode = 0 if passed else 1
+            oom_ed = False
+
+        # else:
+        #     environ = {}
+        #
+        #     environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
+        #     environ['JAVA'] = settings.JVM
+        #     script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
+        #     environ['POLICY'] = os.path.join(script_dir, "junit.policy")
+        #     print(environ)
+        #     if not os.path.isfile(environ['POLICY']):
+        #         raise Exception('cannot find policy file ' + os.path.isfile(environ['POLICY']))
+        #     [output, error, exitcode, timed_out, oom_ed] = \
+        #         execute_arglist(cmd, test_dir, environment_variables=environ, timeout=settings.TEST_TIMEOUT,
+        #                         fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
+        #     # Remove deprecated warning for Java 17 and security manager
+        #     output = JUnitChecker.remove_deprecated_warning(output)
+        #     logger.debug('JUNIT output:' + str(output))
+        #     logger.debug('JUNIT error:' + str(error))
+        #     logger.debug('JUNIT exitcode:' + str(exitcode))
+
+
+################
 
         result = self.create_result(env)
         truncated = False
@@ -292,37 +364,17 @@ class JUnitChecker(ProFormAChecker):
                                log_format=CheckerResult.TEXT_LOG)
         else:
             # show standard log output
+            logger.debug("use standard output")
             (output, truncated) = truncated_log(output)
             output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'
             result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed)
 
         result.set_passed(not exitcode and self.output_ok(output) and not truncated)
+        # logger.debug("---- junit test end ----")
+
         return result
 
-#class JUnitCheckerForm(AlwaysChangedModelForm):
-#    def __init__(self, **args):
-#        """ override default values for the model fields """
-#        super(JUnitCheckerForm, self).__init__(**args)
-#        self.fields["_flags"].initial = ""
-#        self.fields["_output_flags"].initial = ""
-#        self.fields["_libs"].initial = "junit3"
-#        self.fields["_file_pattern"].initial = r"^.*\.[jJ][aA][vV][aA]$"
 
-class JavaBuilderInline(CheckerInline):
-    """ This Class defines how the the the checker is represented as inline in the task admin page. """
-    model = JUnitChecker
-#    form = JUnitCheckerForm
 
-# A more advanced example: By overwriting the form of the checkerinline the initial values of the inherited atributes can be overritten.
-# An other example would be to validate the inputfields in the form. (See Django documentation)
-#class ExampleForm(AlwaysChangedModelForm):
-    #def __init__(self, **args):
-        #""" override public and required """
-        #super(ExampleForm, self).__init__(**args)
-        #self.fields["public"].initial = False
-        #self.fields["required"].initial = False
 
-#class ExampleCheckerInline(CheckerInline):
-    #model = ExampleChecker
-    #form = ExampleForm
