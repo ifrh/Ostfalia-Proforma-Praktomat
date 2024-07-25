@@ -1,6 +1,10 @@
+# 5.0.0
+
+change of architecture: use docker for sandboxes
+
 # 4.18.5
 
-generate proper XML response on exit in student code
+bugfix: generate proper XML response on exit in student code
 
 # 4.18.4
 
