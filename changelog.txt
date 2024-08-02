@@ -1,3 +1,7 @@
+# 5.0.1
+
+read docker group ID in .env file
+
 # 5.0.0
 
 change of architecture: use docker for sandboxes

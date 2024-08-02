@@ -34,7 +34,7 @@ services:
         args:
           LOCALE: de_DE.UTF-8
           PASSWORD: ${PRAKTOMATPASSWORD}
-          DOCKER_GROUP_ID: 1001 # grep "docker" /etc/group
+          DOCKER_GROUP_ID: ${DOCKER_GROUP_ID} # grep "docker" /etc/group
             # LOCALE: en_US.UTF-8
     container_name: praktomat3
     # restart container if it exits:
