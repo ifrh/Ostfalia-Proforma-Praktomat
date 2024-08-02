@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.authors="Ostfalia University of Applied Sciences"
 
 ARG PASSWORD=123
 
-ARG GROUP_ID=999
+ARG GROUP_ID=977
 # docker group id (name=docker cannot be used here)
 # figure it out by call of "/etc/group"
 ARG DOCKER_GROUP_ID=2000
