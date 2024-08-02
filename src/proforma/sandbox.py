@@ -167,16 +167,31 @@ class DockerSandbox(ABC):
 
         if debug_sand_box:
             logger.debug('create container')
-        self._container = self._client.containers.create(
-            image_name, init=True,
-            mem_limit=self._mem_limit,
-            #            cpu_period=100000, cpu_quota=90000,  # max. 70% of the CPU time => configure
-            network_disabled=True,
-            command=DockerSandbox.default_cmd,  # keep container running
-            detach=True,
-            healthcheck=self._healthcheck
-            #            tty=True
-        )
+
+        number = random.randrange(1000000000)
+        name = "tmp_sandbox_" + str(number)
+
+        try:
+            self._container = self._client.containers.create(
+                image_name, init=True,
+                mem_limit=self._mem_limit,
+                #            cpu_period=100000, cpu_quota=90000,  # max. 70% of the CPU time => configure
+                network_disabled=True,
+                command=DockerSandbox.default_cmd,  # keep container running
+                name=name,
+                detach=True,
+                healthcheck=self._healthcheck
+                #            tty=True
+            )
+        except Exception as e:
+            # in case of an exception there might be a dangling container left
+            # that is not removed by the docker code.
+            # So we look for a container named xxx and try and remove it
+            # filters = { "name": "tmp_" + str(number) }
+            logger.error("FATAL ERROR: cannot create new container " + name)
+            logger.error(e)
+            delete_dangling_container(self._client, name)
+            raise e
 
         if self._container is None:
             raise Exception("could not create container")
