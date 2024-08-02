@@ -66,13 +66,14 @@ services:
     #command: ./src/manage.py runserver 0.0.0.0:8010
 
     volumes:
-     - ./extra:/praktomat/extra:ro
-     - ./extra:/praktomat/docker-sandbox-image/java/extra:ro
-      # for development: map source folders into container:
-      # not for production!
+     # - ./extra:/praktomat/extra:ro
+      # map source folders into container
      - ./src:/praktomat/src # not readonly because migrations and python cache needs to be created!
      - /praktomat/src/migrations # do not store migration files on host
-     - ./docker-sandbox-image:/praktomat/docker-sandbox-image:ro
+     # /praktomat/docker-sandbox-image cannot be read-only because the extra folder
+     # is mapped into it
+     - ./docker-sandbox-image:/praktomat/docker-sandbox-image
+     - ./extra:/praktomat/docker-sandbox-image/java/extra:ro
      # allow access to docker socket
      - /var/run/docker.sock:/var/run/docker.sock
     ports:
