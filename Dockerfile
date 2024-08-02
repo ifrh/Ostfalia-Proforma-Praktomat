@@ -5,7 +5,6 @@ LABEL org.opencontainers.image.authors="Ostfalia University of Applied Sciences"
 
 ARG PASSWORD=123
 
-ARG GROUP_ID=977
 # docker group id (name=docker cannot be used here)
 # figure it out by call of "/etc/group"
 ARG DOCKER_GROUP_ID=2000
@@ -49,10 +48,9 @@ RUN apt-get update && \
 ################
 
 # create group praktomat
-RUN groupadd -g ${GROUP_ID} praktomat && \
-  groupadd -g ${DOCKER_GROUP_ID} docker && \
+RUN groupadd -g ${DOCKER_GROUP_ID} docker && \
 # add user praktomat to group praktomat \
-  useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
+  useradd -u ${PRAKTOMAT_ID} praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
 # add user praktomat to docker group \
   usermod -a -G ${DOCKER_GROUP_ID} praktomat && \
 # add user praktomat to sudo (???) \
@@ -66,7 +64,7 @@ echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 # RUN mkdir /praktomat && chown ${PRAKTOMAT_ID}:${GROUP_ID} /praktomat
 WORKDIR /praktomat
-ADD --chown=${PRAKTOMAT_ID}:${GROUP_ID} requirements.txt /praktomat/
+ADD --chown=${PRAKTOMAT_ID} requirements.txt /praktomat/
 RUN pip3 install --upgrade pip && \
     pip3 --version && \
     pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir

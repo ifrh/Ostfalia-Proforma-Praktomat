@@ -238,7 +238,7 @@ class DockerSandbox(ABC):
 
         # we need to change permissions on student folder in order to
         # have the required permissions inside test docker container
-        os.system("chown -R praktomat:praktomat " + self._studentenv)
+        os.system("chown -R praktomat " + self._studentenv)
 
         tmp_filename = None
         try:

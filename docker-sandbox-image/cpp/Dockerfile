@@ -16,12 +16,10 @@ ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
 ENV LANGUAGE ${LOCALE}
 
-ARG GROUP_ID=999
-ARG PRAKTOMAT_ID=999
+ARG PRAKTOMAT_ID=1100
 
 # create user with less capabilties
-RUN groupadd -g ${GROUP_ID} praktomat \
-    && useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/bash
+RUN useradd  -u ${PRAKTOMAT_ID} praktomat -s /bin/bash
 
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation

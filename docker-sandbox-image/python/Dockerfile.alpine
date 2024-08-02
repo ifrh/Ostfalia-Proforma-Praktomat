@@ -29,8 +29,7 @@ RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting
 
 # create user with less capabilties
 # debian:
-# RUN groupadd -g ${GROUP_ID} praktomat \
-#    && useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/sh
+# RUN useradd -u ${PRAKTOMAT_ID} praktomat -s /bin/sh
 # alpine:
 RUN adduser -u ${PRAKTOMAT_ID} praktomat -s /bin/ash --disabled-password
 
