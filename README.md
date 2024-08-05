@@ -56,6 +56,14 @@ So you need to figure out the group id of the docker group on your computer:
 
 Set this group id value in the docker-compose.yml file as DOCKER_GROUP_ID.
 
+The file system used by docker should preferably not be "vfs" (virtual filesystem), 
+otherwise the performance will be greatly reduced.
+
+The file system can be determined as follows: 
+
+        docker info | grep Storage
+
+
 #### Configuration
 
 ##### Mandatory: Credentials
