@@ -138,14 +138,9 @@ The grading service is available on port 80
 
         http://localhost/api/v2/submissions
 
-and port 8010 (circumventing the web server)
-
-        http://localhost:8010/api/v2/submissions
-        
-
 A typical grading HTTP request in CURL is
 
-    curl -X POST --form submission.xml=@submission.xml -F "{solutionfilename}=@{solutionfile}" -F "{taskfilename}=@{taskfile}" http://localhost:8010/api/v2/submissions
+    curl -X POST --form submission.xml=@submission.xml -F "{solutionfilename}=@{solutionfile}" -F "{taskfilename}=@{taskfile}" http://localhost/api/v2/submissions
 
 with the following 'submission.xml'
 

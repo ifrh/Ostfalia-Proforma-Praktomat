@@ -19,23 +19,14 @@ services:
     # - "5432:5432"
      
   praktomat:
-    devices:
-    - "/dev/fuse"
-    cap_add:
-    # - ALL
-    - SYS_ADMIN # for calling unshare in test process
-    # - SYS_CHROOT # for calling chroot in test process with layers
-    security_opt:
-      # if AppAmor is installed then we need to disable it for this container in
-      # order to work with FUSE
-      - apparmor:unconfined
+
     build:
         context: .
         args:
           LOCALE: de_DE.UTF-8
+            # LOCALE: en_US.UTF-8
           PASSWORD: ${PRAKTOMATPASSWORD}
           DOCKER_GROUP_ID: ${DOCKER_GROUP_ID} # grep "docker" /etc/group
-            # LOCALE: en_US.UTF-8
     container_name: praktomat3
     # restart container if it exits:
     restart: always
@@ -55,18 +46,12 @@ services:
       GITUSER: ${GITUSERNAME}
       GITPASS: ${GITPASSWORD}
 
-    #command: python3 ./manage-docker.py runserver 0.0.0.0:8010
     command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=${WORKERS} --worker-class=gevent --graceful-timeout=120
-    # command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=${WORKERS} --worker-class=gevent --graceful-timeout=120 --backlog=${WORKERS}*2
-    ###command: /bin/su -c "exec gunicorn wsgi --bind 0.0.0.0:8010 --workers=1 --worker-class=eventlet" praktomat
-    #command: gunicorn wsgi:praktomat --bind 0.0.0.0:8010 --workers=5 --worker-class=eventlet
 
-    #command: sleep 100000
-    #command: ./manage.py runserver 0.0.0.0:8010
-    #command: ./src/manage.py runserver 0.0.0.0:8010
+    # command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=${WORKERS} --worker-class=gevent --graceful-timeout=120 --backlog=${WORKERS}*2
+    #command: python3 ./manage-docker.py runserver 0.0.0.0:8010
 
     volumes:
-     # - ./extra:/praktomat/extra:ro
       # map source folders into container
      - ./src:/praktomat/src # not readonly because migrations and python cache needs to be created!
      - /praktomat/src/migrations # do not store migration files on host
@@ -76,8 +61,8 @@ services:
      - ./extra:/praktomat/docker-sandbox-image/java/extra:ro
      # allow access to docker socket
      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "8010:8010"
+#    ports:
+#      - "8010:8010"
     depends_on:
       - postgres
       
