@@ -128,6 +128,7 @@ CHECKSTYLE_VER['check-7.6']  = '/praktomat/lib/checkstyle-8.23-all.jar'
 CHECKSTYLE_VER['check-8.23'] = '/praktomat/lib/checkstyle-8.23-all.jar'
 CHECKSTYLE_VER['check-8.29'] = '/praktomat/lib/checkstyle-8.29-all.jar'
 CHECKSTYLE_VER['check-10.1'] = '/praktomat/lib/checkstyle-10.1-all.jar'
+CHECKSTYLE_VER['check-10.17'] = '/praktomat/lib/checkstyle-10.17.0-all.jar'
 
 
 # GIT_LOG_FORMAT = "--oneline" # short hash message
