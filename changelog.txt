@@ -1,6 +1,8 @@
-# 5.0.1
+# 5.1.0
 
 read docker group ID in .env file
+bugfix different user ids
+bugfix possible docker leak if container cannot be created
 
 # 5.0.0
 
