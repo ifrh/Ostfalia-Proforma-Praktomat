@@ -792,9 +792,11 @@ def cleanup():
             #            else:
             #                print("do not delete " + container.name + " image: " + container.image.tags[0] + " state: " + container.status)
             except Exception as e:
-                if container is not None:
+                try:
                     print("cannot check whether to remove container " + container.id)
                     print(container.image)
+                except Exception as e:
+                    pass
                 print(e)
         print("ok")
 
