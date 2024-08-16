@@ -795,7 +795,7 @@ def cleanup():
                 try:
                     print("cannot check whether to remove container " + container.id)
                     print(container.image)
-                except Exception as e:
+                except Exception as e1:
                     pass
                 print(e)
         print("ok")
