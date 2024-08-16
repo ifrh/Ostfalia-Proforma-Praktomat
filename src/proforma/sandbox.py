@@ -311,7 +311,10 @@ class DockerSandbox(ABC):
         number = random.randrange(1000000000)
         self._image = self._container.commit("tmp", str(number))
         # stop old container and remove
-        self._container.stop()
+        try:
+            self._container.stop()
+        except:
+            pass
         self._container.remove(force=True)
         self._container = None
         print(self._image.tags)
@@ -775,18 +778,24 @@ def cleanup():
         containers = client.containers.list(all=True)
         print(containers)
         for container in containers:
-            # print(container.image.tags)
-            if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
-                    container.image.tags[0].find('tmp:') >= 0:
-                print("Remove container " + container.name + " image: " + container.image.tags[0])
-                try:
-                    container.stop()
-                    container.remove(force=True)
-                except Exception as e:
-                    print("cannot remove container " + container.name)
-                    print(e)
-        #            else:
-        #                print("do not delete " + container.name + " image: " + container.image.tags[0] + " state: " + container.status)
+            try:
+                # print(container.image.tags)
+                if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
+                        container.image.tags[0].find('tmp:') >= 0:
+                    print("Remove container " + container.name + " image: " + container.image.tags[0])
+                    try:
+                        container.stop()
+                        container.remove(force=True)
+                    except Exception as e:
+                        print("cannot remove container " + container.name)
+                        print(e)
+            #            else:
+            #                print("do not delete " + container.name + " image: " + container.image.tags[0] + " state: " + container.status)
+            except Exception as e:
+                if container is not None:
+                    print("cannot check whether to remove container " + container.id)
+                    print(container.image)
+                print(e)
         print("ok")
 
         print("deleting old images")
