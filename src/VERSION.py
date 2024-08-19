@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-version = "Version 5.1.1 | 20240816"
+version = "Version 5.1.1 | 20240819"

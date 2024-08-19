@@ -319,11 +319,21 @@ class DockerSandbox(ABC):
         self._container = None
         print(self._image.tags)
 
+        # get factor from environment for calculating limits
+        # Problem ist that ulimit sets limits for user, not for container.
+        # ALl tests run as the same user (praktomat)!
+        FACTOR = os.getenv('PARALLEL')
+        if FACTOR is None or len(FACTOR.strip()) == 0:
+            FACTOR = 2
+        else:
+            FACTOR = int(FACTOR.strip())
+        FACTOR = max(FACTOR, 10)
+
         ulimits = [
             docker.types.Ulimit(name='CPU', soft=25, hard=30),
-            docker.types.Ulimit(name='nproc', soft=250, hard=250),
-            docker.types.Ulimit(name='nofile', soft=64, hard=64),
-            docker.types.Ulimit(name='as', soft=self._mem_limit, hard=self._mem_limit),
+            docker.types.Ulimit(name='nproc', soft=250 * FACTOR, hard=250 * FACTOR),
+            docker.types.Ulimit(name='nofile', soft=64 * FACTOR, hard=64 * FACTOR),
+            docker.types.Ulimit(name='as', soft=self._mem_limit * FACTOR, hard=self._mem_limit * FACTOR),
             docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100),  # 100MB
         ]
 
@@ -681,7 +691,7 @@ class PythonImage(DockerSandboxImage):
                 if not container.put_archive(path='/sandbox', data=fd):
                     raise Exception('cannot put requirements.tar/' + tmp_filename)
 
-            logger.debug(container.status);
+            logger.debug(container.status)
             code, log = container.exec_run("pip3 install -r /sandbox/requirements.txt", user="root")
             yield from self.yield_log(log)
             logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
