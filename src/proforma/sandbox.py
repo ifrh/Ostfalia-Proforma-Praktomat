@@ -329,11 +329,25 @@ class DockerSandbox(ABC):
             FACTOR = int(FACTOR.strip())
         FACTOR = max(FACTOR, 10)
 
+        MAX_CPU_LIMIT_SOFT = os.getenv('MAX_CPU_LIMIT_SOFT')
+        MAX_CPU_LIMIT_HARD = os.getenv('MAX_CPU_LIMIT_SOFT')
+        if MAX_CPU_LIMIT_SOFT is None or len(MAX_CPU_LIMIT_SOFT.strip()) == 0:
+            MAX_CPU_LIMIT_SOFT = 80
+        else:
+            MAX_CPU_LIMIT_SOFT = int(MAX_CPU_LIMIT_SOFT.strip())
+        if MAX_CPU_LIMIT_HARD is None or len(MAX_CPU_LIMIT_HARD.strip()) == 0:
+            MAX_CPU_LIMIT_HARD = 90
+        else:
+            MAX_CPU_LIMIT_HARD = int(MAX_CPU_LIMIT_HARD.strip())
+
+
         ulimits = [
-            docker.types.Ulimit(name='CPU', soft=25, hard=30),
+            docker.types.Ulimit(name='CPU', soft=MAX_CPU_LIMIT_SOFT, hard=MAX_CPU_LIMIT_HARD),
             docker.types.Ulimit(name='nproc', soft=250 * FACTOR, hard=250 * FACTOR),
             docker.types.Ulimit(name='nofile', soft=64 * FACTOR, hard=64 * FACTOR),
-            docker.types.Ulimit(name='as', soft=self._mem_limit * FACTOR, hard=self._mem_limit * FACTOR),
+            docker.types.Ulimit(name='as', soft=5000 * DockerSandbox.meg_byte + FACTOR,
+                        hard=5000 * DockerSandbox.meg_byte + FACTOR),
+#            docker.types.Ulimit(name='as', soft=self._mem_limit * FACTOR, hard=self._mem_limit * FACTOR),
             docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100),  # 100MB
         ]
 

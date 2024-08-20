@@ -1,4 +1,4 @@
-version: '3'
+# version: '3'
 
 # perform the following steps in buuild the docker container images: 
 # 1.a) fill subfolder 'extra' with needed additional libraries for grading (e.g. JUNIT)
@@ -46,6 +46,8 @@ services:
       GITUSER: ${GITUSERNAME}
       GITPASS: ${GITPASSWORD}
       PARALLEL: ${PARALLEL}
+      MAX_CPU_LIMIT_SOFT: ${MAX_CPU_LIMIT_SOFT}
+      MAX_CPU_LIMIT_HARD: ${MAX_CPU_LIMIT_HARD}
 
     command: gunicorn wsgi --bind 0.0.0.0:8010 --workers=${WORKERS} --worker-class=gevent --graceful-timeout=120
 
