@@ -548,8 +548,7 @@ class JavaSandbox(DockerSandbox):
         self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_JAVA  # increase memory limit
 
 
-#   def __del__(self):
-#        super().__del__()
+
 
 
 class JavaImage(DockerSandboxImage):
@@ -757,8 +756,32 @@ class PythonImage(DockerSandboxImage):
         return p_sandbox
 
 
-#    def empty_function(self):
-#        return True
+
+class CheckstyleSandbox(DockerSandbox):
+    def __init__(self, client, studentenv, command):
+        super().__init__(client, studentenv,
+                         None, # no compile command
+                         command,  # run command
+                         None)  # download path
+#        self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_JAVA  # increase memory limit
+
+
+
+class CheckstyleImage(DockerSandboxImage):
+    def __init__(self, praktomat_test):
+        super().__init__(praktomat_test,
+                         '/praktomat/docker-sandbox-image/checkstyle',
+                         "checkstyle-praktomat_sandbox",
+                         None)
+
+    def get_container(self, studentenv = None, command = None):
+        self.create_image()
+        if studentenv is not None:
+            j_sandbox = CheckstyleSandbox(self._client, studentenv, command)
+            j_sandbox.create(self._get_image_fullname(self._get_image_tag()))
+            return j_sandbox
+        else:
+            return None
 
 
 def cleanup():
@@ -851,13 +874,19 @@ def cleanup():
 
 def create_images():
     # create images
-    print("creating docker image for java tests ...")
+    print("creating docker image for Java tests ...")
     sys.stdout.flush()
     sys.stderr.flush()
     JavaImage(None).create_image()
     print("done")
 
-    print("creating docker image for python tests ...")
+    print("creating docker image for Checkstyle tests ...")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    CheckstyleImage(None).create_image()
+    print("done")
+
+    print("creating docker image for Python tests ...")
     sys.stdout.flush()
     sys.stderr.flush()
     for a in PythonImage(None).create_image_yield():

@@ -1,3 +1,9 @@
+# 5.2.0
+
+use separate images for Java and Checkstyle
+read some resource limit values from  .env file
+bugfix: use larger ulimit values as all sandbox containers belong to same user
+
 # 5.1.0
 
 read docker group ID in .env file

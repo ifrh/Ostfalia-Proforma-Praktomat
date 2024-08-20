@@ -63,7 +63,7 @@ class CheckStyleChecker(ProFormAChecker):
                 "com.puppycrawl.tools.checkstyle.Main", "-c", "checks.xml"] + \
                [name for (name, content) in env.sources()]  # + [" > ", env.tmpdir() + "/output.txt"]
         if use_sandbox:
-            j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+            j_sandbox = sandbox.CheckstyleImage(self).get_container(test_dir, None)
             j_sandbox.upload_environmment()
 
             cmd = ' '.join(args)  # convert cmd to string
