@@ -1,3 +1,7 @@
+# 5.2.1
+
+python image: add libcairo2
+
 # 5.2.0
 
 use separate images for Java and Checkstyle

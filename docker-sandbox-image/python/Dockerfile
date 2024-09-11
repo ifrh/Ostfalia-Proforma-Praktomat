@@ -10,7 +10,8 @@ ARG LOCALE_PLAIN=de_DE
 ARG LOCALE=${LOCALE_PLAIN}.UTF-8
 
 # this is how to set locale for debian (from https://hub.docker.com/_/debian):
-RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
+# libcairo2 is used for some special tests and is not actually requeired
+RUN apt-get update && apt-get install -y locales libcairo2 && rm -rf /var/lib/apt/lists/* \
 	&& localedef -i ${LOCALE_PLAIN} -c -f UTF-8 -A /usr/share/locale/locale.alias ${LOCALE}
 
 ENV LANG ${LOCALE}
