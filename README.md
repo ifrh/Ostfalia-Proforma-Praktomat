@@ -18,7 +18,7 @@ The following programming languages and test frameworks are provided with the Pr
 
 |  Language   |               Test Frameworks                |
 |:-----------:|:--------------------------------------------:|         
-|   Java 21   |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1    |
+|   Java 21   |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1/10.17 |
 |     C++     |            Googletest, Make/CMake            |
 |      C      |        Googletest, CUnit, Make/CMake         |
 | Python 3.11 | Unittest with Pip <br/>(Doctest preparation) |
