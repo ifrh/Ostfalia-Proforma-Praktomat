@@ -64,12 +64,12 @@ ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.
 # JUnit 5
     https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar \
 # destination
-    http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip \
+    https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar \
     /praktomat/lib/
 
 #RUN apt-get update \
 #    && apt-get install -y wget unzip \
-#    && wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib \
+#    && wget https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar && unzip -n hamcrest-core-1.3.jar.zip -d /praktomat/lib \
 #    && apt remove -y wget unzip \
 #    && rm -rf /var/lib/apt/lists/*
     

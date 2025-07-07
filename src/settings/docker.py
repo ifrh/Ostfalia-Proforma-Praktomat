@@ -215,23 +215,23 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             #'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
             'handlers': ['console'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'tasks': {
             'handlers': ['console'],
-            'level': 'INFO',  # change debug level as appropiate
-#            'level': 'DEBUG',  # change debug level as appropiate
+#            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },

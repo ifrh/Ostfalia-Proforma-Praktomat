@@ -30,14 +30,14 @@ ADD    https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.j
 # JUnit 5
     https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar \
 # destination
-    http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.zip \
+    https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar \
     /praktomat/lib/
 
 
 RUN unzip /openjfx-21.0.3_linux-x64_bin-sdk.zip  \
   && mv /javafx-sdk-21.0.3 /usr/share/openjfx  \
   && rm /openjfx-21.0.3_linux-x64_bin-sdk.zip \
-  && cd /praktomat/lib && unzip hamcrest-core-1.3.jar.zip && rm hamcrest-core-1.3.jar.zip \
+#  && cd /praktomat/lib && unzip hamcrest-core-1.3.jar.zip && rm hamcrest-core-1.3.jar.zip \
 # set permissions for folder and files in /praktomat
   && find /praktomat -type d -exec chmod 755 {} \; \
   && find /praktomat -type f -exec chmod 644 {} \;
