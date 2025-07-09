@@ -1,4 +1,5 @@
-FROM python:3.11.9-slim-bookworm
+#FROM python:3.11.13-slim-bookworm
+FROM python:3.13.5-slim-bookworm
 
 LABEL description="Praktomat with ProFormA interface"
 LABEL org.opencontainers.image.authors="Ostfalia University of Applied Sciences"

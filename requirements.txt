@@ -1,12 +1,12 @@
 
 chardet==5.2.0 #
-Django==3.2.25
+Django==4.2.16
 # django-extensions==3.1.5
-gevent==24.2.1 #
+gevent==25.5.1 #
 gunicorn==22.0.0 #
 
 
-lxml==5.2.2 #
+lxml==5.4.0 #
 # lxml==4.9.4 # faster than 5.2.2??
 
 # for getting shared objects for sandbox
@@ -14,7 +14,7 @@ lxml==5.2.2 #
 
 pyclean
 
-psycopg2-binary==2.9.9 #
+psycopg2-binary==2.9.10 #
 
 # Pygments is used for highlighting in 'Isabelle'
 # Pygments==2.11.2
@@ -27,7 +27,7 @@ docker==7.1.0
 ## modules automatically installed
 
 elementpath==4.4.0 #
-greenlet==3.0.3 #
+greenlet==3.2.3 #
 pytz==2024.1 #
 setuptools==70.0.0 #
 six==1.16.0 #

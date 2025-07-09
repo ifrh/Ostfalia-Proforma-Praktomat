@@ -1,9 +1,9 @@
-FROM python:3.11.9-slim-bookworm
+FROM python:3.13.5-slim-bookworm
 # FROM python:3.11.9-alpine3.20
 
 MAINTAINER Ostfalia
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # set locale
 ARG LOCALE_PLAIN=de_DE
@@ -14,15 +14,16 @@ ARG LOCALE=${LOCALE_PLAIN}.UTF-8
 RUN apt-get update && apt-get install -y locales libcairo2 && rm -rf /var/lib/apt/lists/* \
 	&& localedef -i ${LOCALE_PLAIN} -c -f UTF-8 -A /usr/share/locale/locale.alias ${LOCALE}
 
-ENV LANG ${LOCALE}
-ENV LC_ALL ${LOCALE}
-ENV LANGUAGE ${LOCALE}
+ENV LANG=${LOCALE}
+ENV LC_ALL=${LOCALE}
+ENV LANGUAGE=${LOCALE}
 
 ARG PRAKTOMAT_ID=1100
 
 # install xmlrunner for test framework
 # lxml is needed for xml result conversion
-RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting
+RUN pip3 install --upgrade pip && pip3 install unittest-xml-reporting
+#RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting
 
 # create user with less capabilties 
 # RUN groupadd -g ${GROUP_ID} praktomat \
