@@ -4,7 +4,7 @@ import shutil, os, re, subprocess
 from django.conf import settings
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.html import escape
 from checker.basemodels import Checker, CheckerFileField, CheckerResult, truncated_log
 from checker.checker.ProFormAChecker import ProFormAChecker

@@ -2,7 +2,7 @@
 
 import re
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from checker.basemodels import CheckerFileField, CheckerResult, truncated_log
 from utilities.file_operations import *
 from django.utils.html import escape

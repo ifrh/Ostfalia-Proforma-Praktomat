@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from checker.basemodels import Checker
 from checker.checker.CreateFileChecker import CreateFileChecker
 from checker.basemodels import CheckerResult, truncated_log

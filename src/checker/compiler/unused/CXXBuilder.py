@@ -4,7 +4,7 @@
 A C++ compiler for construction.
 """
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from checker.compiler.Builder import Builder
 from django.conf import settings
 

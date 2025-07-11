@@ -10,8 +10,8 @@ from tasks.models import Task
 from solutions.models import Solution
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-from django.utils.translation import ugettext_lazy as _
-from django.utils.encoding import force_text
+from django.utils.translation import gettext_lazy as _
+from django.utils.encoding import force_str
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db.models.signals import post_delete
@@ -192,7 +192,7 @@ def truncated_log(log):
         # bugfix Ostfalia: do not calc settings.TEST_MAXLOGSIZE*1024/2 since this results in a float value
         # which cannot be used for indexing
         endindex = settings.TEST_MAXLOGSIZE*512 # 512 = 1024 / 2
-        return (force_text('======= Warning: Output too long, hence truncated ======\n' +
+        return (force_str('======= Warning: Output too long, hence truncated ======\n' +
                            log[0:endindex] + "\n...\n...\n...\n...\n" +
                            log[log_length-endindex:], errors='replace'), True)
     return (log, False)

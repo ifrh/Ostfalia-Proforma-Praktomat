@@ -5,7 +5,7 @@ from pipes import quote
 import re, subprocess
 import shlex
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.html import escape
 from django.template.loader import get_template
 

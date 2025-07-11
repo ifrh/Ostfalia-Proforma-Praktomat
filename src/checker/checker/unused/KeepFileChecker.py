@@ -4,7 +4,7 @@ import os.path
 import os
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from checker.basemodels import Checker
 from utilities.file_operations import *

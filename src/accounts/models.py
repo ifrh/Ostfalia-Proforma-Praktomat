@@ -5,7 +5,7 @@ import random
 
 from functools import reduce
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db import models, utils
 from django.contrib.auth.models import User as BasicUser, UserManager
 from django.db.models import signals
