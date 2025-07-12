@@ -14,26 +14,25 @@ lxml==5.4.0 #
 
 pyclean
 
-psycopg2-binary==2.9.10 #
+# Postgres database access
+psycopg2-binary==2.9.10
 
 # Pygments is used for highlighting in 'Isabelle'
 # Pygments==2.11.2
 
 # for python unittests
 docker==7.1.0
-# unittest-xml-reporting==3.2.0 #
+
+xmlschema==3.3.1 #
 
 
 ## modules automatically installed
 
-elementpath==4.4.0 #
-greenlet==3.2.3 #
-pytz==2024.1 #
-setuptools==70.0.0 #
-six==1.16.0 #
-sqlparse==0.5.0 #
-wheel==0.43.0 #
-xmlschema==3.3.1 #
+#elementpath==4.4.0 #
+#greenlet==3.2.3 #
+#six==1.16.0 #
+# sqlparse==0.5.0 #
+# wheel==0.43.0 #
 
 #asgiref                3.8.1
 #click                  8.1.7
@@ -47,3 +46,5 @@ xmlschema==3.3.1 #
 #zope.event             5.0
 #zope.interface         6.4.post2
 
+#pytz
+#setuptools
