@@ -1,7 +1,7 @@
 # This results in a small docker image.
 # But if numpy (?) needs to be installed this will fail
 
-FROM python:3.11.9-alpine3.20
+FROM python:3.11.13-alpine3.22
 
 MAINTAINER Ostfalia
 

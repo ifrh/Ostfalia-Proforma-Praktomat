@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pipes import quote
+#from pipes import quote
 import shutil, os, re, subprocess
 from django.conf import settings
 

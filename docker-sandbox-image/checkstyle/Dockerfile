@@ -1,5 +1,5 @@
 # FROM scratch as build
-FROM alpine:3.20 as build
+FROM alpine:3.22 as build
 
 
 # set locale
@@ -29,7 +29,7 @@ ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.
 
 
 
-FROM alpine:3.20
+FROM alpine:3.22
 
 ARG PRAKTOMAT_ID=1100
 # add user praktomat

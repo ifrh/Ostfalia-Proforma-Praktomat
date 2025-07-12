@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pipes import quote
+# from pipes import quote
 import os
 import re
 import logging

@@ -1,5 +1,5 @@
 FROM python:3.11.13-slim-bookworm
-#FROM python:3.13.5-slim-bookworm
+# FROM python:3.13.5-slim-bookworm
 
 LABEL description="Praktomat with ProFormA interface"
 LABEL org.opencontainers.image.authors="Ostfalia University of Applied Sciences"
@@ -88,8 +88,11 @@ RUN chmod 0644 /etc/cron.d/praktomat-cron \
 RUN chown praktomat:praktomat /praktomat/init_database.sh /praktomat/entrypoint.sh \
     && chmod u+x /praktomat/init_database.sh /praktomat/entrypoint.sh
 
+RUN pip3 list
+
 # change user
 USER praktomat
+
 
 # run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]

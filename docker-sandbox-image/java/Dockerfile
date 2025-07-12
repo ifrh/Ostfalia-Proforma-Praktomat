@@ -1,5 +1,5 @@
 # FROM scratch as build
-FROM alpine:3.20 as build
+FROM alpine:3.22 as build
 
 
 # set locale
@@ -46,7 +46,7 @@ RUN unzip /openjfx-21.0.3_linux-x64_bin-sdk.zip  \
 
 
 
-FROM alpine:3.20
+FROM alpine:3.22
 
 ARG PRAKTOMAT_ID=1100
 # add user praktomat

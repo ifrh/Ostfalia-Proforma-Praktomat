@@ -1,4 +1,4 @@
-FROM python:3.11.9-slim-bookworm
+FROM python:3.11.13-slim-bookworm
 
 # create user with less capabilties 
 RUN useradd praktomat -s /bin/bash
