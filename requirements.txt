@@ -1,50 +1,49 @@
 
-chardet==5.2.0 #
 Django==4.2.23
-# django-extensions==3.1.5
-gevent==25.5.1 #
-gunicorn==22.0.0 #
+gevent==25.5.1
+gunicorn==23.0.0
+chardet==5.2.0
 
+lxml==6.0.0
+xmlschema==4.1.0
 
-lxml==5.4.0 #
-# lxml==4.9.4 # faster than 5.2.2??
-
-# for getting shared objects for sandbox
-# lddcollect==0.2.0 #
-
-pyclean
 
 # Postgres database access
 psycopg2-binary==2.9.10
 
-# Pygments is used for highlighting in 'Isabelle'
-# Pygments==2.11.2
-
 # for python unittests
 docker==7.1.0
 
-xmlschema==3.3.1 #
 
 
-## modules automatically installed
+pyclean
 
-#elementpath==4.4.0 #
-#greenlet==3.2.3 #
-#six==1.16.0 #
-# sqlparse==0.5.0 #
-# wheel==0.43.0 #
+# => pip list:
+#
+# Package            Version
+# ------------------ --------
+# asgiref            3.9.1
+# certifi            2025.7.9
+# chardet            5.2.0
+# charset-normalizer 3.4.2
+# Django             4.2.23
+# docker             7.1.0
+# elementpath        5.0.3
+# gevent             25.5.1
+# greenlet           3.2.3
+# gunicorn           23.0.0
+# idna               3.10
+# lxml               6.0.0
+# packaging          25.0
+# pip                25.1.1
+# psycopg2-binary    2.9.10
+# pyclean            3.1.0
+# requests           2.32.4
+# setuptools         65.5.1
+# sqlparse           0.5.3
+# urllib3            2.5.0
+# wheel              0.45.1
+# xmlschema          4.1.0
+# zope.event         5.1
+# zope.interface     7.2
 
-#asgiref                3.8.1
-#click                  8.1.7
-#dbus-python            1.2.16
-#packaging              24.0
-#pip                    24.0
-#psycopg2-binary        2.9.9
-#pyelftools             0.31
-#PyGObject              3.36.0
-#typing_extensions      4.12.0
-#zope.event             5.0
-#zope.interface         6.4.post2
-
-#pytz
-#setuptools
