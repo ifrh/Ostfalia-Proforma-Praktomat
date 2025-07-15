@@ -21,6 +21,7 @@
 # functions for grading a student's submission
 
 from django.conf import settings
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files import File
@@ -218,7 +219,11 @@ def _save_file(data, solution_file, filename):
         #             full_filename = os.path.join(full_directory,  package + '/' + filename)
 
         #logger.debug('full_filename name is ' + full_filename)
-        tmp = default_storage.save(full_filename, data)
+        try:
+            tmp = default_storage.save(full_filename, data)
+        except SuspiciousFileOperation as e:
+            raise Exception('Student solution contains suspicious file: ' + filename)
+
         #logger.debug('save returned ' + tmp)
     elif isinstance(data, str): # elif data.__class__.__name__ == 'str':
         fd = open('%s' % (full_filename), 'w')
