@@ -1,6 +1,0 @@
-// Default java policy for the praktomat
-// Set as $POLICY by ScriptChecker and used by ./src/checker/scripts/java
-grant {
-	permission java.lang.RuntimePermission "shutdownHooks";
-	permission java.lang.RuntimePermission "setIO";
-};
