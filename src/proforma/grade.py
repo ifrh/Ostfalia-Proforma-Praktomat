@@ -1,4 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
+import pathlib
 
 # This file is part of Ostfalia-Praktomat.
 #
@@ -27,6 +28,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files import File
 
 from accounts.models import User
+from django.utils._os import safe_join
 from solutions.models import Solution, SolutionFile
 from VERSION import version
 
@@ -187,13 +189,16 @@ def _save_file(data, solution_file, filename):
         solution.task.id) + '/User_' + solution.author.username + '/Solution_' + str(
         solution.id) + '/'      # directory structure from solution.model
     full_filename = os.path.join(full_directory, filename)
+    # full_filename= safe_join(full_directory, filename)
     path = os.path.dirname(full_filename)
     if not os.path.exists(path):
         os.makedirs(path)
 
-    # logger.debug('_save_file ' + filename)
+    logger.debug('_save_file ' + filename)
+    logger.debug('to ' + full_filename)
     # logger.debug('File content class name is ' + data.__class__.__name__)
     if isinstance(data, InMemoryUploadedFile):
+        # logger.debug('InMemoryUploadedFile =>  ' + full_filename)
         with default_storage.open('%s' % (full_filename), 'w') as destination:
             for chunk in data.chunks():
                 destination.write(chunk)
@@ -218,24 +223,34 @@ def _save_file(data, solution_file, filename):
         #             logger.debug('prepend package path ' + package)
         #             full_filename = os.path.join(full_directory,  package + '/' + filename)
 
-        #logger.debug('full_filename name is ' + full_filename)
-        try:
-            tmp = default_storage.save(full_filename, data)
-        except SuspiciousFileOperation as e:
-            raise Exception('Student solution contains suspicious file: ' + filename)
+        # logger.debug('File => full_filename name is ' + full_filename)
+        if default_storage.exists(filename):
+            raise Exception('Student solution overrides existing file: ' + filename)
+        # write file to disk
+        #        tmp = default_storage.save(full_filename, data)
+        # (do not use default_storage.save as it may result in an exception
+        # because of a SuspiciousFileOperation
+        # (requires relative path)
+        data.seek(0)
+        with open(full_filename, "wb") as f_out:
+            f_out.write(data.read())
+
+
 
         #logger.debug('save returned ' + tmp)
     elif isinstance(data, str): # elif data.__class__.__name__ == 'str':
+        #logger.debug('String =>  ' + full_filename)
         fd = open('%s' % (full_filename), 'w')
         fd.write(data)
         fd.close()
     elif isinstance(data, bytes): # data.__class__.__name__ == 'bytes':
+        #logger.debug('bytes =>  ' + full_filename)
         fd = open('%s' % (full_filename), 'wb')
         fd.write(data)
         fd.close()
     elif data.__class__.__name__ == 'PhysicalFile':
         # file already exists => move to correct location
-        # logger.debug('PhysicalFile =>  ' + full_filename)
+        #logger.debug('PhysicalFile =>  ' + full_filename)
         import shutil
         shutil.move(data.path, full_filename)
         # remove folder if not empty

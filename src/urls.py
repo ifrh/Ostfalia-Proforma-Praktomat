@@ -3,9 +3,11 @@ from django.conf import settings
 
 import proforma.views
 
+# Index page
+# url(r'^$', RedirectView.as_view(pattern_name='task_list', permanent=True), name="index"),
+
+
 urlpatterns = [
-    # Index page
-    #url(r'^$', RedirectView.as_view(pattern_name='task_list', permanent=True), name="index"),
 
 # Proforma 2.0
     # official Proforma request
@@ -22,6 +24,7 @@ urlpatterns = [
     re_path(r'^version$', proforma.views.show_version, name="show_version"),
     re_path(r'^praktomat-info$', proforma.views.show_info, name="show_info"),
     re_path(r'^favicon\.ico$', proforma.views.icon, name="icon"),
+    re_path(r'^error$', proforma.views.error_page, name="error"),
 
 ]
 
@@ -33,6 +36,7 @@ if settings.DEBUG:
 
 
 # handle invalid URI as 404
-urlpatterns += [
-    re_path(r'^.*/$', proforma.views.error_page, name='error_page')
-]
+handler404 = proforma.views.not_found_page
+#urlpatterns += [
+#    re_path(r'^.*/$', proforma.views.error_page, name='error_page')
+#]

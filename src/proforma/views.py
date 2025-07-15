@@ -114,3 +114,10 @@ def error_page(request):
     response.status_code = 404
     return response
 
+@csrf_exempt
+def not_found_page(request, exception):
+    logger.error('invalid url: ' + request.get_full_path())
+    response = HttpResponse()
+    response.write('not found')
+    response.status_code = 404
+    return response
