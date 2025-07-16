@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Praktomat Tasks</title>
+</head>
+<body>
+    <h1>Tasks</h1>
+
+    <table>
+        <tr>
+            <td><b>Prog language</b></td>
+            <td><b>Title</b></td>
+            <td><b>UUID</b></td>
+            <td><b>Date</b></td>
+            <td><b>Used</b></td>
+        </tr>
+
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.prog_lang }}</td>
+            <td>{{ task.title }}</td>
+            <td>{{ task.proformatask_uuid }}</td>
+            <td>{{ task.publication_date }}</td>
+            <td>{{ task.used }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</body>
+</html>

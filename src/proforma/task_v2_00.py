@@ -97,11 +97,12 @@ def _get_optional_xml_element(xmlTest, xpath, namespaces, message):
 # wrapper for task object in Praktomat model
 class Praktomat_Task_2_00:
 
-    def __init__(self):
+    def __init__(self, prog_lang):
         self._task = Task.objects.create(title="test",
                                          description="",
                                          # submission_date=datetime.now(),
-                                         publication_date=datetime.now())
+                                         publication_date=datetime.now(),
+                                         prog_lang=prog_lang)
 
     def _getTask(self):
         return self._task
@@ -540,6 +541,8 @@ class Task_2_00:
         if CACHE_TASKS:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task is not None:
+                old_task.used = old_task.used + 1
+                old_task.save()
                 logger.debug('task already exists, no import')
                 yield 'data: task already exists, no import\n\n'
                 self._imported_task = old_task
@@ -565,7 +568,7 @@ class Task_2_00:
 
         # xml_obj = objectify.fromstring(xml_object) # task_xml)
 
-        self._praktomat_task = Praktomat_Task_2_00()
+        self._praktomat_task = Praktomat_Task_2_00(task_proglang)
         try:
             self._praktomat_task.read(xml_dict)
             # self.set_default_user(user_name=SYSUSER)

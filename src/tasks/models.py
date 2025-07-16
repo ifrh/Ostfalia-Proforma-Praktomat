@@ -39,6 +39,10 @@ class Task(models.Model):
     proformatask_uuid = models.UUIDField(editable=False, null=True, help_text = _("UUID of proforma task"))
     proformatask_title = models.TextField(editable=False, null=True, help_text = _("title of proforma task"))
 
+    # for statistics
+    prog_lang = models.CharField(max_length=30, help_text = _("Programming language"))
+    used = models.IntegerField(default=1, help_text = _("How often is the task used?"))
+
     class Meta:
         ordering = ['title']
 #        ordering = ['submission_date', 'title']

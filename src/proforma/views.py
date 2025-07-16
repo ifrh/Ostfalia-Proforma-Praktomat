@@ -102,6 +102,17 @@ def show_info(request):
     return HttpResponse(html_result)
 
 @csrf_exempt
+def tasks(request):
+    html_result = "todo: list all tasks"
+    tasks = Task.objects.all()
+
+    # taskname proglang created count solutions
+    t = get_template('proforma/tasks.html')
+    html_result = t.render({'tasks': tasks})
+    return HttpResponse(html_result)
+
+
+@csrf_exempt
 def icon(request):
     return HttpResponseNotFound('icon not found')
 

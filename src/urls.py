@@ -23,6 +23,7 @@ urlpatterns = [
 
     re_path(r'^version$', proforma.views.show_version, name="show_version"),
     re_path(r'^praktomat-info$', proforma.views.show_info, name="show_info"),
+    re_path(r'^tasks$', proforma.views.tasks, name="tasks"),
     re_path(r'^favicon\.ico$', proforma.views.icon, name="icon"),
     re_path(r'^error$', proforma.views.error_page, name="error"),
 
