@@ -14,7 +14,7 @@ FROM alpine:3.22 as build
 
 
 # Add JFX
-ADD https://download2.gluonhq.com/openjfx/21.0.3/openjfx-21.0.3_linux-x64_bin-sdk.zip /
+ADD https://download2.gluonhq.com/openjfx/21.0.8/openjfx-21.0.8_linux-x64_bin-sdk.zip /
 
 
 COPY extra /praktomat/extra
@@ -34,9 +34,9 @@ ADD    https://github.com/junit-team/junit4/releases/download/r4.12/junit-4.12.j
     /praktomat/lib/
 
 
-RUN unzip /openjfx-21.0.3_linux-x64_bin-sdk.zip  \
-  && mv /javafx-sdk-21.0.3 /usr/share/openjfx  \
-  && rm /openjfx-21.0.3_linux-x64_bin-sdk.zip \
+RUN unzip /openjfx-21.0.8_linux-x64_bin-sdk.zip  \
+  && mv /javafx-sdk-21.0.8 /usr/share/openjfx  \
+  && rm /openjfx-21.0.8_linux-x64_bin-sdk.zip \
 #  && cd /praktomat/lib && unzip hamcrest-core-1.3.jar.zip && rm hamcrest-core-1.3.jar.zip \
 # set permissions for folder and files in /praktomat
   && find /praktomat -type d -exec chmod 755 {} \; \
