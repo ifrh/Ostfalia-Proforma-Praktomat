@@ -79,22 +79,16 @@ def load_defaults(settings):
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.admin',
-        # 'django.contrib.admindocs',
-        # 'django.contrib.staticfiles',
 
         # ./manage.py runserver_plus allows for debugging on werkzeug traceback page. invoke error with assert false
         # not needed for production
-        # 'django_extensions',
-
-#        'configuration', # not needed for Proforma
         'accounts',
         'tasks',
         'solutions',
-#        'attestation', # not needed for Proforma
+        'proforma',
         'checker',
         'utilities',
         'settings',
-        #'sessionprofile', #phpBB integration
     )
 
     d.MIDDLEWARE = [
@@ -113,7 +107,7 @@ def load_defaults(settings):
         'solutions': 'migrations.solutions',
         'accounts': 'migrations.accounts',
         'tasks': 'migrations.tasks',
-        'proforma': 'migrations.proforma',
+ #       'proforma': 'migrations.proforma',
     }
 
     # needed since Django 1.11 in order to show the 'Deactivated' page

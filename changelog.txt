@@ -1,3 +1,11 @@
+# 5.2.3
+
+new: function for recreating all sandbox images (for use in case of software updates)
+
+# 5.2.2
+
+update software used
+
 # 5.2.1
 
 python image: add libcairo2

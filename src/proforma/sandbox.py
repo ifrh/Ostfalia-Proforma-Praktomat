@@ -787,7 +787,7 @@ class CheckstyleImage(DockerSandboxImage):
 def cleanup():
     client = docker.from_env()
     try:
-        print("deleting old containers (image tmp exited)")
+        print("deleting exited sandbox containers (image tmp exited)")
         filters = {
             "status": "exited",
             "name": "tmp_*",
@@ -821,7 +821,7 @@ def cleanup():
                 print(e)
         print("ok")
 
-        print("deleting old containers (image *-praktomat_sandbox:*)")
+        print("deleting old temporary containers (image *-praktomat_sandbox:*)")
         containers = client.containers.list(all=True)
         print(containers)
         for container in containers:
@@ -847,7 +847,7 @@ def cleanup():
                 print(e)
         print("ok")
 
-        print("deleting old images")
+        print("deleting old temporary images")
         images = client.images.list(name="tmp")
         print(images)
         for image in images:
@@ -943,6 +943,38 @@ def get_state():
     return state
 
 
+def admin_delete_sandbox_images():
+    client = docker.from_env()
+
+    try:
+        print("deleting sandbox images")
+        images = client.images.list(name="*praktomat_sandbox")
+        print(images)
+        # at first delete all non base images
+        for image in images:
+            print(image.tags)
+            if not image.tags[0].endswith(":0"):
+                print("Remove image " + image.tags[0])
+                try:
+                    image.remove(force=True)
+                except Exception as e:
+                    print(e)
+                pass
+        # then delete the remaining images
+        images = client.images.list(name="*praktomat_sandbox")
+        for image in images:
+            print(image.tags)
+            print("Remove image " + image.tags[0])
+            try:
+                image.remove(force=True)
+            except Exception as e:
+                print(e)
+            pass
+    finally:
+        client.close()
+
+    print("ok")
+
 if __name__ == '__main__':
     # flush echo messages from shell script on praktomat docker startup
     sys.stdout.flush()
@@ -950,6 +982,8 @@ if __name__ == '__main__':
 
     cleanup()
     create_images()
+#    main(sys.argv[1:])
+
 
 
 

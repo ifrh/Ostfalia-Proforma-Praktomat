@@ -42,6 +42,7 @@ class Task(models.Model):
     # for statistics
     prog_lang = models.CharField(max_length=30, help_text = _("Programming language"))
     used = models.IntegerField(default=1, help_text = _("How often is the task used?"))
+    last_use = models.DateTimeField(help_text = _("The time on which the task was last used."), default=datetime.now)
 
     class Meta:
         ordering = ['title']

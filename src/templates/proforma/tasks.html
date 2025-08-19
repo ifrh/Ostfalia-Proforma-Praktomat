@@ -14,6 +14,7 @@
             <td><b>UUID</b></td>
             <td><b>Date</b></td>
             <td><b>Used</b></td>
+            <td><b>Last Use</b></td>
         </tr>
 
         {% for task in tasks %}
@@ -23,6 +24,7 @@
             <td>{{ task.proformatask_uuid }}</td>
             <td>{{ task.publication_date }}</td>
             <td>{{ task.used }}</td>
+            <td>{{ task.last_use }}</td>
         </tr>
         {% endfor %}
 

@@ -237,40 +237,14 @@ This can easily be done by calling
   
 There is no need to back-up anything!
 
-As the tests run in their own Docker containers, it cannot be ruled out that containers or images sometimes remain after test. 
-The images are always reused (with the exception of Python images with a tag not equal to 0).
-
-Remove dangling containers:
-
-        docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=exited)
-
-Under certain conditions, containers that have never been run could also get stuck:
-
-        docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=created)
-
-Remove unused temporary sandbox images: 
-
-        docker rm $(docker images --filter=reference="tmp:*" -q)
-
-
-On Praktomat (re)start all dangling containers and intermediate images are removed. 
-The docker images for the individual programming languages are retained.
-
-        docker compose up
-
-In case these are to be recreated, e.g. if the programming language Dockerfile
-has been changed, they must be deleted manually.
-
-        docker image ls
-        docker image rm <image1> <image2> ...
-
-Or: Remove all sandbox base images: 
-
-        docker image rm $(docker images --filter=reference="*-praktomat_sandbox" -q)
 
 Retrieve state information:
 
         http://{serverhost}/praktomat-info
+
+Retrieve tasks overview:
+
+        http://{serverhost}/tasks
 
 
 ### Software Update
@@ -282,6 +256,10 @@ In case of a software update this is the recommended process:
 3. ./remove_migrations.sh (delete old build files) 
 4. `docker dompose build`    
 5. `docker dompose up` 
+
+If there are sandbox Dockerfiles to be updated all sandbox images can be recreated with 
+
+    docker exec -u root -it praktomat3 python3 src/manage-docker.py admin_recreate_images
 
 ### Troubleshooting 
 
