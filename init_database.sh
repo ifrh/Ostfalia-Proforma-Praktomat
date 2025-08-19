@@ -45,8 +45,15 @@ echo "migrate"
 python3 ./src/manage-docker.py migrate || exit
 
 echo "create users"
-echo "from django.contrib.auth.models import User; User.objects.create_superuser('$SUPERUSER', '$EMAIL', '$PASSWORD')" | python3 ./src/manage-docker.py shell
-echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | python3 ./src/manage-docker.py shell
+echo "from django.contrib.auth.models import User; \
+User.objects.filter(username='$SUPERUSER').exists() or \
+User.objects.create_superuser('$SUPERUSER', '$EMAIL', '$PASSWORD')" | \
+python3 ./src/manage-docker.py shell
+
+echo "from django.contrib.auth.models import User; \
+User.objects.filter(username='sys_prod').exists() or \
+User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | \
+python3 ./src/manage-docker.py shell
 
 # update media folder for nginx to serve static django files
 # echo "collect static files for webserver"
