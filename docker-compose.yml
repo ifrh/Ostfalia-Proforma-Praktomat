@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: pmuserpass
       POSTGRES_DB: pmdb  
       # POSTGRES_INITDB_ARGS: -E UTF8
-    image: postgres:17
+    image: postgres:17.6
     container_name: praktomat_database3
     #ports:
     # - "5432:5432"
@@ -88,7 +88,7 @@ services:
     # - /data/certs:/etc/nginx/certs
     ports:
      - 80:80
-     - 443:443
+     # - 443:443
     depends_on:
      - praktomat
 
