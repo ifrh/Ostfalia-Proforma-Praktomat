@@ -30,7 +30,7 @@ class Command(BaseCommand):
             requirements_txt = checker.files.filter(filename='requirements.txt', path='')
             if len(requirements_txt) != 0:
                 print(checker.id)
-                print('requirements.txt gefunden for task ' + str(checker.task.id))
+                print('requirements.txt found for task ' + str(checker.task.id))
                 requirements_txt = requirements_txt.first()
 
                 requirements_path = os.path.join(settings.UPLOAD_ROOT,

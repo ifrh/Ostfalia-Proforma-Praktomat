@@ -72,7 +72,9 @@ RUN pip3 install --upgrade pip && \
 
 COPY . /praktomat
 
-RUN mkdir -p /praktomat/upload && mkdir -p /praktomat/media
+RUN mkdir -p /praktomat/upload \
+  && mkdir -p /praktomat/media \
+  && mkdir -p /praktomat/data
 
 # create cron job for deleting temporary files (no dots in new filename)
 COPY cron.conf /etc/cron.d/praktomat-cron
@@ -86,7 +88,8 @@ RUN chmod 0644 /etc/cron.d/praktomat-cron \
 
 # set permissions
 RUN chown praktomat:praktomat /praktomat/init_database.sh /praktomat/entrypoint.sh \
-    && chmod u+x /praktomat/init_database.sh /praktomat/entrypoint.sh
+    && chmod u+x /praktomat/init_database.sh /praktomat/entrypoint.sh \
+    && chown praktomat:praktomat /praktomat/data
 
 RUN pip3 list
 
@@ -96,5 +99,4 @@ USER praktomat
 
 # run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
-
 

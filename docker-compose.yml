@@ -13,10 +13,14 @@ services:
       POSTGRES_PASSWORD: pmuserpass
       POSTGRES_DB: pmdb  
       # POSTGRES_INITDB_ARGS: -E UTF8
-    image: postgres
+    image: postgres:17
     container_name: praktomat_database3
     #ports:
     # - "5432:5432"
+    volumes:
+      - db_volume:/var/lib/postgresql/data/
+
+
      
   praktomat:
 
@@ -64,6 +68,7 @@ services:
      - ./extra:/praktomat/docker-sandbox-image/java/extra:ro
      # allow access to docker socket
      - /var/run/docker.sock:/var/run/docker.sock
+     - data_volume:/praktomat/data
 #    ports:
 #      - "8010:8010"
     depends_on:
@@ -72,18 +77,21 @@ services:
      
 # ngninx is needed for the browser interface
   nginx:
-   # do not use '_' in container name because django gets confused with _ in host names (Moodle docker)
-   container_name: praktomat_nginx3
-   restart: always    
-   build: ./nginx
-   volumes:
-   # static content to serve
+    # do not use '_' in container name because django gets confused with _ in host names (Moodle docker)
+    container_name: praktomat_nginx3
+    restart: always
+    build: ./nginx
+    volumes:
+    # static content to serve
     - ./media:/praktomat/media
     # ssl certificate
     # - /data/certs:/etc/nginx/certs
-   ports:
+    ports:
      - 80:80
      - 443:443
-   depends_on:
+    depends_on:
      - praktomat
 
+volumes:
+  data_volume:
+  db_volume:

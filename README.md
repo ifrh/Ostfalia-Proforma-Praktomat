@@ -247,13 +247,21 @@ Retrieve tasks overview:
         http://{serverhost}/tasks
 
 
+From version 5.3.0 the docker compose file creates volumes for data and database. 
+So data is persistent. If you want to cleanup data execute
+
+    docker volume rm xxx_data_volume
+    docker volume rm xxx_database
+
+xxx depends on the installation folder (check 'docker volume ls'). 
+
 ### Software Update
 
 In case of a software update this is the recommended process:
 
 1. `docker compose down`
 2. update software (e.g. `git pull`)
-3. ./remove_migrations.sh (delete old build files) 
+3. `sudo ./remove_migrations.sh` (delete old build files) 
 4. `docker dompose build`    
 5. `docker dompose up` 
 
