@@ -263,11 +263,13 @@ In case of a software update this is the recommended process:
 2. update software (e.g. `git pull`)
 3. `sudo ./remove_migrations.sh` (delete old build files) 
 4. `docker dompose build`    
-5. `docker dompose up` 
+5. `docker dompose up -d` 
 
 If there are sandbox Dockerfiles to be updated all sandbox images can be recreated with 
 
     docker exec -u root -it praktomat3 python3 src/manage-docker.py admin_recreate_images
+
+It is recommended to restart Praktomat afterwards (docker compose up -d), because otherwise the status (http://{serverhost}/praktomat-info) will be incomplete (images will be missing).
 
 ### Troubleshooting 
 

@@ -1,7 +1,7 @@
 # 5.3.0
 
 new: function for recreating all sandbox images (for use in case of software updates)
-new: make tasks persistent (docker compose file change)
+new: make uploaded tasks persistent
 
 # 5.2.2
 
